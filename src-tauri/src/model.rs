@@ -44,7 +44,7 @@ pub struct UpdateBug {
     pub bugnote_text: String,//问题注释
 }
 
-#[derive(Default,Serialize)]
+#[derive(Debug, Default, Serialize)]
 pub struct BugList {
     pub bugs: Vec<Bug>,
     pub total: i64,

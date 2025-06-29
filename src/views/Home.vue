@@ -3,12 +3,10 @@ import { ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from '@tauri-apps/api/event'
 
-const bugList = ref([
-  { id: '1', system: 'Windows', title: '无法启动应用' },
-  { id: '2', system: 'Linux', title: '权限错误' },
-  { id: '3', system: 'macOS', title: '界面显示异常' }
-]);
-const testStr = ref("asd");
+const bugList = ref([]);
+const total = ref(0);
+const limit = ref(0);
+const page = ref(0);
 
 // 一键处理已修正
 async function revisedHandle() {
@@ -23,7 +21,18 @@ async function notReviseHandle() {
 // 监听rust发送的消息
 listen('timer-tick', (event) => {
   console.log('收到定时消息:', event.payload)
-  testStr.value = event.payload;
+  try {
+    const obj = event.payload;
+    if (obj) {
+      total.value = parseInt(obj.total) || 0;
+      limit.value = parseInt(obj.limit) || 0;
+      page.value = parseInt(obj.page) || 0;
+      bugList.value = obj.bugs || [];
+    };
+  } catch (error) {
+    console.error('解析 JSON 失败:', error);
+    return;
+  }
 })
 </script>
 
@@ -31,13 +40,14 @@ listen('timer-tick', (event) => {
   <main class="container">
     <el-card class="box-card">
       <div slot="header" class="clearfix">
-        <span>Bug 列表{{ testStr }}</span>
+        <span>Bug 列表</span>
       </div>
 
       <el-table :data="bugList" style="width: 100%">
-        <el-table-column prop="id" label="ID" width="180" />
-        <el-table-column prop="system" label="系统" width="180" />
-        <el-table-column prop="title" label="标题" />
+        <el-table-column prop="bug_id" label="ID" width="60" />
+        <el-table-column prop="project" label="项目名称" width="80" />
+        <el-table-column prop="handler" label="处理人" />
+        <el-table-column prop="summary" label="摘要" />
         <el-table-column label="操作" width="180">
           <template #default="scope">
             <el-button type="success" size="small" @click="revisedHandle" plain>已修正</el-button>
@@ -45,6 +55,10 @@ listen('timer-tick', (event) => {
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination">
+        <el-pagination background layout="prev, pager, next" :total="total" :page="page" />
+      </div>
     </el-card>
   </main>
 </template>
@@ -53,6 +67,11 @@ listen('timer-tick', (event) => {
 .box-card {
   max-width: 800px;
   margin: 40px auto;
+}
+
+.pagination {
+  text-align: center;
+  margin-top: 20px;
 }
 
 </style>

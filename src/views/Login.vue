@@ -1,14 +1,55 @@
 <script setup>
-import { ref } from "vue";
+import { ref, watch, nextTick } from "vue";
 import { invoke } from "@tauri-apps/api/core";
+import { pa } from "element-plus/es/locales.mjs";
 
-const greetMsg = ref("");
-const name = ref("");
+const username = ref("");
+const password = ref("");
+const showUsername = ref(true);
+const showPassword = ref(false);
+const usernameInputRef = ref(null);
+const passwordInputRef = ref(null);
 
-async function greet() {
-  greetMsg.value = await invoke("greet", { name: name.value });
-  await invoke("api_login", { username: "dengxiangcheng", password: "dxc3434DXC" });
+async function login() {
+  const result = await invoke("api_login", { username: "dengxiangcheng", password: "dxc3434DXC" });
+  console.log("登录结果", result);
+  if (result) {
+    // 登录成功
+    console.log("登录成功", result);
+    // 可以在这里进行页面跳转或其他操作
+  } else {
+    // 登录失败
+    console.error("登录失败");
+  }
 }
+
+function nextEvent() {
+  if (showUsername.value) {
+    if (username.value == "") {
+      return;
+    }
+    showUsername.value = false;
+    showPassword.value = true;
+    nextTick(() => {
+      passwordInputRef.value?.focus();
+    });
+  } else if (showPassword.value) {
+    if (password.value == "") {
+      showPassword.value = false;
+      showUsername.value = true;
+      nextTick(() => {
+        usernameInputRef.value?.focus();
+      });
+      return;
+    }
+    login();
+  }
+}
+function handleSubmit(event) {
+  event.preventDefault(); // 阻止默认提交行为
+  nextEvent();
+}
+
 </script>
 
 <template>
@@ -26,13 +67,33 @@ async function greet() {
         <img src="../assets/vue.svg" class="logo vue" alt="Vue logo" />
       </a>
     </div>
-    <p>Click on the Tauri, Vite, and Vue logos to learn more.</p>
+    <p>Click to log in to the bug system.</p>
 
-    <form class="row" @submit.prevent="greet">
-      <input id="greet-input" v-model="name" placeholder="Enter a name..." />
-      <button type="submit">Greet</button>
+    <form class="row" @submit.prevent="handleSubmit">
+      <div v-if="showUsername" class="input-group">
+        <input
+          class="greet-input"
+          ref="usernameInputRef"
+          v-model="username"
+          placeholder="Enter a username..."
+          @keyup.enter="nextEvent"
+        />
+      </div>
+      <div v-if="showPassword" class="input-group">
+        <input
+          class="greet-input"
+          ref="passwordInputRef"
+          v-model="password"
+          placeholder="Enter a password..."
+          @keyup.enter="nextEvent"
+        />
+      </div>
+      <button @click="nextEvent">
+        <div v-if="showUsername && password == ''">Next</div>
+        <div v-if="showPassword && password == ''">Back</div>
+        <div v-if="showPassword && password !== ''">Login</div>
+      </button>
     </form>
-    <p>{{ greetMsg }}</p>
   </main>
 </template>
 
@@ -133,7 +194,7 @@ button {
   outline: none;
 }
 
-#greet-input {
+.greet-input {
   margin-right: 5px;
 }
 

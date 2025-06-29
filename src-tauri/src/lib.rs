@@ -118,28 +118,29 @@ fn start_timer(app: AppHandle) {
         let param  = result.unwrap_or_default();
         loop {
             ticker.tick().await;
-            // 判断是否登录
-            let (logined, jar) = {
-                if let Ok(my_state) = state.lock() {
-                    (my_state.logined.clone(), my_state.jar.clone())
-                } else {
-                    continue;
-                }
-            };
-            // 如果未登录，则跳过
-            if !*logined {
-                println!("未登录，跳过定时任务");
-                continue;
-            }
-            // 查询列表
-            let body = match view_all_set(jar.clone(), param.clone()).await {
-                Ok(b) => b,
-                Err(e) => {
-                    println!("查询列表失败: {}", e);
-                    continue;
-                }
-            };
+            // // 判断是否登录
+            // let (logined, jar) = {
+            //     if let Ok(my_state) = state.lock() {
+            //         (my_state.logined.clone(), my_state.jar.clone())
+            //     } else {
+            //         continue;
+            //     }
+            // };
+            // // 如果未登录，则跳过
+            // if !*logined {
+            //     println!("未登录，跳过定时任务");
+            //     continue;
+            // }
+            // // 查询列表
+            // let body = match view_all_set(jar.clone(), param.clone()).await {
+            //     Ok(b) => b,
+            //     Err(e) => {
+            //         println!("查询列表失败: {}", e);
+            //         continue;
+            //     }
+            // };
             // 解析数据
+            let body = include_str!("view_all_set.html").to_string();//test
             let data = match view_all_set_data(&Html::parse_document(body.as_str())) {
                 Ok(d) => d,
                 Err(e) => {
