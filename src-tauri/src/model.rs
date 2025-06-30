@@ -52,6 +52,30 @@ pub struct BugList {
     pub limit: i64,
 }
 
+#[derive(Debug,Default,Serialize)]
+pub struct BugInfo {
+    pub bug_id: i64,
+    pub project_id: i64,//项目id
+    pub project: String,//项目
+    pub category_id: i64,//类别ID
+    pub view_status: i64,//查看权限
+    pub date_submitted: i64,//报告日期
+    pub last_updated: i64,//最后更新时间
+    pub reporter_id: i64,//报告员id
+    pub reporter: String,//报告员
+    pub handler_id: i64,//处理人
+    pub handler: String,//处理人名称
+    pub priority: i64,//优先级
+    pub severity: i64,//严重性
+    pub reproducibility: i64,//出现频率
+    pub status: i64,//状态
+    pub resolution: i64,//处理状况
+    pub summary: String,//摘要
+    pub description: String,//描述
+    pub additional_information: String,//附注
+    pub tags: String,//标签
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct FindBugListParams {
     pub r#type: i64,

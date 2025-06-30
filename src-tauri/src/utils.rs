@@ -286,7 +286,7 @@ pub fn bug_update_token_data(document: &Html) -> Result<String, String> {
         .ok_or("not found".to_string())
 }
 
-// 查询view_all_set未解决数据
+// 查询view_all_set数据
 pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error::Error>> {
     // 创建选择器
     let selector = Selector::parse("#buglist tbody tr")
@@ -301,23 +301,27 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
             // bug_id
             let id_slector = Selector::parse(".column-id a").unwrap();
             bug.bug_id = element.select(&id_slector).find_map(|e| e.inner_html().parse::<i64>().ok()).unwrap_or(0);
-            bug.summary.push_str("asd");
+            
             // issue_notes_count
             let bugnotes_selector = Selector::parse(".column-bugnotes-count a").unwrap();
             bug.issue_notes_count = element.select(&bugnotes_selector).find_map(|e| e.inner_html().parse::<i64>().ok()).unwrap_or(0);
+            
             // attachments
             let attachments_selector = Selector::parse(".column-attachments a").unwrap();
             bug.attachments = element.select(&attachments_selector).find_map(|e| e.inner_html().parse::<i64>().ok()).unwrap_or(0);
+            
             // priority
             let priority_selector = Selector::parse(".column-priority i").unwrap();
             bug.priority = element.select(&priority_selector).find_map(|e| {
                 Some(Priority::from(e.value().attr("title").unwrap_or("")).as_i64())
             }).unwrap_or(0);
+            
             // category_id
             let category_selector = Selector::parse(".column-category div").unwrap();
             bug.category_id = element.select(&category_selector).find_map(|e| {
                 Some(Category::from(e.text().last().unwrap_or(&"").trim()).as_i64())
             }).unwrap_or(0);
+            
             // project_id
             let project_selector = Selector::parse(".column-category div span a").unwrap();
             bug.project_id = element.select(&project_selector).find_map(|e| {
@@ -332,16 +336,19 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
             bug.severity = element.select(&severity_selector).find_map(|e| {
                 Some(Severity::from(e.inner_html().trim()).as_i64())
             }).unwrap_or(0);
+            
             // status
             let status_selector = Selector::parse(".column-status div span").unwrap();
             bug.status = element.select(&status_selector).find_map(|e| {
                 Some(Status::from(e.inner_html().trim()).as_i64())
             }).unwrap_or(0);
+            
             // resolution
             let resolution_selector = Selector::parse(".column-status div span").unwrap();
             bug.resolution = element.select(&resolution_selector).find_map(|e| {
                 Some(Resolution::from(e.value().attr("title").unwrap_or("0")).as_i64())
             }).unwrap_or(0);
+            
             // handler_id
             let handler_selector = Selector::parse(".column-status div a").unwrap();
             bug.handler_id = element.select(&handler_selector).find_map(|e| {
@@ -351,6 +358,7 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
                     href.split('=').nth(1).and_then(|id| id.parse::<i64>().ok())
                 })
             }).unwrap_or(0);
+            
             // date_submitted
             let date_submitted_selector = Selector::parse(".column-date-submitted").unwrap();
             // <td class="column-date-submitted">2025-06-06</td>
@@ -363,6 +371,7 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
                 // 转为时间戳（秒）
                 Some(datetime.timestamp())
             }).unwrap_or(0);
+            
             // last_updated
             let last_modified_selector = Selector::parse(".column-last-modified").unwrap();
             // <td class="column-last-modified">2025-06-18</td>
@@ -375,6 +384,7 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
                 // 转为时间戳（秒）
                 Some(datetime.timestamp())
             }).unwrap_or(0);
+            
             // summary
             let summary_selector = Selector::parse(".column-summary a").unwrap();
             bug.summary = element.select(&summary_selector).map(|e| {
@@ -384,16 +394,19 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
             bug
         })
         .collect();
+    
     // total eg: 1 - 50 / 61
     let total_selector = Selector::parse("#bug_action .badge").unwrap();
     bug_list.total = document.select(&total_selector).find_map(|e| {
         e.inner_html().split('/').last().map(|s| s.trim().parse::<i64>().unwrap_or(0))
     }).unwrap_or(0);
+    
     // page
     let page_selector = Selector::parse("#bug_action .active a").unwrap();
     bug_list.page = document.select(&page_selector).find_map(|e| {
         e.inner_html().parse::<i64>().ok()
     }).unwrap_or(0);
+    
     // limit
     let limit_selector = Selector::parse("#per_page_filter_target input").unwrap();
     bug_list.limit = document.select(&limit_selector).find_map(|e| {
@@ -403,6 +416,128 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
     bug_list.bugs = results;
 
     Ok(bug_list)
+}
+
+// 查询my_view_detail数据
+pub fn my_view_detail_data(document: &Html) -> Result<BugInfo, Box<dyn std::error::Error>> {
+    let mut bug = BugInfo::default();
+    // bug_id
+    let id_slector = Selector::parse(".bug-header-data .bug-id").unwrap();
+    bug.bug_id = document.select(&id_slector).find_map(|e| e.inner_html().parse::<i64>().ok()).unwrap_or(0);
+    
+    // project_id
+    let project_selector = Selector::parse(".bug-header-data .bug-project").unwrap();
+    bug.project_id = document.select(&project_selector).find_map(|e| {
+        // project
+        bug.project = e.inner_html().trim().to_string();
+        Some(Project::from(bug.project.as_str()).as_i64())
+    }).unwrap_or(0);
+    
+    // category_id
+    let category_selector = Selector::parse(".bug-header-data .bug-category").unwrap();
+    bug.category_id = document.select(&category_selector).find_map(|e| {
+        Some(Category::from(e.inner_html().trim()).as_i64())
+    }).unwrap_or(0);
+    
+    // view_status
+
+
+    // date_submitted 2025-06-17 16:20
+    let date_submitted_selector = Selector::parse(".bug-header-data .bug-date-submitted").unwrap();
+    bug.date_submitted = document.select(&date_submitted_selector).find_map(|e| {
+        let date_str = e.inner_html();
+        // 解析为 NaiveDate
+        let date = NaiveDate::parse_from_str(date_str.as_str(), "%Y-%m-%d %H:%M").ok()?;
+        // 设为上海时区的0点
+        let datetime = Shanghai.from_local_datetime(&date.and_hms_opt(0, 0, 0)?).unwrap();
+        // 转为时间戳（秒）
+        Some(datetime.timestamp())
+    }).unwrap_or(0);
+    
+    // last_updated 2025-06-17 16:20
+    let last_modified_selector = Selector::parse(".bug-header-data .bug-last-modified").unwrap();
+    bug.last_updated = document.select(&last_modified_selector).find_map(|e| {
+        let date_str = e.inner_html();
+        // 解析为 NaiveDate
+        let date = NaiveDate::parse_from_str(date_str.as_str(), "%Y-%m-%d %H:%M").ok()?;
+        // 设为上海时区的0点
+        let datetime = Shanghai.from_local_datetime(&date.and_hms_opt(0, 0, 0)?).unwrap();
+        // 转为时间戳（秒）
+        Some(datetime.timestamp())
+    }).unwrap_or(0);
+
+    // reporter_id
+    let handler_selector = Selector::parse("tbody .bug-reporter a").unwrap();
+    bug.reporter_id = document.select(&handler_selector).find_map(|e| {
+        //  reporter
+        bug.reporter = e.inner_html();
+        e.value().attr("href").and_then(|href| {
+            href.split('=').nth(1).and_then(|id| id.parse::<i64>().ok())
+        })
+    }).unwrap_or(0);
+    
+    // handler_id
+    let handler_selector = Selector::parse("tbody .bug-assigned-to a").unwrap();
+    bug.handler_id = document.select(&handler_selector).find_map(|e| {
+        //  handler
+        bug.handler = e.inner_html();
+        e.value().attr("href").and_then(|href| {
+            href.split('=').nth(1).and_then(|id| id.parse::<i64>().ok())
+        })
+    }).unwrap_or(0);
+
+    // priority
+    let priority_selector = Selector::parse("tbody td .bug-priority").unwrap();
+    bug.priority = document.select(&priority_selector).find_map(|e| {
+        Some(Priority::from(e.value().attr("title").unwrap_or("")).as_i64())
+    }).unwrap_or(0);
+
+    // severity
+    let severity_selector = Selector::parse("tbody td .bug-severity").unwrap();
+    bug.severity = document.select(&severity_selector).find_map(|e| {
+        Some(Severity::from(e.inner_html().trim()).as_i64())
+    }).unwrap_or(0);
+
+    // reproducibility
+
+
+    // status
+    let status_selector = Selector::parse("tbody td .bug-status span").unwrap();
+    bug.status = document.select(&status_selector).find_map(|e| {
+        Some(Status::from(e.text().last().unwrap_or(&"").trim()).as_i64())
+    }).unwrap_or(0);
+
+    // resolution
+    let resolution_selector = Selector::parse("tbody td .bug-resolution").unwrap();
+    bug.resolution = document.select(&resolution_selector).find_map(|e| {
+        Some(Status::from(e.inner_html().trim()).as_i64())
+    }).unwrap_or(0);
+
+    // summary 
+    let summary_selector = Selector::parse("tbody td bug-summary").unwrap();
+    bug.summary = document.select(&summary_selector).map(|e| {
+        e.inner_html().trim().to_string()
+    }).collect::<Vec<String>>().join("").trim().to_string();
+
+    // description
+    let description_selector = Selector::parse("tbody td bug-description").unwrap();
+    bug.description = document.select(&description_selector).map(|e| {
+        e.inner_html().trim().to_string()
+    }).collect::<Vec<String>>().join("").trim().to_string();
+    
+    // additional-information
+    let additional_information_selector = Selector::parse("tbody td bug-additional-information").unwrap();
+    bug.additional_information = document.select(&additional_information_selector).map(|e| {
+        e.inner_html().trim().to_string()
+    }).collect::<Vec<String>>().join("").trim().to_string();
+    
+    // tags
+    let tags_selector = Selector::parse("tbody td bug-tags").unwrap();
+    bug.tags = document.select(&tags_selector).map(|e| {
+        e.inner_html().trim().to_string()
+    }).collect::<Vec<String>>().join("").trim().to_string();
+
+    Ok(bug)
 }
 
 pub fn get_hash<T: Hash>(t: &T) -> u64 {
