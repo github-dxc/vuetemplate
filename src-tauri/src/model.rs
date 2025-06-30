@@ -25,7 +25,7 @@ pub struct UpdateToken {
     pub bug_id: i64,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 pub struct UpdateBug {
     pub bug_update_token: String,
     pub bug_id: i64,

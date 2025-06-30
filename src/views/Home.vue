@@ -1,8 +1,10 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
-import { listen } from '@tauri-apps/api/event'
+import { listen } from '@tauri-apps/api/event';
+import { useRouter } from 'vue-router';
 
+const router = useRouter()
 const bugList = ref([]);
 const total = ref(0);
 const limit = ref(0);
@@ -17,6 +19,23 @@ async function revisedHandle() {
 async function notReviseHandle() {
   
 }
+
+// 初始化
+onMounted(async () => {
+  try {
+    const obj = await invoke("api_bug_list", { });
+    console.log(obj);
+    if (obj) {
+        total.value = parseInt(obj.total) || 0;
+        limit.value = parseInt(obj.limit) || 0;
+        page.value = parseInt(obj.page) || 0;
+        bugList.value = obj.bugs || [];
+    }
+  } catch (error) {
+    console.log(error);
+    router.push("/login");
+  }
+});
 
 // 监听rust发送的消息
 listen('timer-tick', (event) => {
@@ -44,7 +63,12 @@ listen('timer-tick', (event) => {
       </div>
 
       <el-table :data="bugList" style="width: 100%">
-        <el-table-column prop="bug_id" label="ID" width="60" />
+        <el-table-column label="ID" width="60" >
+          <template #default="scope">
+            <el-link type="primary" :href="'http://bug.test.com/view.php?id=' + scope.row.bug_id" target="_blank">{{ scope.row.bug_id }}</el-link>
+          </template>
+        </el-table-column>
+
         <el-table-column prop="project" label="项目名称" width="80" />
         <el-table-column prop="handler" label="处理人" />
         <el-table-column prop="summary" label="摘要" />

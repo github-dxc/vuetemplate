@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+    <meta name="robots" content="noindex,follow"/>
+    <title>我的视图 - MantisBT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+    <link rel="stylesheet" type="text/css" href="http://bug.test.com/css/default.css?cache_key=991bb728eea2923f36cfa9c64025e9ae"/>
+    <link rel="stylesheet" type="text/css" href="http://bug.test.com/css/status_config.php?cache_key=990a348b488b9c163bcdc2bc816bb905"/>
+    <link rel="stylesheet" type="text/css" href="http://bug.test.com/css/dropzone-5.5.0.min.css"/>
+    <link rel="stylesheet" type="text/css" href="http://bug.test.com/css/bootstrap-3.4.1.min.css"/>
+    <link rel="stylesheet" type="text/css" href="http://bug.test.com/css/font-awesome-4.7.0.min.css"/>
+    <link rel="stylesheet" type="text/css" href="http://bug.test.com/css/fonts.css?cache_key=991bb728eea2923f36cfa9c64025e9ae"/>
+    <link rel="stylesheet" type="text/css" href="http://bug.test.com/css/bootstrap-datetimepicker-4.17.47.min.css"/>
+    <link rel="stylesheet" type="text/css" href="http://bug.test.com/css/ace.min.css?cache_key=991bb728eea2923f36cfa9c64025e9ae"/>
+    <link rel="stylesheet" type="text/css" href="http://bug.test.com/css/ace-mantis.css?cache_key=991bb728eea2923f36cfa9c64025e9ae"/>
+    <link rel="stylesheet" type="text/css" href="http://bug.test.com/css/ace-skins.min.css?cache_key=991bb728eea2923f36cfa9c64025e9ae"/>
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon"/>
+    <link rel="search" type="application/opensearchdescription+xml" title="MantisBT：全文搜索" href="http://bug.test.com/browser_search_plugin.php?type=text"/>
+    <link rel="search" type="application/opensearchdescription+xml" title="MantisBT：按问题Id搜索" href="http://bug.test.com/browser_search_plugin.php?type=id"/>
+    <script type="text/javascript" src="/javascript_config.php?cache_key=990a348b488b9c163bcdc2bc816bb905"></script>
+    <script type="text/javascript" src="/javascript_translations.php?cache_key=aaa06b70c166522c6368bc2bbf601c96"></script>
+    <script type="text/javascript" src="/js/jquery-2.2.4.min.js"></script>
+    <script type="text/javascript" src="/js/dropzone-5.5.0.min.js"></script>
+    <script type="text/javascript" src="/js/common.js"></script>
+    <meta http-equiv="Refresh" content="1800; URL=http://bug.test.com/my_view_page.php?refresh=true"/>
+</head>
+<body class="skin-3">
+<style>
+    * {
+        font-family: "Open Sans";
+    }
+
+    h1, h2, h3, h4, h5 {
+        font-family: "Open Sans";
+    }
+</style>
+<div id="navbar" class="navbar navbar-default navbar-collapse navbar-fixed-top noprint">
+    <div id="navbar-container" class="navbar-container">
+        <button id="menu-toggler" type="button" class="navbar-toggle menu-toggler pull-left hidden-lg hidden-md" data-target="#sidebar">
+            <span class="sr-only">Toggle sidebar</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <div class="navbar-header">
+            <a href="/my_view_page.php" class="navbar-brand">
+                <span class="smaller-75">MantisBT </span>
+            </a>
+            <button type="button" class="navbar-toggle navbar-toggle collapsed pull-right hidden-sm hidden-md hidden-lg" data-toggle="collapse" data-target=".navbar-buttons,.navbar-menu">
+                <span class="sr-only">Toggle user menu</span>
+                <i class="fa fa-user ace-icon fa-2x white"></i>
+            </button>
+        </div>
+        <div class="navbar-buttons navbar-header navbar-collapse collapse">
+            <ul class="nav ace-nav">
+                <li class="hidden-sm hidden-xs">
+                    <div class="btn-group btn-corner padding-right-8 padding-left-8">
+                        <a class="btn btn-primary btn-sm" href="bug_report_page.php">
+                            <i class="fa fa-edit "></i>
+                            提交问题
+                        </a>
+                    </div>
+                </li>
+                <li class="grey" id="dropdown_projects_menu">
+                    <a data-toggle="dropdown" href="#" class="dropdown-toggle">
+                        &#160;云计算海外版-用户端 &#160;<i class="fa fa-angle-down ace-icon bigger-110"></i>
+                    </a>
+                    <ul id="projects-list" class=" dropdown-menu dropdown-menu-right dropdown-yellow dropdown-caret dropdown-close">
+                        <li>
+                            <div class="projects-searchbox">
+                                <input class="search form-control input-md" placeholder="搜索"/>
+                            </div>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <div class="scrollable-menu">
+                                <ul class="list dropdown-yellow no-margin">
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=0">所有项目</a>
+                                    </li>
+                                    <li class="divider"></li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=22">EasyLink</a>
+                                    </li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=22;24">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EasyLink-用户端</a>
+                                    </li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=22;23">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EasyLink-管理端</a>
+                                    </li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=9">云计算</a>
+                                    </li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=9;11">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云计算-用户端</a>
+                                    </li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=9;10">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云计算-管理端</a>
+                                    </li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=9;21">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云计算-线上问题</a>
+                                    </li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=26">云计算海外版</a>
+                                    </li>
+                                    <li class="active">
+                                        <a class="project-link" href="/set_project.php?project_id=26;28">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云计算海外版-用户端</a>
+                                    </li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=26;27">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云计算海外版-管理端</a>
+                                    </li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=13">云转码</a>
+                                    </li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=13;16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云转码-用户端</a>
+                                    </li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=13;17">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云转码-管理端</a>
+                                    </li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=12">证书系统</a>
+                                    </li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=25">资源管理系统</a>
+                                    </li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=18">钱包</a>
+                                    </li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=18;20">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;钱包-用户端</a>
+                                    </li>
+                                    <li>
+                                        <a class="project-link" href="/set_project.php?project_id=18;19">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;钱包-管理端</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+                <li class="grey">
+                    <a data-toggle="dropdown" href="#" class="dropdown-toggle">
+                        <i class="fa fa-user ace-icon fa-2x white"></i>
+                        <span class="user-info">dengxiangcheng</span>
+                        <i class="fa fa-angle-down ace-icon"></i>
+                    </a>
+                    <ul class="user-menu dropdown-menu dropdown-menu-right dropdown-yellow dropdown-caret dropdown-close">
+                        <li>
+                            <a href="/account_page.php">
+                                <i class="fa fa-user ace-icon"></i>
+                                个人资料
+                            </a>
+                        </li>
+                        <li>
+                            <a href="http://bug.test.com/issues_rss.php?username=dengxiangcheng&amp;key=ExlzNcJcwbxWYIn6sI6KPJqkLouCHsWa_te3CaToHxRBb3ianUDdFtnwa_Gd9uzyyKCDoYkvf7rbY8M2S1tp&amp;project_id=28">
+                                <i class="fa fa-rss-square orange ace-icon"></i>
+                                RSS
+                            </a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a href="/logout_page.php">
+                                <i class="fa fa-sign-out ace-icon"></i>
+                                注销
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="main-container" id="main-container">
+    <div id="sidebar" class="sidebar sidebar-fixed responsive compact ">
+        <ul class="nav nav-list">
+            <li class="active">
+                <a href="/my_view_page.php">
+                    <i class="fa fa-dashboard menu-icon"></i>
+                    <span class="menu-text">我的视图 </span>
+                </a>
+                <b class="arrow"></b>
+            </li>
+            <li>
+                <a href="/view_all_bug_page.php">
+                    <i class="fa fa-list-alt menu-icon"></i>
+                    <span class="menu-text">查看问题 </span>
+                </a>
+                <b class="arrow"></b>
+            </li>
+            <li>
+                <a href="/bug_report_page.php">
+                    <i class="fa fa-edit menu-icon"></i>
+                    <span class="menu-text">提交问题 </span>
+                </a>
+                <b class="arrow"></b>
+            </li>
+            <li>
+                <a href="/changelog_page.php">
+                    <i class="fa fa-retweet menu-icon"></i>
+                    <span class="menu-text">变更日志 </span>
+                </a>
+                <b class="arrow"></b>
+            </li>
+            <li>
+                <a href="/roadmap_page.php">
+                    <i class="fa fa-road menu-icon"></i>
+                    <span class="menu-text">路线图 </span>
+                </a>
+                <b class="arrow"></b>
+            </li>
+        </ul>
+        <div id="sidebar-btn" class="sidebar-toggle sidebar-collapse">
+            <i data-icon2="ace-icon fa fa-angle-double-right" data-icon1="ace-icon fa fa-angle-double-left" class="ace-icon fa fa-angle-double-left"></i>
+        </div>
+    </div>
+    <div class="main-content">
+        <div id="breadcrumbs" class="breadcrumbs noprint">
+            <ul class="breadcrumb">
+                <li>
+                    <i class="fa fa-user home-icon active"></i>
+                    <a href="/account_page.php">dengxiangcheng ( 邓祥成 ) </a>
+                    <span class="label hidden-xs label-default arrowed">开发人员</span>
+                </li>
+            </ul>
+            <div class="nav-recent hidden-xs">
+                最近浏览的: <a href="/view.php?id=2152" title="[已分配] test">0002152</a>
+                , <a href="/view.php?id=2138" title="[已发布] 【购买凭证】增加IP数量字段{需求}" class="resolved">0002138</a>
+                , <a href="/view.php?id=2133" title="[已关闭] 【官网-购买确认页面】裸金属描述优化" class="resolved">0002133</a>
+                , <a href="/view.php?id=2130" title="[已关闭] 【云服务器-购买页面】操作系统栏样式错误" class="resolved">0002130</a>
+                , <a href="/view.php?id=2129" title="[已发布] 【设置-邮件日志】筛选中，邮件类型需要去掉告警消息" class="resolved">0002129</a>
+            </div>
+            <div id="nav-search" class="nav-search">
+                <form class="form-search" method="post" action="/jump_to_bug.php">
+                            <span class="input-icon">
+                                <input type="text" name="bug_id" autocomplete="off" class="nav-search-input" placeholder="问题 #">
+                                <i class="fa fa-search ace-icon nav-search-icon"></i>
+                            </span>
+                </form>
+            </div>
+        </div>
+        <div class="page-content">
+            <div class="row">
+                <div class="col-xs-12 col-md-7">
+                    <div id="assigned" class="widget-box widget-color-blue2 ">
+                        <div class="widget-header widget-header-small">
+                            <h4 class="widget-title lighter">
+                                <i class="fa fa-list-alt ace-icon"></i>
+                                <a class="white" href="view_all_set.php?type=1&amp;temporary=y&amp;handler_id=29&amp;hide_status=80">分派给我的(未解决)</a>
+                                <span class="badge">1 - 1 / 1  </span>
+                            </h4>
+                            <div class="widget-toolbar">
+                                <a data-action="collapse" href="#">
+                                    <i class="fa fa-chevron-up 1 ace-icon bigger-125"></i>
+                                </a>
+                            </div>
+                            <div class="widget-toolbar no-border hidden-xs">
+                                <div class="widget-menu">
+                                    <a class="btn btn-primary btn-white btn-round btn-xs" href="view_all_set.php?type=1&amp;temporary=y&amp;handler_id=29&amp;hide_status=80">查看问题</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="widget-body">
+                            <div class="widget-main no-padding">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-condensed table-striped table-hover">
+                                        <tbody>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=2152">0002152</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-50-fg" title="已分配"></i>
+                                                <a class="edit" href="bug_update_page.php?bug_id=2152">
+                                                    <i class="fa fa-pencil bigger-130 padding-2 grey" title="编辑"></i>
+                                                </a>
+                                                <i class="fa fa-minus fa-lg orange2 " title="中"></i>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=2152">test</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 后端</span>
+                                                <span class="small">
+                                                                - <strong>2025-06-17 16:43</strong>
+                                                            </span>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-10"></div>
+                    <div id="unassigned" class="widget-box widget-color-blue2 ">
+                        <div class="widget-header widget-header-small">
+                            <h4 class="widget-title lighter">
+                                <i class="fa fa-list-alt ace-icon"></i>
+                                <a class="white" href="view_all_set.php?type=1&amp;temporary=y&amp;handler_id=[none]&amp;hide_status=90">未分派的</a>
+                                <span class="badge">0 - 0 / 0  </span>
+                            </h4>
+                            <div class="widget-toolbar">
+                                <a data-action="collapse" href="#">
+                                    <i class="fa fa-chevron-up 1 ace-icon bigger-125"></i>
+                                </a>
+                            </div>
+                            <div class="widget-toolbar no-border hidden-xs">
+                                <div class="widget-menu">
+                                    <a class="btn btn-primary btn-white btn-round btn-xs" href="view_all_set.php?type=1&amp;temporary=y&amp;handler_id=[none]&amp;hide_status=90">查看问题</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="widget-body">
+                            <div class="widget-main no-padding">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-condensed table-striped table-hover">
+                                        <tbody>
+                                        <tr>
+                                            <td>&#160;</td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-10"></div>
+                    <div id="reported" class="widget-box widget-color-blue2 ">
+                        <div class="widget-header widget-header-small">
+                            <h4 class="widget-title lighter">
+                                <i class="fa fa-list-alt ace-icon"></i>
+                                <a class="white" href="view_all_set.php?type=1&amp;temporary=y&amp;reporter_id=29&amp;hide_status=90">我报告的</a>
+                                <span class="badge">1 - 1 / 1  </span>
+                            </h4>
+                            <div class="widget-toolbar">
+                                <a data-action="collapse" href="#">
+                                    <i class="fa fa-chevron-up 1 ace-icon bigger-125"></i>
+                                </a>
+                            </div>
+                            <div class="widget-toolbar no-border hidden-xs">
+                                <div class="widget-menu">
+                                    <a class="btn btn-primary btn-white btn-round btn-xs" href="view_all_set.php?type=1&amp;temporary=y&amp;reporter_id=29&amp;hide_status=90">查看问题</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="widget-body">
+                            <div class="widget-main no-padding">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-condensed table-striped table-hover">
+                                        <tbody>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=2152">0002152</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-50-fg" title="已分配"></i>
+                                                <a class="edit" href="bug_update_page.php?bug_id=2152">
+                                                    <i class="fa fa-pencil bigger-130 padding-2 grey" title="编辑"></i>
+                                                </a>
+                                                <i class="fa fa-minus fa-lg orange2 " title="中"></i>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=2152">test</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 后端</span>
+                                                <span class="small">
+                                                                - <strong>2025-06-17 16:43</strong>
+                                                            </span>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-10"></div>
+                    <div id="resolved" class="widget-box widget-color-blue2 ">
+                        <div class="widget-header widget-header-small">
+                            <h4 class="widget-title lighter">
+                                <i class="fa fa-list-alt ace-icon"></i>
+                                <a class="white" href="view_all_set.php?type=1&amp;temporary=y&amp;status=80&amp;hide_status=90">已解决的</a>
+                                <span class="badge">1 - 6 / 6  </span>
+                            </h4>
+                            <div class="widget-toolbar">
+                                <a data-action="collapse" href="#">
+                                    <i class="fa fa-chevron-up 1 ace-icon bigger-125"></i>
+                                </a>
+                            </div>
+                            <div class="widget-toolbar no-border hidden-xs">
+                                <div class="widget-menu">
+                                    <a class="btn btn-primary btn-white btn-round btn-xs" href="view_all_set.php?type=1&amp;temporary=y&amp;status=80&amp;hide_status=90">查看问题</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="widget-body">
+                            <div class="widget-main no-padding">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-condensed table-striped table-hover">
+                                        <tbody>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=2149">0002149</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-80-fg" title="已解决"></i>
+                                                <i class="fa fa-minus fa-lg orange2 " title="中"></i>
+                                                <a class="attachments" href="view.php?id=2149#attachments" title="查看 1 问题 # 2149 附件">
+                                                    <i class="fa fa-paperclip fa-lg grey" title="1&#32;附件"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=2149">{需求}【云服务器】IP为空的时候，还是需要把带宽值显示出来</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 前端</span>
+                                                <span class="small">
+                                                                - <strong>2025-06-17 16:41</strong>
+                                                            </span>
+                                            </td>
+                                        </tr>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=2127">0002127</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-80-fg" title="已解决"></i>
+                                                <i class="fa fa-minus fa-lg orange2 " title="中"></i>
+                                                <a class="attachments" href="view.php?id=2127#attachments" title="查看 1 问题 # 2127 附件">
+                                                    <i class="fa fa-paperclip fa-lg grey" title="1&#32;附件"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=2127">【云服务器】有一台服务器，无法连接登录</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 后端</span>
+                                                <span class="small">
+                                                                - <strong>2025-06-17 15:15</strong>
+                                                            </span>
+                                            </td>
+                                        </tr>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=2126">0002126</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-80-fg" title="已解决"></i>
+                                                <i class="fa fa-minus fa-lg orange2 " title="中"></i>
+                                                <a class="attachments" href="view.php?id=2126#attachments" title="查看 1 问题 # 2126 附件">
+                                                    <i class="fa fa-paperclip fa-lg grey" title="1&#32;附件"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=2126">【云服务器】有一台服务器，已使用流量错误</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 后端</span>
+                                                <span class="small">- 2025-06-16 17:31</span>
+                                            </td>
+                                        </tr>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=2107">0002107</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-80-fg" title="已解决"></i>
+                                                <i class="fa fa-chevron-down fa-lg green " title="低"></i>
+                                                <a class="attachments" href="view.php?id=2107#attachments" title="查看 1 问题 # 2107 附件">
+                                                    <i class="fa fa-paperclip fa-lg grey" title="1&#32;附件"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=2107">【消息通知】滚动条挡住字符了（狐火浏览器）</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 前端</span>
+                                                <span class="small">- 2025-06-13 15:35</span>
+                                            </td>
+                                        </tr>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=2109">0002109</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-80-fg" title="已解决"></i>
+                                                <i class="fa fa-chevron-down fa-lg green " title="低"></i>
+                                                <a class="attachments" href="view.php?id=2109#attachments" title="查看 1 问题 # 2109 附件">
+                                                    <i class="fa fa-paperclip fa-lg grey" title="1&#32;附件"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=2109">【账户信息】中文模式，账号已被绑定提示语是英文的</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 前端</span>
+                                                <span class="small">- 2025-06-13 15:06</span>
+                                            </td>
+                                        </tr>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=1880">0001880</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-80-fg" title="已解决"></i>
+                                                <i class="fa fa-minus fa-lg orange2 " title="中"></i>
+                                                <a class="attachments" href="view.php?id=1880#attachments" title="查看 1 问题 # 1880 附件">
+                                                    <i class="fa fa-paperclip fa-lg grey" title="1&#32;附件"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=1880">【云服务器-详情】带宽限速未生效</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 后端</span>
+                                                <span class="small">- 2025-06-04 17:23</span>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-10"></div>
+                    <div id="recent_mod" class="widget-box widget-color-blue2 ">
+                        <div class="widget-header widget-header-small">
+                            <h4 class="widget-title lighter">
+                                <i class="fa fa-list-alt ace-icon"></i>
+                                <a class="white" href="view_all_set.php?type=1&amp;temporary=y&amp;hide_status=none&amp;filter_by_last_updated_date=1&amp;last_updated_end_day=17&amp;last_updated_end_month=6&amp;last_updated_end_year=2025&amp;last_updated_start_day=18&amp;last_updated_start_month=5&amp;last_updated_start_year=2025">最近修改 (30 天)</a>
+                                <span class="badge">1 - 10 / 373  </span>
+                            </h4>
+                            <div class="widget-toolbar">
+                                <a data-action="collapse" href="#">
+                                    <i class="fa fa-chevron-up 1 ace-icon bigger-125"></i>
+                                </a>
+                            </div>
+                            <div class="widget-toolbar no-border hidden-xs">
+                                <div class="widget-menu">
+                                    <a class="btn btn-primary btn-white btn-round btn-xs" href="view_all_set.php?type=1&amp;temporary=y&amp;hide_status=none&amp;filter_by_last_updated_date=1&amp;last_updated_end_day=17&amp;last_updated_end_month=6&amp;last_updated_end_year=2025&amp;last_updated_start_day=18&amp;last_updated_start_month=5&amp;last_updated_start_year=2025">查看问题</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="widget-body">
+                            <div class="widget-main no-padding">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-condensed table-striped table-hover">
+                                        <tbody>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=2152">0002152</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-50-fg" title="已分配"></i>
+                                                <a class="edit" href="bug_update_page.php?bug_id=2152">
+                                                    <i class="fa fa-pencil bigger-130 padding-2 grey" title="编辑"></i>
+                                                </a>
+                                                <i class="fa fa-minus fa-lg orange2 " title="中"></i>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=2152">test</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 后端</span>
+                                                <span class="small">
+                                                                - <strong>2025-06-17 16:43</strong>
+                                                            </span>
+                                            </td>
+                                        </tr>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=1839">0001839</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-81-fg" title="已发布"></i>
+                                                <i class="fa fa-minus fa-lg orange2 " title="中"></i>
+                                                <a class="attachments" href="view.php?id=1839#attachments" title="查看 2 问题 # 1839 附件">
+                                                    <i class="fa fa-paperclip fa-lg grey" title="2&#32;附件"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=1839">【裸金属】操作日志记录不全</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 后端</span>
+                                                <span class="small">
+                                                                - <strong>2025-06-17 16:43</strong>
+                                                            </span>
+                                            </td>
+                                        </tr>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=2149">0002149</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-80-fg" title="已解决"></i>
+                                                <i class="fa fa-minus fa-lg orange2 " title="中"></i>
+                                                <a class="attachments" href="view.php?id=2149#attachments" title="查看 1 问题 # 2149 附件">
+                                                    <i class="fa fa-paperclip fa-lg grey" title="1&#32;附件"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=2149">{需求}【云服务器】IP为空的时候，还是需要把带宽值显示出来</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 前端</span>
+                                                <span class="small">
+                                                                - <strong>2025-06-17 16:41</strong>
+                                                            </span>
+                                            </td>
+                                        </tr>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=2150">0002150</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-83-fg" title="不予解决"></i>
+                                                <i class="fa fa-minus fa-lg orange2 " title="中"></i>
+                                                <a class="attachments" href="view.php?id=2150#attachments" title="查看 1 问题 # 2150 附件">
+                                                    <i class="fa fa-paperclip fa-lg grey" title="1&#32;附件"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=2150">【裸金属】自动续费失败</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 后端</span>
+                                                <span class="small">
+                                                                - <strong>2025-06-17 16:27</strong>
+                                                            </span>
+                                            </td>
+                                        </tr>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=2120">0002120</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-20-fg" title="反馈"></i>
+                                                <a class="edit" href="bug_update_page.php?bug_id=2120">
+                                                    <i class="fa fa-pencil bigger-130 padding-2 grey" title="编辑"></i>
+                                                </a>
+                                                <i class="fa fa-minus fa-lg orange2 " title="中"></i>
+                                                <a class="attachments" href="view.php?id=2120#attachments" title="查看 2 问题 # 2120 附件">
+                                                    <i class="fa fa-paperclip fa-lg grey" title="2&#32;附件"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=2120">【官网】自定义cookie设置失败</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 前端</span>
+                                                <span class="small">
+                                                                - <strong>2025-06-17 16:18</strong>
+                                                            </span>
+                                            </td>
+                                        </tr>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=2151">0002151</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-50-fg" title="已分配"></i>
+                                                <a class="edit" href="bug_update_page.php?bug_id=2151">
+                                                    <i class="fa fa-pencil bigger-130 padding-2 grey" title="编辑"></i>
+                                                </a>
+                                                <i class="fa fa-chevron-down fa-lg green " title="低"></i>
+                                                <a class="attachments" href="view.php?id=2151#attachments" title="查看 1 问题 # 2151 附件">
+                                                    <i class="fa fa-paperclip fa-lg grey" title="1&#32;附件"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=2151">【官网】打开自定义设置cookies弹窗后还能滚动底部页面</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 前端</span>
+                                                <span class="small">
+                                                                - <strong>2025-06-17 16:15</strong>
+                                                            </span>
+                                            </td>
+                                        </tr>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=2121">0002121</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-50-fg" title="已分配"></i>
+                                                <a class="edit" href="bug_update_page.php?bug_id=2121">
+                                                    <i class="fa fa-pencil bigger-130 padding-2 grey" title="编辑"></i>
+                                                </a>
+                                                <i class="fa fa-chevron-down fa-lg green " title="低"></i>
+                                                <a class="attachments" href="view.php?id=2121#attachments" title="查看 2 问题 # 2121 附件">
+                                                    <i class="fa fa-paperclip fa-lg grey" title="2&#32;附件"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=2121">【官网】cookie设置：文案错误</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 前端</span>
+                                                <span class="small">
+                                                                - <strong>2025-06-17 16:11</strong>
+                                                            </span>
+                                            </td>
+                                        </tr>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=2133">0002133</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-90-fg" title="已关闭"></i>
+                                                <i class="fa fa-chevron-down fa-lg green " title="低"></i>
+                                                <a class="attachments" href="view.php?id=2133#attachments" title="查看 1 问题 # 2133 附件">
+                                                    <i class="fa fa-paperclip fa-lg grey" title="1&#32;附件"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=2133">【官网-购买确认页面】裸金属描述优化</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 前端</span>
+                                                <span class="small">
+                                                                - <strong>2025-06-17 16:07</strong>
+                                                            </span>
+                                            </td>
+                                        </tr>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=2138">0002138</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-81-fg" title="已发布"></i>
+                                                <i class="fa fa-minus fa-lg orange2 " title="中"></i>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=2138">【购买凭证】增加IP数量字段{需求}</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 后端</span>
+                                                <span class="small">
+                                                                - <strong>2025-06-17 16:05</strong>
+                                                            </span>
+                                            </td>
+                                        </tr>
+                                        <tr class="my-buglist-bug ">
+                                            <td class="nowrap width-13 my-buglist-id">
+                                                <a href="/view.php?id=2075">0002075</a>
+                                                <br/>
+                                                <i class="fa fa-square fa-status-box status-90-fg" title="已关闭"></i>
+                                                <i class="fa fa-minus fa-lg orange2 " title="中"></i>
+                                                <a class="attachments" href="view.php?id=2075#attachments" title="查看 1 问题 # 2075 附件">
+                                                    <i class="fa fa-paperclip fa-lg grey" title="1&#32;附件"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                            <span>
+                                                                <a href="view.php?id=2075">【邮件相关】裸金属账单邮件没有发</a>
+                                                            </span>
+                                                <br/>
+                                                <span class="small">[所有项目] 前端</span>
+                                                <span class="small">
+                                                                - <strong>2025-06-17 16:03</strong>
+                                                            </span>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-10"></div>
+                    <div id="monitored" class="widget-box widget-color-blue2 ">
+                        <div class="widget-header widget-header-small">
+                            <h4 class="widget-title lighter">
+                                <i class="fa fa-list-alt ace-icon"></i>
+                                <a class="white" href="view_all_set.php?type=1&amp;temporary=y&amp;monitor_user_id=29&amp;hide_status=90">我监视的</a>
+                                <span class="badge">0 - 0 / 0  </span>
+                            </h4>
+                            <div class="widget-toolbar">
+                                <a data-action="collapse" href="#">
+                                    <i class="fa fa-chevron-up 1 ace-icon bigger-125"></i>
+                                </a>
+                            </div>
+                            <div class="widget-toolbar no-border hidden-xs">
+                                <div class="widget-menu">
+                                    <a class="btn btn-primary btn-white btn-round btn-xs" href="view_all_set.php?type=1&amp;temporary=y&amp;monitor_user_id=29&amp;hide_status=90">查看问题</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="widget-body">
+                            <div class="widget-main no-padding">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-condensed table-striped table-hover">
+                                        <tbody>
+                                        <tr>
+                                            <td>&#160;</td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-10"></div>
+                </div>
+                <div class="col-xs-12 col-md-5">
+                    <div id="timeline" class="widget-box widget-color-blue2 ">
+                        <div class="widget-header widget-header-small">
+                            <h4 class="widget-title lighter">
+                                <i class="fa fa-clock-o ace-icon"></i>
+                                时间轴
+                            </h4>
+                            <div class="widget-toolbar">
+                                <a data-action="collapse" href="#">
+                                    <i class="fa fa-chevron-up 1 ace-icon bigger-125"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="widget-body">
+                            <div class="widget-toolbox">
+                                <div class="btn-toolbar">
+                                    &#160;&#160;<span class="label label-grey">2025-06-10 </span>
+                                    .. <span class="label label-grey">2025-06-17 </span>
+                                    &#160;&#160;
+                                    <div class="btn-group">
+                                        <a class="btn btn-primary btn-xs btn-white btn-round" href="my_view_page.php?days=7">前页</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="widget-main no-padding">
+                                <div class="profile-feed"></div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-thumbs-o-up pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="zhanglong" href="http://bug.test.com/view_user_page.php?id=24">张茏</a>
+                                            </span>
+                                    解决了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=1839" title="[已发布] 【裸金属】操作日志记录不全" class="resolved">0001839</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:43
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-thumbs-o-up pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="zhuzhaofeng" href="http://bug.test.com/view_user_page.php?id=27">朱兆峰</a>
+                                            </span>
+                                    解决了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2149" title="[已解决] {需求}【云服务器】IP为空的时候，还是需要把带宽值显示出来" class="resolved">0002149</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:41
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-comment-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="qiuhongyu@test.com" href="http://bug.test.com/view_user_page.php?id=21">邱泓瑀</a>
+                                            </span>
+                                    在问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2150" title="[不予解决] 【裸金属】自动续费失败" class="resolved">0002150</a>
+                                            </span>
+                                    做出评论
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:27
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-comment-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="zhanglong" href="http://bug.test.com/view_user_page.php?id=24">张茏</a>
+                                            </span>
+                                    在问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2150" title="[不予解决] 【裸金属】自动续费失败" class="resolved">0002150</a>
+                                            </span>
+                                    做出评论
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:25
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-thumbs-o-up pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="zhanglong" href="http://bug.test.com/view_user_page.php?id=24">张茏</a>
+                                            </span>
+                                    解决了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2150" title="[不予解决] 【裸金属】自动续费失败" class="resolved">0002150</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:25
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-flag-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="dengxiangcheng" href="http://bug.test.com/view_user_page.php?id=29">邓祥成</a>
+                                            </span>
+                                    开始解决问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2152" title="[已分配] test">0002152</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:20
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-plus pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="dengxiangcheng" href="http://bug.test.com/view_user_page.php?id=29">邓祥成</a>
+                                            </span>
+                                    创建了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2152" title="[已分配] test">0002152</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:20
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-refresh pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    重启了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2120" title="[反馈] 【官网】自定义cookie设置失败">0002120</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:18
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-file-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    为问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2120" title="[反馈] 【官网】自定义cookie设置失败">0002120</a>
+                                            </span>
+                                    附加了文件<em>image-2.png</em>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:18
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-comment-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    在问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2120" title="[反馈] 【官网】自定义cookie设置失败">0002120</a>
+                                            </span>
+                                    做出评论
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:18
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-file-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    为问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2151" title="[已分配] 【官网】打开自定义设置cookies弹窗后还能滚动底部页面">0002151</a>
+                                            </span>
+                                    附加了文件<em>image.png</em>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:15
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-hand-o-right pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    将问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2151" title="[已分配] 【官网】打开自定义设置cookies弹窗后还能滚动底部页面">0002151</a>
+                                            </span>
+                                    分配给
+                                    <span class="username">
+                                                <a title="tangyuanbin" href="http://bug.test.com/view_user_page.php?id=12">唐元彬</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:15
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-plus pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    创建了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2151" title="[已分配] 【官网】打开自定义设置cookies弹窗后还能滚动底部页面">0002151</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:15
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-file-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    为问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2121" title="[已分配] 【官网】cookie设置：文案错误">0002121</a>
+                                            </span>
+                                    附加了文件<em>image-2.png</em>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:11
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-comment-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    在问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2121" title="[已分配] 【官网】cookie设置：文案错误">0002121</a>
+                                            </span>
+                                    做出评论
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:11
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-refresh pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    重启了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2121" title="[已分配] 【官网】cookie设置：文案错误">0002121</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:10
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-power-off pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    关闭了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2133" title="[已关闭] 【官网-购买确认页面】裸金属描述优化" class="resolved">0002133</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:07
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-thumbs-o-up pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="dengxiangcheng" href="http://bug.test.com/view_user_page.php?id=29">邓祥成</a>
+                                            </span>
+                                    解决了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2138" title="[已发布] 【购买凭证】增加IP数量字段{需求}" class="resolved">0002138</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:05
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-comment-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    在问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2150" title="[不予解决] 【裸金属】自动续费失败" class="resolved">0002150</a>
+                                            </span>
+                                    做出评论
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:04
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-hand-o-right pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="qiuhongyu@test.com" href="http://bug.test.com/view_user_page.php?id=21">邱泓瑀</a>
+                                            </span>
+                                    将问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2150" title="[不予解决] 【裸金属】自动续费失败" class="resolved">0002150</a>
+                                            </span>
+                                    分配给
+                                    <span class="username">
+                                                <a title="zhanglong" href="http://bug.test.com/view_user_page.php?id=24">张茏</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:03
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-file-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    为问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2150" title="[不予解决] 【裸金属】自动续费失败" class="resolved">0002150</a>
+                                            </span>
+                                    附加了文件<em>image.png</em>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:03
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-hand-o-right pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    将问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2150" title="[不予解决] 【裸金属】自动续费失败" class="resolved">0002150</a>
+                                            </span>
+                                    分配给
+                                    <span class="username">
+                                                <a title="qiuhongyu@test.com" href="http://bug.test.com/view_user_page.php?id=21">邱泓瑀</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:03
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-plus pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    创建了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2150" title="[不予解决] 【裸金属】自动续费失败" class="resolved">0002150</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:03
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-power-off pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="bigcity" href="http://bug.test.com/view_user_page.php?id=23">陈俊</a>
+                                            </span>
+                                    关闭了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2075" title="[已关闭] 【邮件相关】裸金属账单邮件没有发" class="resolved">0002075</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 16:03
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-file-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="bigcity" href="http://bug.test.com/view_user_page.php?id=23">陈俊</a>
+                                            </span>
+                                    为问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2149" title="[已解决] {需求}【云服务器】IP为空的时候，还是需要把带宽值显示出来" class="resolved">0002149</a>
+                                            </span>
+                                    附加了文件<em>image.png</em>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 15:41
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-tag pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="bigcity" href="http://bug.test.com/view_user_page.php?id=23">陈俊</a>
+                                            </span>
+                                    将问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2149" title="[已解决] {需求}【云服务器】IP为空的时候，还是需要把带宽值显示出来" class="resolved">0002149</a>
+                                            </span>
+                                    标记
+                                    <span class="tag_name">
+                                                <a class="btn btn-xs btn-primary btn-white btn-round" href="tag_view_page.php?tag_id=2" title="">代码错误</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 15:41
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-hand-o-right pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="bigcity" href="http://bug.test.com/view_user_page.php?id=23">陈俊</a>
+                                            </span>
+                                    将问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2149" title="[已解决] {需求}【云服务器】IP为空的时候，还是需要把带宽值显示出来" class="resolved">0002149</a>
+                                            </span>
+                                    分配给
+                                    <span class="username">
+                                                <a title="zhuzhaofeng" href="http://bug.test.com/view_user_page.php?id=27">朱兆峰</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 15:41
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-plus pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="bigcity" href="http://bug.test.com/view_user_page.php?id=23">陈俊</a>
+                                            </span>
+                                    创建了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2149" title="[已解决] {需求}【云服务器】IP为空的时候，还是需要把带宽值显示出来" class="resolved">0002149</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 15:41
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-power-off pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="bigcity" href="http://bug.test.com/view_user_page.php?id=23">陈俊</a>
+                                            </span>
+                                    关闭了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2091" title="[已关闭] 【云服务器】复数cpu，vcpu没有加s" class="resolved">0002091</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 15:34
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-thumbs-o-up pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="tangping" href="http://bug.test.com/view_user_page.php?id=25">唐平</a>
+                                            </span>
+                                    解决了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2127" title="[已解决] 【云服务器】有一台服务器，无法连接登录" class="resolved">0002127</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 15:15
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-comment-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="tangping" href="http://bug.test.com/view_user_page.php?id=25">唐平</a>
+                                            </span>
+                                    在问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2127" title="[已解决] 【云服务器】有一台服务器，无法连接登录" class="resolved">0002127</a>
+                                            </span>
+                                    做出评论
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 15:15
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-power-off pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="bigcity" href="http://bug.test.com/view_user_page.php?id=23">陈俊</a>
+                                            </span>
+                                    关闭了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2130" title="[已关闭] 【云服务器-购买页面】操作系统栏样式错误" class="resolved">0002130</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 14:57
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-file-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="bigcity" href="http://bug.test.com/view_user_page.php?id=23">陈俊</a>
+                                            </span>
+                                    为问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2148" title="[已分配] 【云服务器-购买页面】cpv和内存之间的空白太多了，可以调整小一些">0002148</a>
+                                            </span>
+                                    附加了文件<em>image.png</em>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 14:57
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-tag pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="bigcity" href="http://bug.test.com/view_user_page.php?id=23">陈俊</a>
+                                            </span>
+                                    将问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2148" title="[已分配] 【云服务器-购买页面】cpv和内存之间的空白太多了，可以调整小一些">0002148</a>
+                                            </span>
+                                    标记
+                                    <span class="tag_name">
+                                                <a class="btn btn-xs btn-primary btn-white btn-round" href="tag_view_page.php?tag_id=11" title="">需求设计</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 14:57
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-hand-o-right pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="bigcity" href="http://bug.test.com/view_user_page.php?id=23">陈俊</a>
+                                            </span>
+                                    将问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2148" title="[已分配] 【云服务器-购买页面】cpv和内存之间的空白太多了，可以调整小一些">0002148</a>
+                                            </span>
+                                    分配给
+                                    <span class="username">
+                                                <a title="zhuzhaofeng" href="http://bug.test.com/view_user_page.php?id=27">朱兆峰</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 14:57
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-plus pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="bigcity" href="http://bug.test.com/view_user_page.php?id=23">陈俊</a>
+                                            </span>
+                                    创建了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2148" title="[已分配] 【云服务器-购买页面】cpv和内存之间的空白太多了，可以调整小一些">0002148</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 14:57
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-file-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    为问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2142" title="[已分配] 【裸金属】创建中时，不应显示更多按钮">0002142</a>
+                                            </span>
+                                    附加了文件<em>image-2.png</em>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 14:50
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-comment-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    在问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2142" title="[已分配] 【裸金属】创建中时，不应显示更多按钮">0002142</a>
+                                            </span>
+                                    做出评论
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 14:50
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-refresh pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    重启了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2142" title="[已分配] 【裸金属】创建中时，不应显示更多按钮">0002142</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 14:50
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-power-off pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="bigcity" href="http://bug.test.com/view_user_page.php?id=23">陈俊</a>
+                                            </span>
+                                    关闭了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2146" title="[已关闭] 【首页】套餐中流量类型返回的0" class="resolved">0002146</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 14:46
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-file-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="bigcity" href="http://bug.test.com/view_user_page.php?id=23">陈俊</a>
+                                            </span>
+                                    为问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2146" title="[已关闭] 【首页】套餐中流量类型返回的0" class="resolved">0002146</a>
+                                            </span>
+                                    附加了文件<em>image.png</em>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 14:40
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-tag pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="bigcity" href="http://bug.test.com/view_user_page.php?id=23">陈俊</a>
+                                            </span>
+                                    将问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2146" title="[已关闭] 【首页】套餐中流量类型返回的0" class="resolved">0002146</a>
+                                            </span>
+                                    标记
+                                    <span class="tag_name">
+                                                <a class="btn btn-xs btn-primary btn-white btn-round" href="tag_view_page.php?tag_id=2" title="">代码错误</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 14:40
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-hand-o-right pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="bigcity" href="http://bug.test.com/view_user_page.php?id=23">陈俊</a>
+                                            </span>
+                                    将问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2146" title="[已关闭] 【首页】套餐中流量类型返回的0" class="resolved">0002146</a>
+                                            </span>
+                                    分配给
+                                    <span class="username">
+                                                <a title="qiuhongyu@test.com" href="http://bug.test.com/view_user_page.php?id=21">邱泓瑀</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 14:40
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-plus pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="bigcity" href="http://bug.test.com/view_user_page.php?id=23">陈俊</a>
+                                            </span>
+                                    创建了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2146" title="[已关闭] 【首页】套餐中流量类型返回的0" class="resolved">0002146</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 14:40
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-thumbs-o-up pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="zhuzhaofeng" href="http://bug.test.com/view_user_page.php?id=27">朱兆峰</a>
+                                            </span>
+                                    解决了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2137" title="[已发布] 【官网-配置信息】增加IP数量{需求}" class="resolved">0002137</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 14:28
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-thumbs-o-up pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="zhuzhaofeng" href="http://bug.test.com/view_user_page.php?id=27">朱兆峰</a>
+                                            </span>
+                                    解决了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2074" title="[已发布] 【云服务器】修改密码，提示与校验不一致" class="resolved">0002074</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 14:01
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-thumbs-o-up pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="zhuzhaofeng" href="http://bug.test.com/view_user_page.php?id=27">朱兆峰</a>
+                                            </span>
+                                    解决了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2142" title="[已分配] 【裸金属】创建中时，不应显示更多按钮">0002142</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 13:59
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-thumbs-o-up pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="zhuzhaofeng" href="http://bug.test.com/view_user_page.php?id=27">朱兆峰</a>
+                                            </span>
+                                    解决了问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2124" title="[已发布] 【官网-裸金属/云服务器】标签回显错误" class="resolved">0002124</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 11:58
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-file-o pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    为问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2142" title="[已分配] 【裸金属】创建中时，不应显示更多按钮">0002142</a>
+                                            </span>
+                                    附加了文件<em>image.png</em>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 11:40
+                                </div>
+                            </div>
+                            <div class="profile-activity clearfix">
+                                <i class="fa fa-hand-o-right pull-left thumbicon btn-primary no-hover"></i>
+                                <div class="action">
+                                            <span class="username">
+                                                <a title="manman" href="http://bug.test.com/view_user_page.php?id=28">刘思婷</a>
+                                            </span>
+                                    将问题
+                                    <span class="issue_id">
+                                                <a href="/view.php?id=2142" title="[已分配] 【裸金属】创建中时，不应显示更多按钮">0002142</a>
+                                            </span>
+                                    分配给
+                                    <span class="username">
+                                                <a title="zhuzhaofeng" href="http://bug.test.com/view_user_page.php?id=27">朱兆峰</a>
+                                            </span>
+                                </div>
+                                <div class="time">
+                                    <i class="fa fa-clock-o ace-icon bigger-110"></i>
+                                    2025-06-17 11:40
+                                </div>
+                            </div>
+                            <div class="widget-toolbox">
+                                <div class="btn-toolbar">
+                                    <a class="btn btn-primary btn-sm btn-white btn-round" href="my_view_page.php?days=0&all=1">更多事件…</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-10"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clearfix"></div>
+    <div class="space-20"></div>
+    <div class="footer noprint">
+        <div class="footer-inner">
+            <div class="footer-content">
+                <div class="col-md-6 col-xs-12 no-padding">
+                    <address>
+                        <strong>
+                            Powered by <a href="https://www.mantisbt.org" title="bug tracking software">MantisBT </a>
+                        </strong>
+                        <br>
+                        <small>Copyright &copy;2000 - 2025 MantisBT Team</small>
+                        <br>
+                        <small>
+                            联系<a href="mailto:webmaster@example.com" title="Contact the webmaster via e-mail.">管理员</a>
+                            获取援助
+                        </small>
+                        <br>
+                    </address>
+                </div>
+                <div class="col-md-6 col-xs-12">
+                    <div class="pull-right" id="powered-by-mantisbt-logo">
+                        <a href="https://www.mantisbt.org" title="Mantis Bug Tracker: a free and open source web based bug tracking system.">
+                            <img src="/images/mantis_logo.png" width="102" height="35" alt="Powered by Mantis Bug Tracker: a free and open source web based bug tracking system."/>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <a class="btn-scroll-up btn btn-sm btn-inverse display" id="btn-scroll-up" href="#">
+        <i class="fa fa-angle-double-up ace-icon icon-only bigger-110"></i>
+    </a>
+</div>
+<script type="text/javascript" src="/js/bootstrap-3.4.1.min.js"></script>
+<script type="text/javascript" src="/js/moment-with-locales-2.29.4.min.js"></script>
+<script type="text/javascript" src="/js/bootstrap-datetimepicker-4.17.47.min.js"></script>
+<script type="text/javascript" src="/js/typeahead.jquery-1.3.4.min.js"></script>
+<script type="text/javascript" src="/js/list-2.3.1.min.js"></script>
+<script type="text/javascript" src="/js/ace.min.js"></script>
+</body>
+</html>

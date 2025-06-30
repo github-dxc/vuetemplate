@@ -12,6 +12,7 @@ use tauri_plugin_notification::{NotificationExt, PermissionState};
 use std::collections::HashMap;
 use scraper::{Html};
 use tokio::time::{interval, Duration};
+use chrono::Utc;
 
 
 
@@ -37,6 +38,7 @@ struct MyState {
     logined: Arc<bool>, // 是否登录
     jar: Arc<Jar>,
     last_bugs: Arc<Mutex<HashMap<i64, Bug>>>, //bugs列表
+    data_hash:  Arc<u64>,
 }
 
 // 测试接口
@@ -79,11 +81,65 @@ async fn api_logout(app: AppHandle) -> Result<(), String> {
 
 // bug列表
 #[tauri::command]
-async fn api_bug_list(app: AppHandle) -> Result<Vec<Bug>, String> {
-    let state = app.state::<Mutex<MyState>>();
-    // state.lock().unwrap().last_bugs.insert(1, Bug::default());
+async fn api_bug_list(app: AppHandle) -> Result<BugList, String> {
+    let (logined, jar) = {
+        let state = app.state::<Mutex<MyState>>();
+        let my_state = state.lock().map_err(|e|format!("error:{}",e))?;
+        (my_state.logined.clone(), my_state.jar.clone())
+    };
+    if !*logined {
+        return Err("未登录".to_string());
+    }
+    let param_str = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器";
+    let param = serde_html_form::from_str::<FindBugListParams>(param_str).map_err(|e|format!("serde_html_form err:{}",e))?;
+    // 查询列表
+    let body = view_all_set(jar.clone(), param.clone()).await.map_err(|e|format!("view_all_set err:{}",e))?;
+    // 解析数据
+    let data = view_all_set_data(&Html::parse_document(body.as_str())).map_err(|e|format!("view_all_set_data err:{}",e))?;
 
-    Ok(vec![Bug::default()])
+    Ok(data)
+}
+
+// 修改bug
+#[tauri::command]
+async fn update_bug(app: AppHandle,bug_id: i64) -> Result<String, String> {
+    let (logined, jar) = {
+        let state = app.state::<Mutex<MyState>>();
+        let my_state = state.lock().map_err(|e|format!("error:{}",e))?;
+        (my_state.logined.clone(), my_state.jar.clone())
+    };
+    if !*logined {
+        return Err("未登录".to_string());
+    }
+    // 查询bug详情
+    let body = my_view_detail(jar.clone(), bug_id).await.map_err(|e|format!("error:{}",e))?;
+    let bug_update_token = bug_update_token_data(&Html::parse_document(body.as_str()))?;
+    // bug修改页面
+    let body = bug_update_page(jar.clone(), UpdateToken{
+        bug_id,
+        bug_update_token,
+    }).await.map_err(|e|format!("error:{}",e))?;
+    let bug_update_token = bug_update_token_data(&Html::parse_document(body.as_str()))?;
+    // 提交bug
+    let now = Utc::now();
+    let bug = UpdateBug{ 
+        bug_update_token, 
+        bug_id, 
+        last_updated: now.timestamp(), 
+        category_id: todo!(), 
+        view_state: todo!(), 
+        handler_id: todo!(), 
+        priority: todo!(), 
+        severity: todo!(), 
+        reproducibility: todo!(), 
+        status: todo!(), 
+        resolution: todo!(), 
+        summary: todo!(), 
+        description: todo!(), 
+        additional_information: todo!(), 
+        bugnote_text: todo!() 
+    };
+    bug_update(jar.clone(), bug).await.map_err(|e|format!("error:{}",e))
 }
 
 // 发送通知
@@ -118,29 +174,29 @@ fn start_timer(app: AppHandle) {
         let param  = result.unwrap_or_default();
         loop {
             ticker.tick().await;
-            // // 判断是否登录
-            // let (logined, jar) = {
-            //     if let Ok(my_state) = state.lock() {
-            //         (my_state.logined.clone(), my_state.jar.clone())
-            //     } else {
-            //         continue;
-            //     }
-            // };
-            // // 如果未登录，则跳过
-            // if !*logined {
-            //     println!("未登录，跳过定时任务");
-            //     continue;
-            // }
-            // // 查询列表
-            // let body = match view_all_set(jar.clone(), param.clone()).await {
-            //     Ok(b) => b,
-            //     Err(e) => {
-            //         println!("查询列表失败: {}", e);
-            //         continue;
-            //     }
-            // };
+            // 判断是否登录
+            let (logined, jar) = {
+                if let Ok(my_state) = state.lock() {
+                    (my_state.logined.clone(), my_state.jar.clone())
+                } else {
+                    continue;
+                }
+            };
+            // 如果未登录，则跳过
+            if !*logined {
+                println!("未登录，跳过定时任务");
+                continue;
+            }
+            // 查询列表
+            let body = match view_all_set(jar.clone(), param.clone()).await {
+                Ok(b) => b,
+                Err(e) => {
+                    println!("查询列表失败: {}", e);
+                    continue;
+                }
+            };
+            // let body = include_str!("view_all_set.html").to_string();//test
             // 解析数据
-            let body = include_str!("view_all_set.html").to_string();//test
             let data = match view_all_set_data(&Html::parse_document(body.as_str())) {
                 Ok(d) => d,
                 Err(e) => {
@@ -158,6 +214,11 @@ fn start_timer(app: AppHandle) {
             };
             // 把最新的bug放进全局状态
             if let Ok(my_state) = state.lock(){
+                // 如果和上条一样则不更新
+                if *(my_state.data_hash.clone()) == get_hash(&resp) {
+                    println!("相同数据");
+                    continue;
+                }
                 let last_bugs = my_state.last_bugs.clone();
                 let result = last_bugs.lock();
                 if let Ok(mut old_map) = result {

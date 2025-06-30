@@ -14,6 +14,8 @@ use scraper::{Html, Selector};
 use serde_html_form;
 use chrono::{NaiveDate, TimeZone};
 use chrono_tz::Asia::Shanghai;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 // login 页面
 pub async fn login(jar: Arc<Jar>,username: &str, password: &str) -> Result<String, Box<dyn std::error::Error>> {
@@ -274,6 +276,15 @@ pub fn find_all_tasks(html_content: &str,selector_text: &str) -> Result<Vec<Stri
     }
 }
 
+// 查询bug_update_token
+pub fn bug_update_token_data(document: &Html) -> Result<String, String> {
+    // 创建选择器
+    let selector = Selector::parse("input[type=\"bug_update_token\"]")
+        .map_err(|e| format!("Selector 解析失败: {:?}", e))?;
+    document.select(&selector)
+        .find_map(|e|e.value().attr("value").map(|s|s.to_string()))
+        .ok_or("not found".to_string())
+}
 
 // 查询view_all_set未解决数据
 pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error::Error>> {
@@ -392,4 +403,10 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
     bug_list.bugs = results;
 
     Ok(bug_list)
+}
+
+pub fn get_hash<T: Hash>(t: &T) -> u64 {
+    let mut s = DefaultHasher::new();
+    t.hash(&mut s);
+    s.finish()
 }

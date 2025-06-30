@@ -1,8 +1,9 @@
 <script setup>
 import { ref, watch, nextTick } from "vue";
 import { invoke } from "@tauri-apps/api/core";
-import { pa } from "element-plus/es/locales.mjs";
+import { useRouter } from 'vue-router';
 
+const router = useRouter()
 const username = ref("");
 const password = ref("");
 const showUsername = ref(true);
@@ -11,13 +12,11 @@ const usernameInputRef = ref(null);
 const passwordInputRef = ref(null);
 
 async function login() {
-  const result = await invoke("api_login", { username: "dengxiangcheng", password: "dxc3434DXC" });
-  console.log("登录结果", result);
-  if (result) {
-    // 登录成功
+  try {
+    const result = await invoke("api_login", { username: "dengxiangcheng", password: "dxc3434DXC" });
     console.log("登录成功", result);
-    // 可以在这里进行页面跳转或其他操作
-  } else {
+    router.push("/home");
+  } catch (error) {
     // 登录失败
     console.error("登录失败");
   }
