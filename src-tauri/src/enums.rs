@@ -515,3 +515,114 @@ impl From<i64> for Project {
         }
     }
 }
+
+
+// <option value="10" selected="selected">公开</option>
+// <option value="50">私有</option>
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ViewStatus {
+    Unknown = 0,
+    Public = 10,
+    Privite = 50,
+}
+impl ViewStatus {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ViewStatus::Unknown => "[任意]",
+            ViewStatus::Public => "公开",
+            ViewStatus::Privite => "私有",
+        }
+    }
+    pub fn as_i64(&self) -> i64 {
+        *self as i64
+    }
+}
+impl std::fmt::Display for ViewStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+impl From<&str> for ViewStatus {
+    fn from(s: &str) -> Self {
+        match s {
+            "公开" => ViewStatus::Public,
+            "私有" => ViewStatus::Privite,
+            _ => ViewStatus::Unknown,
+        }
+    }
+}
+impl From<i64> for ViewStatus {
+    fn from(n: i64) -> Self {
+        match n {
+            10 => ViewStatus::Public,
+            50 => ViewStatus::Privite,
+            _ => ViewStatus::Unknown,
+        }
+    }
+}
+
+// <option value="10" selected="selected">总是</option>
+// <option value="30">有时</option>
+// <option value="50">随机</option>
+// <option value="70">没有试验</option>
+// <option value="90">无法重现</option>
+// <option value="100">不适用</option>
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Reproducibility {
+    Unknown = 0,
+    Always = 10,
+    Sometimes = 30,
+    Random = 50,
+    NoTest = 70,
+    NotReproducible = 90,
+    NotApplicable = 100,
+}
+impl Reproducibility {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Reproducibility::Unknown => "[任意]",
+            Reproducibility::Always => "总是",
+            Reproducibility::Sometimes => "有时",
+            Reproducibility::Random => "随机",
+            Reproducibility::NoTest => "没有试验",
+            Reproducibility::NotReproducible => "无法重现",
+            Reproducibility::NotApplicable => "不适用",
+        }
+    }
+    pub fn as_i64(&self) -> i64 {
+        *self as i64
+    }
+}
+impl std::fmt::Display for Reproducibility {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+impl From<&str> for Reproducibility {
+    fn from(s: &str) -> Self {
+        match s {
+            "总是" => Reproducibility::Always,
+            "有时" => Reproducibility::Sometimes,
+            "随机" => Reproducibility::Random,
+            "没有试验" => Reproducibility::NoTest,
+            "无法重现" => Reproducibility::NotReproducible,
+            "不适用" => Reproducibility::NotApplicable,
+            _ => Reproducibility::Unknown,
+        }
+    }
+}
+impl From<i64> for Reproducibility {
+    fn from(n: i64) -> Self {
+        match n {
+            10 => Reproducibility::Always,
+            30 => Reproducibility::Sometimes,
+            50 => Reproducibility::Random,
+            70 => Reproducibility::NoTest,
+            90 => Reproducibility::NotReproducible,
+            100 => Reproducibility::NotApplicable,
+            _ => Reproducibility::Unknown,
+        }
+    }
+}

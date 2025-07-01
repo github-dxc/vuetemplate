@@ -19,7 +19,7 @@ pub struct Bug {
     pub summary: String,//摘要
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 pub struct UpdateToken {
     pub bug_update_token: String,
     pub bug_id: i64,
@@ -40,7 +40,8 @@ pub struct UpdateBug {
     pub resolution: i64,//处理状况
     pub summary: String,//摘要
     pub description: String,//描述
-    pub additional_information: String,
+    pub additional_information: String,//附注
+    pub steps_to_reproduce: String,//问题重现步骤
     pub bugnote_text: String,//问题注释
 }
 
@@ -58,7 +59,7 @@ pub struct BugInfo {
     pub project_id: i64,//项目id
     pub project: String,//项目
     pub category_id: i64,//类别ID
-    pub view_status: i64,//查看权限
+    pub view_state: i64,//查看权限
     pub date_submitted: i64,//报告日期
     pub last_updated: i64,//最后更新时间
     pub reporter_id: i64,//报告员id
@@ -73,7 +74,25 @@ pub struct BugInfo {
     pub summary: String,//摘要
     pub description: String,//描述
     pub additional_information: String,//附注
+    pub steps_to_reproduce: String,//问题重现步骤
     pub tags: String,//标签
+    pub bugnote_notes: Vec<BugNote>,//注释列表
+    pub attachments: Vec<FileInfo>,//附件
+}
+
+#[derive(Debug,Default,Serialize)]
+pub struct FileInfo {
+    pub size: i64,
+    pub url: String,
+    pub name: String,
+}
+
+#[derive(Debug,Default,Serialize)]
+pub struct BugNote {
+    pub note_id: i64,
+    pub time: i64,
+    pub text: String,
+    pub attachments: Vec<FileInfo>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

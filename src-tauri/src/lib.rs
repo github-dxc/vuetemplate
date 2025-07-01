@@ -22,7 +22,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .manage(Mutex::new(MyState::default())) // 注册全局状态
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, api_login, api_logout, api_bug_list,])
+        .invoke_handler(tauri::generate_handler![greet, api_login, api_logout, api_bug_list, api_update_bug])
         .setup(|app|{
             let handle = app.handle();
             start_timer(handle.clone());
@@ -102,7 +102,7 @@ async fn api_bug_list(app: AppHandle) -> Result<BugList, String> {
 
 // 修改bug
 #[tauri::command]
-async fn update_bug(app: AppHandle,bug_id: i64) -> Result<String, String> {
+async fn api_update_bug(app: AppHandle,bug_id: i64,status: i64,resolution: i64) -> Result<String, String> {
     let (logined, jar) = {
         let state = app.state::<Mutex<MyState>>();
         let my_state = state.lock().map_err(|e|format!("error:{}",e))?;
@@ -112,13 +112,15 @@ async fn update_bug(app: AppHandle,bug_id: i64) -> Result<String, String> {
         return Err("未登录".to_string());
     }
     // 查询bug详情
-    let body = my_view_detail(jar.clone(), bug_id).await.map_err(|e|format!("error:{}",e))?;
-    let bug_update_token = bug_update_token_data(&Html::parse_document(body.as_str()))?;
+    let body = my_view_detail(jar.clone(), bug_id).await?;
+    let document = Html::parse_document(body.as_str());
+    let bug_update_token = bug_update_token_data(&document)?;
+    let bug_info = my_view_detail_data(&document)?;
     // bug修改页面
     let body = bug_update_page(jar.clone(), UpdateToken{
         bug_id,
         bug_update_token,
-    }).await.map_err(|e|format!("error:{}",e))?;
+    }).await?;
     let bug_update_token = bug_update_token_data(&Html::parse_document(body.as_str()))?;
     // 提交bug
     let now = Utc::now();
@@ -126,20 +128,21 @@ async fn update_bug(app: AppHandle,bug_id: i64) -> Result<String, String> {
         bug_update_token, 
         bug_id, 
         last_updated: now.timestamp(), 
-        category_id: todo!(), 
-        view_state: todo!(), 
-        handler_id: todo!(), 
-        priority: todo!(), 
-        severity: todo!(), 
-        reproducibility: todo!(), 
-        status: todo!(), 
-        resolution: todo!(), 
-        summary: todo!(), 
-        description: todo!(), 
-        additional_information: todo!(), 
-        bugnote_text: todo!() 
+        category_id: bug_info.category_id, 
+        view_state: bug_info.view_state, 
+        handler_id: bug_info.handler_id, 
+        priority: bug_info.priority, 
+        severity: bug_info.severity, 
+        reproducibility: bug_info.reproducibility, 
+        status: status, 
+        resolution: resolution, 
+        summary: bug_info.summary, 
+        description: bug_info.description, 
+        additional_information: "".to_string(), 
+        steps_to_reproduce: "".to_string(),
+        bugnote_text: "".to_string(),
     };
-    bug_update(jar.clone(), bug).await.map_err(|e|format!("error:{}",e))
+    bug_update(jar.clone(), bug).await
 }
 
 // 发送通知
@@ -312,12 +315,18 @@ mod tests {
         let r = view_all_set_data(&document);
         assert!(r.is_ok());
         let data = r.unwrap();
-        for a in data.bugs {
-            println!("Summary: {:?}", a);
-        }
-        println!("Total: {}", data.total);
-        println!("Page: {}", data.page);
-        println!("Limit: {}", data.limit);
+        println!("Summary: {:?}", data);
+    }
+
+    #[tokio::test]
+    async fn test_my_view_detail_data() {
+        // 读取view_all_set.html文件内容
+        let html_content = include_str!("view.php.html");
+        let document = Html::parse_document(html_content);
+        let r = my_view_detail_data(&document);
+        assert!(r.is_ok());
+        let data = r.unwrap();
+        println!("Summary: {:?}", data);
     }
 
 }

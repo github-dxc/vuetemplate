@@ -11,8 +11,14 @@ const limit = ref(0);
 const page = ref(0);
 
 // 一键处理已修正
-async function revisedHandle() {
-  
+async function revisedHandle(bug_id) {
+  try {
+    const result = await invoke("api_update_bug", { bug_id: bug_id, status: 81, resolution: 20 });
+    console.log("更新成功", result);
+  } catch (error) {
+    // 更新成功
+    console.error("更新成功");
+  }
 }
 
 // 一键处理不修改
@@ -74,7 +80,7 @@ listen('timer-tick', (event) => {
         <el-table-column prop="summary" label="摘要" />
         <el-table-column label="操作" width="180">
           <template #default="scope">
-            <el-button type="success" size="small" @click="revisedHandle" plain>已修正</el-button>
+            <el-button type="success" size="small" @click="revisedHandle(scope.row.bug_id)" plain>已修正</el-button>
             <el-button type="warning" size="small" @click="notReviseHandle" plain>不修改</el-button>
           </template>
         </el-table-column>

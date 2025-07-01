@@ -144,7 +144,7 @@ pub async fn view_all_set(jar: Arc<Jar>,params: FindBugListParams) -> Result<Str
 }
 
 // my_view_detail 页面
-pub async fn my_view_detail(jar: Arc<Jar>,id: i64) -> Result<String, Box<dyn std::error::Error>> {
+pub async fn my_view_detail(jar: Arc<Jar>,id: i64) -> Result<String, String> {
     let url = format!("http://bug.test.com/view.php?id={}", id);
 
     // 构建请求头
@@ -171,7 +171,7 @@ pub async fn my_view_detail(jar: Arc<Jar>,id: i64) -> Result<String, Box<dyn std
 }
 
 // bug_update_page 页面
-pub async fn bug_update_page(jar: Arc<Jar>,bug: UpdateToken) -> Result<String, Box<dyn std::error::Error>> {
+pub async fn bug_update_page(jar: Arc<Jar>,bug: UpdateToken) -> Result<String, String> {
     let url = "http://bug.test.com/bug_update_page.php";
 
     // body
@@ -193,7 +193,7 @@ pub async fn bug_update_page(jar: Arc<Jar>,bug: UpdateToken) -> Result<String, B
         .build()
         .map_err(|e| e.to_string())?;
 
-    // 发送 GET 请求
+    // 发送 POST 请求
     let resp = client.post(url).body(body).send().await.map_err(|e| e.to_string())?;
 
     let text = resp.text().await.map_err(|e| e.to_string())?;
@@ -201,7 +201,7 @@ pub async fn bug_update_page(jar: Arc<Jar>,bug: UpdateToken) -> Result<String, B
 }
  
 // bug_update 页面
-pub async fn bug_update(jar: Arc<Jar>,bug: UpdateBug) -> Result<String, Box<dyn std::error::Error>> {
+pub async fn bug_update(jar: Arc<Jar>,bug: UpdateBug) -> Result<String, String> {
     let url = "http://bug.test.com/bug_update.php";
 
     // body
@@ -419,7 +419,7 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
 }
 
 // 查询my_view_detail数据
-pub fn my_view_detail_data(document: &Html) -> Result<BugInfo, Box<dyn std::error::Error>> {
+pub fn my_view_detail_data(document: &Html) -> Result<BugInfo, String> {
     let mut bug = BugInfo::default();
     // bug_id
     let id_slector = Selector::parse(".bug-header-data .bug-id").unwrap();
@@ -440,7 +440,10 @@ pub fn my_view_detail_data(document: &Html) -> Result<BugInfo, Box<dyn std::erro
     }).unwrap_or(0);
     
     // view_status
-
+    let view_status_selector = Selector::parse(".bug-header-data .bug-view-status").unwrap();
+    bug.view_state = document.select(&view_status_selector).find_map(|e| {
+        Some(ViewStatus::from(e.inner_html().trim()).as_i64())
+    }).unwrap_or(0);
 
     // date_submitted 2025-06-17 16:20
     let date_submitted_selector = Selector::parse(".bug-header-data .bug-date-submitted").unwrap();
@@ -475,7 +478,7 @@ pub fn my_view_detail_data(document: &Html) -> Result<BugInfo, Box<dyn std::erro
             href.split('=').nth(1).and_then(|id| id.parse::<i64>().ok())
         })
     }).unwrap_or(0);
-    
+
     // handler_id
     let handler_selector = Selector::parse("tbody .bug-assigned-to a").unwrap();
     bug.handler_id = document.select(&handler_selector).find_map(|e| {
@@ -487,55 +490,135 @@ pub fn my_view_detail_data(document: &Html) -> Result<BugInfo, Box<dyn std::erro
     }).unwrap_or(0);
 
     // priority
-    let priority_selector = Selector::parse("tbody td .bug-priority").unwrap();
+    let priority_selector = Selector::parse("tbody td.bug-priority").unwrap();
     bug.priority = document.select(&priority_selector).find_map(|e| {
-        Some(Priority::from(e.value().attr("title").unwrap_or("")).as_i64())
+        Some(Priority::from(e.inner_html().trim()).as_i64())
     }).unwrap_or(0);
 
     // severity
-    let severity_selector = Selector::parse("tbody td .bug-severity").unwrap();
+    let severity_selector = Selector::parse("tbody td.bug-severity").unwrap();
     bug.severity = document.select(&severity_selector).find_map(|e| {
         Some(Severity::from(e.inner_html().trim()).as_i64())
     }).unwrap_or(0);
 
     // reproducibility
-
+    let reproducibility_selector = Selector::parse("tbody td.bug-reproducibility").unwrap();
+    bug.reproducibility = document.select(&reproducibility_selector).find_map(|e| {
+        Some(Reproducibility::from(e.inner_html().trim()).as_i64())
+    }).unwrap_or(0);
 
     // status
-    let status_selector = Selector::parse("tbody td .bug-status span").unwrap();
+    let status_selector = Selector::parse("tbody td.bug-status").unwrap();
     bug.status = document.select(&status_selector).find_map(|e| {
         Some(Status::from(e.text().last().unwrap_or(&"").trim()).as_i64())
     }).unwrap_or(0);
 
     // resolution
-    let resolution_selector = Selector::parse("tbody td .bug-resolution").unwrap();
+    let resolution_selector = Selector::parse("tbody td.bug-resolution").unwrap();
     bug.resolution = document.select(&resolution_selector).find_map(|e| {
-        Some(Status::from(e.inner_html().trim()).as_i64())
+        Some(Resolution::from(e.inner_html().trim()).as_i64())
     }).unwrap_or(0);
 
     // summary 
-    let summary_selector = Selector::parse("tbody td bug-summary").unwrap();
+    let summary_selector = Selector::parse("tbody td.bug-summary").unwrap();
     bug.summary = document.select(&summary_selector).map(|e| {
         e.inner_html().trim().to_string()
     }).collect::<Vec<String>>().join("").trim().to_string();
 
     // description
-    let description_selector = Selector::parse("tbody td bug-description").unwrap();
+    let description_selector = Selector::parse("tbody td.bug-description").unwrap();
     bug.description = document.select(&description_selector).map(|e| {
         e.inner_html().trim().to_string()
     }).collect::<Vec<String>>().join("").trim().to_string();
     
     // additional-information
-    let additional_information_selector = Selector::parse("tbody td bug-additional-information").unwrap();
+    let additional_information_selector = Selector::parse("tbody td.bug-additional-information").unwrap();
     bug.additional_information = document.select(&additional_information_selector).map(|e| {
+        e.inner_html().trim().to_string()
+    }).collect::<Vec<String>>().join("").trim().to_string();
+
+    // bug-steps-to-reproduce
+    let steps_to_reproduce_selector = Selector::parse("tbody td.bug-steps-to-reproduce").unwrap();
+    bug.steps_to_reproduce = document.select(&steps_to_reproduce_selector).map(|e| {
         e.inner_html().trim().to_string()
     }).collect::<Vec<String>>().join("").trim().to_string();
     
     // tags
-    let tags_selector = Selector::parse("tbody td bug-tags").unwrap();
+    let tags_selector = Selector::parse("tbody td.bug-tags").unwrap();
     bug.tags = document.select(&tags_selector).map(|e| {
         e.inner_html().trim().to_string()
     }).collect::<Vec<String>>().join("").trim().to_string();
+
+    // attachments
+    let attachments_selector = Selector::parse(".bug-attach-tags .collapse-open.noprint").unwrap();
+    bug.attachments = document.select(&attachments_selector).map(|e| {
+        let mut size = 0;
+        let mut url = String::new();
+        let mut name = String::new();
+        e.select(&Selector::parse("a:nth-of-type(2)").unwrap())
+        .for_each(|e|{
+            //<a href="file_download.php?file_id=2365&amp;type=bug">image.png</a>&#32;(179,667&#32;字节)&#32;&nbsp;&nbsp;
+            url = format!("http://bug.test.com/{}",e.value().attr("href").unwrap_or(""));
+            name = e.inner_html().trim().to_string();
+            e.next_sibling().map(|sibling| {
+                if sibling.value().is_text() {
+                    size = sibling.value().as_text().map(|text| text.trim().to_string()).unwrap_or(String::new())
+                        .replace("字节", "")
+                        .replace("(", "")
+                        .replace(")", "")
+                        .replace(",", "")
+                        .trim()
+                        .parse::<i64>().unwrap_or(0);
+                }
+            });
+        });
+        FileInfo {size,url,name}
+    }).collect();
+
+    // bugnote_notes 
+    let bugnote_notes_selector = Selector::parse(".bugnote.visible-on-hover-toggle").unwrap();
+    bug.bugnote_notes = document.select(&bugnote_notes_selector).map(|e| {
+        let time = e.select(&Selector::parse(".no-margin.small.lighter").unwrap())
+            .find_map(|e| {
+                let date_str = e.text().last().unwrap_or(&"").trim();
+                // 解析为 NaiveDate
+                let date = NaiveDate::parse_from_str(date_str, "%Y-%m-%d %H:%M").ok()?;
+                // 设为上海时区的0点
+                let datetime = Shanghai.from_local_datetime(&date.and_hms_opt(0, 0, 0)?).unwrap();
+                // 转为时间戳（秒）
+                Some(datetime.timestamp())
+            }).unwrap_or(0);
+        let note_id = e.select(&Selector::parse("a.lighter").unwrap())
+            .find_map(|e| e.inner_html().replace("~", "").trim().parse::<i64>().ok()).unwrap_or(0);
+        let text = e.select(&Selector::parse(".bugnote-note.bugnote-public").unwrap())
+            .find_map(|e| e.text().find(|_|true)).unwrap_or("");
+        // attachments
+        let attachments_selector = Selector::parse(".collapse-open.noprint").unwrap();
+        let attachments = document.select(&attachments_selector).map(|e| {
+            let mut size = 0;
+            let mut url = String::new();
+            let mut name = String::new();
+            e.select(&Selector::parse("a:nth-of-type(2)").unwrap())
+            .for_each(|e|{
+                //<a href="file_download.php?file_id=2365&amp;type=bug">image.png</a>&#32;(179,667&#32;字节)&#32;&nbsp;&nbsp;
+                url = format!("http://bug.test.com/{}",e.value().attr("href").unwrap_or(""));
+                name = e.inner_html().trim().to_string();
+                e.next_sibling().map(|sibling| {
+                    if sibling.value().is_text() {
+                        size = sibling.value().as_text().map(|text| text.trim().to_string()).unwrap_or(String::new())
+                            .replace("字节", "")
+                            .replace("(", "")
+                            .replace(")", "")
+                            .replace(",", "")
+                            .trim()
+                            .parse::<i64>().unwrap_or(0);
+                    }
+                });
+            });
+            FileInfo { size, url, name}
+        }).collect();
+        BugNote { time, note_id, text: text.to_string(), attachments}
+    }).collect();
 
     Ok(bug)
 }
