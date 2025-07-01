@@ -22,7 +22,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .manage(Mutex::new(MyState::default())) // 注册全局状态
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, api_login, api_logout, api_bug_list, api_update_bug])
+        .invoke_handler(tauri::generate_handler![api_init_data, api_login, api_logout, api_bug_list, api_update_bug])
         .setup(|app|{
             let handle = app.handle();
             start_timer(handle.clone());
@@ -41,11 +41,19 @@ struct MyState {
     data_hash:  Arc<u64>,
 }
 
-// 测试接口
+// 初始化数据
 #[tauri::command]
-fn greet(app: AppHandle,name: &str) -> String { 
-    let _ = send_notify(app, name, name);
-    format!("Hello, {}! You've been greeted from Rust!", name)
+fn api_init_data(_app: AppHandle) -> String { 
+    let mut hm = HashMap::new();
+    hm.insert("Priority", Priority::kv());
+    hm.insert("Severity", Severity::kv());
+    hm.insert("Reproducibility", Reproducibility::kv());
+    hm.insert("ViewStatus", ViewStatus::kv());
+    hm.insert("Category", Category::kv());
+    hm.insert("Project", Project::kv());
+    hm.insert("Status", Status::kv());
+    hm.insert("Resolution", Resolution::kv());
+    serde_json::to_string(&hm).unwrap_or_else(|_|"{}".to_string())
 }
 
 // 登录

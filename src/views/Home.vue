@@ -9,6 +9,27 @@ const bugList = ref([]);
 const total = ref(0);
 const limit = ref(0);
 const page = ref(0);
+const enums = ref({
+  Project: [],
+  Priority: [],
+  Severity: [],
+  Reproducibility: [],
+  ViewStatus: [],
+  Resolution: [],
+  Status: [],
+  Category: []
+});
+
+// 根据传入enums的key获取value enum=[{key:1,value:"asd"}]
+function getEnumValue(_enum) {
+  return function(key) {
+    if (_enum && _enum.length > 0) {
+      const item = _enum.find(e => e.key === key);
+      return item ? item.value : key; // 如果找不到对应的key，返回key本身
+    }
+    return key; // 如果_enum为空或未定义，返回key本身
+  };
+}
 
 // 一键处理已修正
 async function revisedHandle(bug_id) {
@@ -22,13 +43,25 @@ async function revisedHandle(bug_id) {
 }
 
 // 一键处理不修改
-async function notReviseHandle() {
-  
+async function notReviseHandle(bug_id) {
+  try {
+    const result = await invoke("api_update_bug", { bug_id: bug_id, status: 83, resolution: 70 });
+    console.log("更新成功", result);
+  } catch (error) {
+    // 更新成功
+    console.error("更新成功");
+  }
 }
 
 // 初始化
 onMounted(async () => {
   try {
+    // 获取枚举数据
+    const enumsData = await invoke("api_init_data", { name: "enums" });
+    console.log("枚举数据:", enumsData);
+    if (enumsData) {
+      enums.value = enumsData;
+    }
     const obj = await invoke("api_bug_list", { });
     console.log(obj);
     if (obj) {
@@ -76,12 +109,17 @@ listen('timer-tick', (event) => {
         </el-table-column>
 
         <el-table-column prop="project" label="项目名称" width="80" />
-        <el-table-column prop="handler" label="处理人" />
-        <el-table-column prop="summary" label="摘要" />
+        <el-table-column prop="handler" label="处理人" width="80" />
+        <el-table-column prop="summary" label="摘要" width="200" />
+        <el-table-column prop="priority" label="优先级" width="80">
+          <template #default="scope">
+            {{ getEnumValue(enums.Priority)(scope.row.priority) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="180">
           <template #default="scope">
             <el-button type="success" size="small" @click="revisedHandle(scope.row.bug_id)" plain>已修正</el-button>
-            <el-button type="warning" size="small" @click="notReviseHandle" plain>不修改</el-button>
+            <el-button type="warning" size="small" @click="notReviseHandle(scope.row.bug_id)" plain>不修改</el-button>
           </template>
         </el-table-column>
       </el-table>

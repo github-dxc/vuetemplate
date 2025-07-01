@@ -1,9 +1,18 @@
+
+use serde::Serialize;
+
 // <option value="10">无</option>
 // <option value="20">低</option>
 // <option value="30" selected="selected">中</option>
 // <option value="40">高</option>
 // <option value="50">紧急</option>
 // <option value="60">非常紧急</option>
+
+#[derive(Debug, Clone, Serialize)]
+pub struct KV {
+    pub key: i64,
+    pub value: String,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Priority {
@@ -29,6 +38,16 @@ impl Priority {
     }
     pub fn as_i64(&self) -> i64 {
         *self as i64
+    }
+    pub fn kv()-> Vec<KV> {
+        vec![
+            KV { key: Priority::None.as_i64(), value: Priority::None.as_str().to_string() },
+            KV { key: Priority::Low.as_i64(), value: Priority::Low.as_str().to_string() },
+            KV { key: Priority::Middle.as_i64(), value: Priority::Middle.as_str().to_string() },
+            KV { key: Priority::High.as_i64(), value: Priority::High.as_str().to_string() },
+            KV { key: Priority::Emergency.as_i64(), value: Priority::Emergency.as_str().to_string() },
+            KV { key: Priority::VeryEmergency.as_i64(), value: Priority::VeryEmergency.as_str().to_string() },
+        ]
     }
 }
 impl std::fmt::Display for Priority {
@@ -98,6 +117,17 @@ impl Category {
     }
     pub fn as_i64(&self) -> i64 {
         *self as i64
+    }
+    pub fn kv()-> Vec<KV> {
+        vec![
+            KV { key: Category::General.as_i64(), value: Category::General.as_str().to_string() },
+            KV { key: Category::UIDesign.as_i64(), value: Category::UIDesign.as_str().to_string() },
+            KV { key: Category::ProductDesign.as_i64(), value: Category::ProductDesign.as_str().to_string() },
+            KV { key: Category::Frontend.as_i64(), value: Category::Frontend.as_str().to_string() },
+            KV { key: Category::Backend.as_i64(), value: Category::Backend.as_str().to_string() },
+            KV { key: Category::BigData.as_i64(), value: Category::BigData.as_str().to_string() },
+            KV { key: Category::AndroidClient.as_i64(), value: Category::AndroidClient.as_str().to_string() },
+        ]
     }
 }
 impl std::fmt::Display for Category {
@@ -171,6 +201,18 @@ impl Severity {
     }
     pub fn as_i64(&self) -> i64 {
         *self as i64
+    }
+    pub fn kv()-> Vec<KV> {
+        vec![
+            KV { key: Severity::NewFeature.as_i64(), value: Severity::NewFeature.as_str().to_string() },
+            KV { key: Severity::Detail.as_i64(), value: Severity::Detail.as_str().to_string() },
+            KV { key: Severity::Text.as_i64(), value: Severity::Text.as_str().to_string() },
+            KV { key: Severity::SmallAdjustment.as_i64(), value: Severity::SmallAdjustment.as_str().to_string() },
+            KV { key: Severity::SmallError.as_i64(), value: Severity::SmallError.as_str().to_string() },
+            KV { key: Severity::SeriousError.as_i64(), value: Severity::SeriousError.as_str().to_string() },
+            KV { key: Severity::Crash.as_i64(), value: Severity::Crash.as_str().to_string() },
+            KV { key: Severity::Downtime.as_i64(), value: Severity::Downtime.as_str().to_string() },
+        ]
     }
 }
 impl std::fmt::Display for Severity {
@@ -260,6 +302,22 @@ impl Status {
     pub fn as_i64(&self) -> i64 {
         *self as i64
     }
+    pub fn kv()-> Vec<KV> {
+        vec![
+            KV { key: Status::New.as_i64(), value: Status::New.as_str().to_string() },
+            KV { key: Status::Feedback.as_i64(), value: Status::Feedback.as_str().to_string() },
+            KV { key: Status::Acknowledged.as_i64(), value: Status::Acknowledged.as_str().to_string() },
+            KV { key: Status::Confirmed.as_i64(), value: Status::Confirmed.as_str().to_string() },
+            KV { key: Status::Assigned.as_i64(), value: Status::Assigned.as_str().to_string() },
+            KV { key: Status::Resolved.as_i64(), value: Status::Resolved.as_str().to_string() },
+            KV { key: Status::Released.as_i64(), value: Status::Released.as_str().to_string() },
+            KV { key: Status::Verified.as_i64(), value: Status::Verified.as_str().to_string() },
+            KV { key: Status::NotFixed.as_i64(), value: Status::NotFixed.as_str().to_string() },
+            KV { key: Status::DelayedFix.as_i64(), value: Status::DelayedFix.as_str().to_string() },
+            KV { key: Status::Reopened.as_i64(), value: Status::Reopened.as_str().to_string() },
+            KV { key: Status::Closed.as_i64(), value: Status::Closed.as_str().to_string() },
+        ]
+    }
 }
 impl std::fmt::Display for Status {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -347,6 +405,19 @@ impl Resolution {
     }
     pub fn as_i64(&self) -> i64 {
         *self as i64
+    }
+    pub fn kv()-> Vec<KV> {
+        vec![
+            KV { key: Resolution::Unprocessed.as_i64(), value: Resolution::Unprocessed.as_str().to_string() },
+            KV { key: Resolution::Fixed.as_i64(), value: Resolution::Fixed.as_str().to_string() },
+            KV { key: Resolution::Reopened.as_i64(), value: Resolution::Reopened.as_str().to_string() },
+            KV { key: Resolution::NotReproducible.as_i64(), value: Resolution::NotReproducible.as_str().to_string() },
+            KV { key: Resolution::NotFixable.as_i64(), value: Resolution::NotFixable.as_str().to_string() },
+            KV { key: Resolution::Duplicate.as_i64(), value: Resolution::Duplicate.as_str().to_string() },
+            KV { key: Resolution::NotRequired.as_i64(), value: Resolution::NotRequired.as_str().to_string() },
+            KV { key: Resolution::Later.as_i64(), value: Resolution::Later.as_str().to_string() },
+            KV { key: Resolution::NoChange.as_i64(), value: Resolution::NoChange.as_str().to_string() },
+        ]
     }
 }
 impl std::fmt::Display for Resolution {
@@ -457,6 +528,29 @@ impl Project {
     pub fn as_i64(&self) -> i64 {
         *self as i64
     }
+    pub fn kv()-> Vec<KV> {
+        vec![
+            KV { key: Project::AllProjects.as_i64(), value: Project::AllProjects.as_str().to_string() },
+            KV { key: Project::EasyLink.as_i64(), value: Project::EasyLink.as_str().to_string() },
+            KV { key: Project::EasyLinkUser.as_i64(), value: Project::EasyLinkUser.as_str().to_string() },
+            KV { key: Project::EasyLinkAdmin.as_i64(), value: Project::EasyLinkAdmin.as_str().to_string() },
+            KV { key: Project::CloudComputing.as_i64(), value: Project::CloudComputing.as_str().to_string() },
+            KV { key: Project::CloudComputingUser.as_i64(), value: Project::CloudComputingUser.as_str().to_string() },
+            KV { key: Project::CloudComputingAdmin.as_i64(), value: Project::CloudComputingAdmin.as_str().to_string() },
+            KV { key: Project::CloudComputingOnlineIssues.as_i64(), value: Project::CloudComputingOnlineIssues.as_str().to_string() },
+            KV { key: Project::CloudComputingOverseas.as_i64(), value: Project::CloudComputingOverseas.as_str().to_string() },
+            KV { key: Project::CloudComputingOverseasUser.as_i64(), value: Project::CloudComputingOverseasUser.as_str().to_string() },
+            KV { key: Project::CloudComputingOverseasAdmin.as_i64(), value: Project::CloudComputingOverseasAdmin.as_str().to_string() },
+            KV { key: Project::CloudTranscoding.as_i64(), value: Project::CloudTranscoding.as_str().to_string() },
+            KV { key: Project::CloudTranscodingUser.as_i64(), value: Project::CloudTranscodingUser.as_str().to_string() },
+            KV { key: Project::CloudTranscodingAdmin.as_i64(), value: Project::CloudTranscodingAdmin.as_str().to_string() },
+            KV { key: Project::CertificateSystem.as_i64(), value: Project::CertificateSystem.as_str().to_string() },
+            KV { key: Project::ResourceManagementSystem.as_i64(), value: Project::ResourceManagementSystem.as_str().to_string() },
+            KV { key: Project::Wallet.as_i64(), value: Project::Wallet.as_str().to_string() },
+            KV { key: Project::WalletUser.as_i64(), value: Project::WalletUser.as_str().to_string() },
+            KV { key: Project::WalletAdmin.as_i64(), value: Project::WalletAdmin.as_str().to_string() },
+        ]
+    }
 }
 impl std::fmt::Display for Project {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -537,6 +631,12 @@ impl ViewStatus {
     pub fn as_i64(&self) -> i64 {
         *self as i64
     }
+    pub fn kv()-> Vec<KV> {
+        vec![
+            KV { key: ViewStatus::Public.as_i64(), value: ViewStatus::Public.as_str().to_string() },
+            KV { key: ViewStatus::Privite.as_i64(), value: ViewStatus::Privite.as_str().to_string() },
+        ]
+    }
 }
 impl std::fmt::Display for ViewStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -593,6 +693,16 @@ impl Reproducibility {
     }
     pub fn as_i64(&self) -> i64 {
         *self as i64
+    }
+    pub fn kv()-> Vec<KV> {
+        vec![
+            KV { key: Reproducibility::Always.as_i64(), value: Reproducibility::Always.as_str().to_string() },
+            KV { key: Reproducibility::Sometimes.as_i64(), value: Reproducibility::Sometimes.as_str().to_string() },
+            KV { key: Reproducibility::Random.as_i64(), value: Reproducibility::Random.as_str().to_string() },
+            KV { key: Reproducibility::NoTest.as_i64(), value: Reproducibility::NoTest.as_str().to_string() },
+            KV { key: Reproducibility::NotReproducible.as_i64(), value: Reproducibility::NotReproducible.as_str().to_string() },
+            KV { key: Reproducibility::NotApplicable.as_i64(), value: Reproducibility::NotApplicable.as_str().to_string() },
+        ]
     }
 }
 impl std::fmt::Display for Reproducibility {
