@@ -112,10 +112,14 @@ async fn api_update_bug(app: AppHandle,bug_id: i64,status: i64,resolution: i64) 
         return Err("未登录".to_string());
     }
     // 查询bug详情
-    let body = my_view_detail(jar.clone(), bug_id).await?;
-    let document = Html::parse_document(body.as_str());
-    let bug_update_token = bug_update_token_data(&document)?;
-    let bug_info = my_view_detail_data(&document)?;
+    let bug_update_token;
+    let bug_info;
+    {
+        let body = my_view_detail(jar.clone(), bug_id).await?;
+        let document = Html::parse_document(body.as_str());
+        bug_update_token = bug_update_token_data(&document)?;
+        bug_info = my_view_detail_data(&document)?;
+    }
     // bug修改页面
     let body = bug_update_page(jar.clone(), UpdateToken{
         bug_id,
