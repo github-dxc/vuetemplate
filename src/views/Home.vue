@@ -21,14 +21,13 @@ const enums = ref({
 });
 
 // 根据传入enums的key获取value enum=[{key:1,value:"asd"}]
-function getEnumValue(_enum) {
-  return function(key) {
-    if (_enum && _enum.length > 0) {
-      const item = _enum.find(e => e.key === key);
-      return item ? item.value : key; // 如果找不到对应的key，返回key本身
-    }
-    return key; // 如果_enum为空或未定义，返回key本身
-  };
+function getEnumValue( _enum, key) {
+  if (_enum && _enum.length > 0) {
+    const item = _enum.find(e => e.key === key);
+    console.log("获取枚举值:", key, item);
+    return item ? item.value : key; // 如果找不到对应的key，返回key本身
+  }
+  return key; // 如果_enum为空或未定义，返回key本身
 }
 
 // 一键处理已修正
@@ -59,8 +58,9 @@ onMounted(async () => {
     // 获取枚举数据
     const enumsData = await invoke("api_init_data", { name: "enums" });
     console.log("枚举数据:", enumsData);
+    const v = JSON.parse(enumsData)
     if (enumsData) {
-      enums.value = enumsData;
+      enums.value = v;
     }
     const obj = await invoke("api_bug_list", { });
     console.log(obj);
@@ -111,9 +111,9 @@ listen('timer-tick', (event) => {
         <el-table-column prop="project" label="项目名称" width="80" />
         <el-table-column prop="handler" label="处理人" width="80" />
         <el-table-column prop="summary" label="摘要" width="200" />
-        <el-table-column prop="priority" label="优先级" width="80">
+        <el-table-column prop="priority" label="状态" width="80">
           <template #default="scope">
-            {{ getEnumValue(enums.Priority)(scope.row.priority) }}
+            {{ getEnumValue(enums.Status,scope.row.status) }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="180">
