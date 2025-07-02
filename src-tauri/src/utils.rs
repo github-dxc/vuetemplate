@@ -2,6 +2,7 @@ use crate::model::*;
 use crate::enums::*;
 
 use std::sync::Arc;
+use std::time::Duration;
 use url::Url;
 use reqwest::header::{
     HeaderMap, HeaderValue, ACCEPT, ACCEPT_LANGUAGE, CONNECTION, REFERER, ORIGIN,
@@ -44,6 +45,7 @@ pub async fn login(jar: Arc<Jar>,username: &str, password: &str) -> Result<Strin
 
     // 创建 reqwest 客户端
     let client = Client::builder()
+        .timeout(Duration::from_secs(2))
         .cookie_provider(jar)
         .danger_accept_invalid_certs(true) // --insecure
         .default_headers(headers)
@@ -85,6 +87,7 @@ pub async fn my_view_page(jar: Arc<Jar>) -> Result<String, Box<dyn std::error::E
 
     // 创建 reqwest 客户端
     let client = Client::builder()
+        .timeout(Duration::from_secs(2))
         .cookie_provider(jar)
         .danger_accept_invalid_certs(true) // --insecure
         .default_headers(headers)
@@ -122,6 +125,7 @@ pub async fn view_all_set(jar: Arc<Jar>,params: FindBugListParams) -> Result<Str
 
     // 创建 reqwest 客户端
     let client = Client::builder()
+        .timeout(Duration::from_secs(2))
         .cookie_provider(jar)
         .danger_accept_invalid_certs(true) // --insecure
         .default_headers(headers)
@@ -157,6 +161,7 @@ pub async fn my_view_detail(jar: Arc<Jar>,id: i64) -> Result<String, String> {
 
     // 创建 reqwest 客户端
     let client = Client::builder()
+        .timeout(Duration::from_secs(2))
         .cookie_provider(jar)
         .danger_accept_invalid_certs(true) // --insecure
         .default_headers(headers)
@@ -187,6 +192,7 @@ pub async fn bug_update_page(jar: Arc<Jar>,bug: UpdateToken) -> Result<String, S
 
     // 创建 reqwest 客户端
     let client = Client::builder()
+        .timeout(Duration::from_secs(2))
         .cookie_provider(jar)
         .danger_accept_invalid_certs(true) // --insecure
         .default_headers(headers)
@@ -217,6 +223,7 @@ pub async fn bug_update(jar: Arc<Jar>,bug: UpdateBug) -> Result<String, String> 
 
     // 创建 reqwest 客户端
     let client = Client::builder()
+        .timeout(Duration::from_secs(2))
         .cookie_provider(jar)
         .danger_accept_invalid_certs(true) // --insecure
         .default_headers(headers)

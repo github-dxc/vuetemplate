@@ -13,11 +13,17 @@ use std::collections::HashMap;
 use scraper::{Html};
 use tokio::time::{interval, Duration};
 use chrono::Utc;
+use env_logger;
+use log::{info, warn, debug};
 
 
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // 初始化日志实现库
+    env_logger::Builder::new()
+        .filter_level(log::LevelFilter::Info) // 设置日志级别为 Debug
+        .init();
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
         .manage(Mutex::new(MyState::default())) // 注册全局状态
@@ -92,16 +98,19 @@ async fn api_logout(app: AppHandle) -> Result<(), String> {
 async fn api_bug_list(app: AppHandle) -> Result<BugList, String> {
     let (logined, jar) = {
         let state = app.state::<Mutex<MyState>>();
-        let my_state = state.lock().map_err(|e|format!("error:{}",e))?;
+        let mut my_state = state.lock().map_err(|e|format!("error:{}",e))?;
+        
+        my_state.logined = Arc::new(true); // 模拟登录状态
         (my_state.logined.clone(), my_state.jar.clone())
     };
+    let body = include_str!("view_all_set.html").to_string();//模拟查询数据
     if !*logined {
         return Err("未登录".to_string());
     }
     let param_str = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器";
     let param = serde_html_form::from_str::<FindBugListParams>(param_str).map_err(|e|format!("serde_html_form err:{}",e))?;
     // 查询列表
-    let body = view_all_set(jar.clone(), param.clone()).await.map_err(|e|format!("view_all_set err:{}",e))?;
+    // let body = view_all_set(jar.clone(), param.clone()).await.map_err(|e|format!("view_all_set err:{}",e))?;
     // 解析数据
     let data = view_all_set_data(&Html::parse_document(body.as_str())).map_err(|e|format!("view_all_set_data err:{}",e))?;
 
@@ -185,7 +194,7 @@ fn start_timer(app: AppHandle) {
         let mut ticker = interval(Duration::from_secs(5));
         // let param = FindBugListParams::default();
         let param_str = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器";
-        let result = serde_html_form::from_str::<FindBugListParams>(param_str).map_err(|e|println!("serde_html_form err:{}",e));
+        let result = serde_html_form::from_str::<FindBugListParams>(param_str).map_err(|e|info!("serde_html_form err:{}",e));
         let param  = result.unwrap_or_default();
         loop {
             ticker.tick().await;
@@ -199,14 +208,14 @@ fn start_timer(app: AppHandle) {
             };
             // 如果未登录，则跳过
             if !*logined {
-                println!("未登录，跳过定时任务");
+                info!("未登录，跳过定时任务");
                 continue;
             }
             // 查询列表
             let body = match view_all_set(jar.clone(), param.clone()).await {
                 Ok(b) => b,
                 Err(e) => {
-                    println!("查询列表失败: {}", e);
+                    info!("查询列表失败: {}", e);
                     continue;
                 }
             };
@@ -215,7 +224,7 @@ fn start_timer(app: AppHandle) {
             let data = match view_all_set_data(&Html::parse_document(body.as_str())) {
                 Ok(d) => d,
                 Err(e) => {
-                    println!("解析数据失败: {}", e);
+                    info!("解析数据失败: {}", e);
                     continue;
                 }
             };
@@ -223,7 +232,7 @@ fn start_timer(app: AppHandle) {
             let resp = match serde_json::to_string(&data) {
                 Ok(s) => s,
                 Err(e) => {
-                    println!("序列化数据失败: {}", e);
+                    info!("序列化数据失败: {}", e);
                     continue;
                 }
             };
@@ -231,13 +240,13 @@ fn start_timer(app: AppHandle) {
             if let Ok(my_state) = state.lock(){
                 // 如果和上条一样则不更新
                 if *(my_state.data_hash.clone()) == get_hash(&resp) {
-                    println!("相同数据");
+                    info!("相同数据");
                     continue;
                 }
                 let last_bugs = my_state.last_bugs.clone();
                 let result = last_bugs.lock();
                 if let Ok(mut old_map) = result {
-                    // println!("{:?}",*old_map);
+                    // info!("{:?}",*old_map);
                     let mut new_map = HashMap::new();
                     for b in data.bugs {
                         // 判断旧的列表中是否有这个bug,如果没有则发送通知
@@ -273,7 +282,7 @@ mod tests {
         let result = login(Arc::new(Jar::default()),"dengxiangcheng", "dxc3434DXC").await;
         assert!(result.is_ok());
         if let Ok(text) = result {
-            println!("text: {}", text);
+            info!("text: {}", text);
         }
     }
     
@@ -283,14 +292,14 @@ mod tests {
         let result = login(jar.clone(),"dengxiangcheng", "dxc3434DXC").await;
         assert!(result.is_ok(), "Login failed");
         let ck = find_jar_cookies(&jar, "MANTIS_STRING_COOKIE").unwrap();
-        println!("MANTIS_STRING_COOKIE: {}", ck);
+        info!("MANTIS_STRING_COOKIE: {}", ck);
         let result = my_view_page(jar.clone()).await;
         assert!(result.is_ok());
         let body = result.unwrap();
         find_all_tasks(body.as_str(), "#resolved .widget-body .my-buglist-bug td a").unwrap()
         .iter()
         .for_each(|task| {
-            println!("task: {}", task);
+            info!("task: {}", task);
         });
     }
 
@@ -306,17 +315,17 @@ mod tests {
         let result = view_all_set(jar, result.unwrap()).await;
         assert!(result.is_ok());
         let body = result.unwrap();
-        // println!("body: {}", body);
+        // info!("body: {}", body);
 
 
         let r = view_all_set_data(&Html::parse_document(body.as_str()));
         let data = r.unwrap();
         for a in data.bugs {
-            println!("Summary: {:?}", a);
+            info!("Summary: {:?}", a);
         }
-        println!("Total: {}", data.total);
-        println!("Page: {}", data.page);
-        println!("Limit: {}", data.limit);
+        info!("Total: {}", data.total);
+        info!("Page: {}", data.page);
+        info!("Limit: {}", data.limit);
     }
 
     #[tokio::test]
@@ -327,7 +336,7 @@ mod tests {
         let r = view_all_set_data(&document);
         assert!(r.is_ok());
         let data = r.unwrap();
-        println!("Summary: {:?}", data);
+        info!("Summary: {:?}", data);
     }
 
     #[tokio::test]
@@ -338,7 +347,7 @@ mod tests {
         let r = my_view_detail_data(&document);
         assert!(r.is_ok());
         let data = r.unwrap();
-        println!("Summary: {:?}", data);
+        info!("Summary: {:?}", data);
     }
 
 }

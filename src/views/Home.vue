@@ -20,6 +20,19 @@ const enums = ref({
   Category: []
 });
 
+// 定义每行的class
+const tableRowClassName = ({
+  row,
+  rowIndex,
+}) => {
+  if (rowIndex === 1) {
+    return 'warning-row'
+  } else if (rowIndex === 3) {
+    return 'success-row'
+  }
+  return ''
+}
+
 // 根据传入enums的key获取value enum=[{key:1,value:"asd"}]
 function getEnumValue( _enum, key) {
   if (_enum && _enum.length > 0) {
@@ -101,16 +114,22 @@ listen('timer-tick', (event) => {
         <span>Bug 列表</span>
       </div>
 
-      <el-table :data="bugList" style="width: 100%">
+      <el-table :data="bugList" style="width: 100%;font-size: 12px" :row-class-name="tableRowClassName">
         <el-table-column label="ID" width="60" >
           <template #default="scope">
             <el-link type="primary" :href="'http://bug.test.com/view.php?id=' + scope.row.bug_id" target="_blank">{{ scope.row.bug_id }}</el-link>
           </template>
         </el-table-column>
 
-        <el-table-column prop="project" label="项目名称" width="80" />
+        <el-table-column prop="project" label="项目名称" width="100" />
         <el-table-column prop="handler" label="处理人" width="80" />
-        <el-table-column prop="summary" label="摘要" width="200" />
+        <el-table-column prop="summary" label="摘要" width="200" show-overflow-tooltip>
+          <template #default="scope">
+            <div class="multi-line-ellipsis">
+              {{ scope.row.summary }}
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column prop="priority" label="状态" width="80">
           <template #default="scope">
             {{ getEnumValue(enums.Status,scope.row.status) }}
@@ -142,4 +161,20 @@ listen('timer-tick', (event) => {
   margin-top: 20px;
 }
 
+.multi-line-ellipsis {
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* 限制显示两行 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal; /* 允许换行 */
+}
+
+::v-deep(.warning-row) {
+  --el-table-tr-bg-color: var(--el-color-warning-light-9);
+}
+
+::v-deep(.success-row) {
+  --el-table-tr-bg-color: var(--el-color-success-light-9);
+}
 </style>
