@@ -83,6 +83,7 @@ function handleSubmit(event) {
           class="greet-input"
           ref="passwordInputRef"
           v-model="password"
+          type="password"
           placeholder="Enter a password..."
           @keyup.enter="nextEvent"
         />

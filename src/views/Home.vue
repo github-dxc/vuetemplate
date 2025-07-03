@@ -25,12 +25,14 @@ const tableRowClassName = ({
   row,
   rowIndex,
 }) => {
-  if (rowIndex === 1) {
-    return 'warning-row'
-  } else if (rowIndex === 3) {
-    return 'success-row'
+  const status = row.status;
+  if (status <= 50 || status === 85) {
+    return 'primary-row';
+  } else if (status === 80 || status === 81 || status === 82) {
+    return 'success-row';
+  } else if (status === 83 || status === 84) {
+    return 'warning-row';
   }
-  return ''
 }
 
 // 根据传入enums的key获取value enum=[{key:1,value:"asd"}]
@@ -41,6 +43,19 @@ function getEnumValue( _enum, key) {
     return item ? item.value : key; // 如果找不到对应的key，返回key本身
   }
   return key; // 如果_enum为空或未定义，返回key本身
+}
+
+// 根据状态获取颜色
+function getStatusColor(status) {
+  if (status <= 50 || status === 85) {
+    return 'primary';
+  } else if (status === 80 || status === 81 || status === 82) {
+    return 'success';
+  } else if (status === 83 || status === 84) {
+    return 'warning';
+  } else if (status === 90) {
+    return 'info';
+  }
 }
 
 // 一键处理已修正
@@ -132,11 +147,23 @@ listen('timer-tick', (event) => {
         </el-table-column>
         <el-table-column prop="priority" label="状态" width="80">
           <template #default="scope">
-            {{ getEnumValue(enums.Status,scope.row.status) }}
+            <el-tag :type="getStatusColor(scope.row.status)">{{ getEnumValue(enums.Status,scope.row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="180">
           <template #default="scope">
+            <el-dropdown split-button type="primary" @click="handleClick" @command="handleCommand" size="small">
+              已修正
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item>不修改</el-dropdown-item>
+                  <el-dropdown-item>Action 2</el-dropdown-item>
+                  <el-dropdown-item>Action 3</el-dropdown-item>
+                  <el-dropdown-item divided>Action 4</el-dropdown-item>
+                  <el-dropdown-item>Action 5</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
             <el-button type="success" size="small" @click="revisedHandle(scope.row.bug_id)" plain>已修正</el-button>
             <el-button type="warning" size="small" @click="notReviseHandle(scope.row.bug_id)" plain>不修改</el-button>
           </template>
@@ -177,4 +204,9 @@ listen('timer-tick', (event) => {
 ::v-deep(.success-row) {
   --el-table-tr-bg-color: var(--el-color-success-light-9);
 }
+
+::v-deep(.primary-row) {
+  --el-table-tr-bg-color: var(--el-color-primary-light-9);
+}
+
 </style>
