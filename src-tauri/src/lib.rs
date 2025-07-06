@@ -1,22 +1,21 @@
+mod enums;
 mod model;
 mod utils;
-mod enums;
 
-use model::*;
-use utils::*;
 use enums::*;
-use tauri::{AppHandle, Emitter, Manager};
-use std::sync::{Arc,Mutex};
-use reqwest::cookie::{Jar};
-use tauri_plugin_notification::{NotificationExt, PermissionState};
-use std::collections::HashMap;
-use scraper::{Html};
-use tokio::time::{interval, Duration};
+use utils::*;
+use model::*;
 use chrono::Utc;
 use env_logger;
-use log::{info, warn, debug};
-
-
+use log::{debug, info, warn};
+use reqwest::cookie::Jar;
+use scraper::Html;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use tauri::{AppHandle, Emitter, Manager};
+use tauri_plugin_notification::{NotificationExt, PermissionState};
+use tokio::time::{interval, Duration};
+use tauri_plugin_updater::UpdaterExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -25,13 +24,26 @@ pub fn run() {
         .filter_level(log::LevelFilter::Info) // 设置日志级别为 Debug
         .init();
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_notification::init())
         .manage(Mutex::new(MyState::default())) // 注册全局状态
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![api_init_data, api_login, api_logout, api_bug_list, api_update_bug])
-        .setup(|app|{
-            let handle = app.handle();
-            start_timer(handle.clone());
+        .invoke_handler(tauri::generate_handler![
+            api_init_data,
+            api_login,
+            api_logout,
+            api_bug_list,
+            api_update_bug
+        ])
+        .setup(|app| {
+            let handle1 = app.handle().clone();
+            let handle2 = app.handle().clone();
+            //是否更新
+            tauri::async_runtime::spawn(async move {
+                update(handle1).await.unwrap_or_else(|e|info!("error:{}",e));
+              });
+            //启动定时任务
+            start_timer(handle2.clone());
             Ok(())
         })
         .run(tauri::generate_context!())
@@ -44,12 +56,12 @@ struct MyState {
     logined: Arc<bool>, // 是否登录
     jar: Arc<Jar>,
     last_bugs: Arc<Mutex<HashMap<i64, Bug>>>, //bugs列表
-    data_hash:  Arc<u64>,
+    data_hash: Arc<u64>,
 }
 
 // 初始化数据
 #[tauri::command]
-fn api_init_data(_app: AppHandle) -> String { 
+fn api_init_data(_app: AppHandle) -> String {
     let mut hm = HashMap::new();
     hm.insert("Priority", Priority::kv());
     hm.insert("Severity", Severity::kv());
@@ -59,7 +71,7 @@ fn api_init_data(_app: AppHandle) -> String {
     hm.insert("Project", Project::kv());
     hm.insert("Status", Status::kv());
     hm.insert("Resolution", Resolution::kv());
-    serde_json::to_string(&hm).unwrap_or_else(|_|"{}".to_string())
+    serde_json::to_string(&hm).unwrap_or_else(|_| "{}".to_string())
 }
 
 // 登录
@@ -98,31 +110,38 @@ async fn api_logout(app: AppHandle) -> Result<(), String> {
 async fn api_bug_list(app: AppHandle) -> Result<BugList, String> {
     let (logined, jar) = {
         let state = app.state::<Mutex<MyState>>();
-        let mut my_state = state.lock().map_err(|e|format!("error:{}",e))?;
-        
+        let mut my_state = state.lock().map_err(|e| format!("error:{}", e))?;
+
         my_state.logined = Arc::new(true); // 模拟登录状态
         (my_state.logined.clone(), my_state.jar.clone())
     };
-    let body = include_str!("view_all_set.html").to_string();//模拟查询数据
+    let body = include_str!("view_all_set.html").to_string(); //模拟查询数据
     if !*logined {
         return Err("未登录".to_string());
     }
     let param_str = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器";
-    let param = serde_html_form::from_str::<FindBugListParams>(param_str).map_err(|e|format!("serde_html_form err:{}",e))?;
+    let param = serde_html_form::from_str::<FindBugListParams>(param_str)
+        .map_err(|e| format!("serde_html_form err:{}", e))?;
     // 查询列表
     // let body = view_all_set(jar.clone(), param.clone()).await.map_err(|e|format!("view_all_set err:{}",e))?;
     // 解析数据
-    let data = view_all_set_data(&Html::parse_document(body.as_str())).map_err(|e|format!("view_all_set_data err:{}",e))?;
+    let data = view_all_set_data(&Html::parse_document(body.as_str()))
+        .map_err(|e| format!("view_all_set_data err:{}", e))?;
 
     Ok(data)
 }
 
 // 修改bug
 #[tauri::command]
-async fn api_update_bug(app: AppHandle,bug_id: i64,status: i64,resolution: i64) -> Result<String, String> {
+async fn api_update_bug(
+    app: AppHandle,
+    bug_id: i64,
+    status: i64,
+    resolution: i64,
+) -> Result<String, String> {
     let (logined, jar) = {
         let state = app.state::<Mutex<MyState>>();
-        let my_state = state.lock().map_err(|e|format!("error:{}",e))?;
+        let my_state = state.lock().map_err(|e| format!("error:{}", e))?;
         (my_state.logined.clone(), my_state.jar.clone())
     };
     if !*logined {
@@ -138,28 +157,32 @@ async fn api_update_bug(app: AppHandle,bug_id: i64,status: i64,resolution: i64) 
         bug_info = my_view_detail_data(&document)?;
     }
     // bug修改页面
-    let body = bug_update_page(jar.clone(), UpdateToken{
-        bug_id,
-        bug_update_token,
-    }).await?;
+    let body = bug_update_page(
+        jar.clone(),
+        UpdateToken {
+            bug_id,
+            bug_update_token,
+        },
+    )
+    .await?;
     let bug_update_token = bug_update_token_data(&Html::parse_document(body.as_str()))?;
     // 提交bug
     let now = Utc::now();
-    let bug = UpdateBug{ 
-        bug_update_token, 
-        bug_id, 
-        last_updated: now.timestamp(), 
-        category_id: bug_info.category_id, 
-        view_state: bug_info.view_state, 
-        handler_id: bug_info.handler_id, 
-        priority: bug_info.priority, 
-        severity: bug_info.severity, 
-        reproducibility: bug_info.reproducibility, 
-        status: status, 
-        resolution: resolution, 
-        summary: bug_info.summary, 
-        description: bug_info.description, 
-        additional_information: "".to_string(), 
+    let bug = UpdateBug {
+        bug_update_token,
+        bug_id,
+        last_updated: now.timestamp(),
+        category_id: bug_info.category_id,
+        view_state: bug_info.view_state,
+        handler_id: bug_info.handler_id,
+        priority: bug_info.priority,
+        severity: bug_info.severity,
+        reproducibility: bug_info.reproducibility,
+        status: status,
+        resolution: resolution,
+        summary: bug_info.summary,
+        description: bug_info.description,
+        additional_information: "".to_string(),
         steps_to_reproduce: "".to_string(),
         bugnote_text: "".to_string(),
     };
@@ -167,16 +190,19 @@ async fn api_update_bug(app: AppHandle,bug_id: i64,status: i64,resolution: i64) 
 }
 
 // 发送通知
-fn send_notify(app: AppHandle,title: &str,content: &str) -> Result<(), String> { 
+fn send_notify(app: AppHandle, title: &str, content: &str) -> Result<(), String> {
     // 检查通知权限
-    let permission = app.notification().permission_state()
+    let permission = app
+        .notification()
+        .permission_state()
         .map_err(|e| format!("获取权限失败: {}", e))?;
     if permission != PermissionState::Granted {
         return Err("通知权限未授予".to_string());
     }
-    
+
     // 创建并发送通知
-    let notification = app.notification()
+    let notification = app
+        .notification()
         .builder()
         .title(title)
         .body(content)
@@ -194,8 +220,9 @@ fn start_timer(app: AppHandle) {
         let mut ticker = interval(Duration::from_secs(5));
         // let param = FindBugListParams::default();
         let param_str = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器";
-        let result = serde_html_form::from_str::<FindBugListParams>(param_str).map_err(|e|info!("serde_html_form err:{}",e));
-        let param  = result.unwrap_or_default();
+        let result = serde_html_form::from_str::<FindBugListParams>(param_str)
+            .map_err(|e| info!("serde_html_form err:{}", e));
+        let param = result.unwrap_or_default();
         loop {
             ticker.tick().await;
             // 判断是否登录
@@ -237,7 +264,7 @@ fn start_timer(app: AppHandle) {
                 }
             };
             // 把最新的bug放进全局状态
-            if let Ok(my_state) = state.lock(){
+            if let Ok(my_state) = state.lock() {
                 // 如果和上条一样则不更新
                 if *(my_state.data_hash.clone()) == get_hash(&resp) {
                     info!("相同数据");
@@ -250,12 +277,28 @@ fn start_timer(app: AppHandle) {
                     let mut new_map = HashMap::new();
                     for b in data.bugs {
                         // 判断旧的列表中是否有这个bug,如果没有则发送通知
-                        if old_map.iter().all(|(bgid,bg)| (*bgid != b.bug_id)||(*bgid == b.bug_id && bg.status != b.status)){
-                            if matches!(Status::from(b.status), Status::New | Status::Feedback | Status::Acknowledged | Status::Confirmed | Status::Assigned) {
+                        if old_map.iter().all(|(bgid, bg)| {
+                            (*bgid != b.bug_id) || (*bgid == b.bug_id && bg.status != b.status)
+                        }) {
+                            if matches!(
+                                Status::from(b.status),
+                                Status::New
+                                    | Status::Feedback
+                                    | Status::Acknowledged
+                                    | Status::Confirmed
+                                    | Status::Assigned
+                            ) {
                                 let _ = send_notify(
-                                    app.clone(), 
-                                    format!(" {} | {} - {} -> {}",b.project,Category::from(b.category_id).as_str(),Severity::from(b.severity).as_str(),b.handler).as_str(),
-                                    b.summary.as_str()
+                                    app.clone(),
+                                    format!(
+                                        " {} | {} - {} -> {}",
+                                        b.project,
+                                        Category::from(b.category_id).as_str(),
+                                        Severity::from(b.severity).as_str(),
+                                        b.handler
+                                    )
+                                    .as_str(),
+                                    b.summary.as_str(),
                                 );
                             }
                         };
@@ -263,7 +306,7 @@ fn start_timer(app: AppHandle) {
                     }
                     *old_map = new_map;
                 }
-            }else {
+            } else {
                 continue;
             };
             // 向前端所有窗口广播消息
@@ -272,41 +315,67 @@ fn start_timer(app: AppHandle) {
     });
 }
 
+// 更新器
+async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
+    if let Some(update) = app.updater()?.check().await? {
+        let mut downloaded = 0;
+
+        // alternatively we could also call update.download() and update.install() separately
+        update
+        .download_and_install(
+            |chunk_length, content_length| {
+            downloaded += chunk_length;
+            println!("downloaded {downloaded} from {content_length:?}");
+            },
+            || {
+            println!("download finished");
+            },
+        )
+        .await?;
+
+        println!("update installed");
+        app.restart();
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use scraper::{Html};
+    use scraper::Html;
 
     #[tokio::test]
     async fn test_login() {
-        let result = login(Arc::new(Jar::default()),"dengxiangcheng", "dxc3434DXC").await;
+        let result = login(Arc::new(Jar::default()), "dengxiangcheng", "dxc3434DXC").await;
         assert!(result.is_ok());
         if let Ok(text) = result {
             info!("text: {}", text);
         }
     }
-    
+
     #[tokio::test]
     async fn test_my_view_page() {
         let jar = Arc::new(Jar::default());
-        let result = login(jar.clone(),"dengxiangcheng", "dxc3434DXC").await;
+        let result = login(jar.clone(), "dengxiangcheng", "dxc3434DXC").await;
         assert!(result.is_ok(), "Login failed");
         let ck = find_jar_cookies(&jar, "MANTIS_STRING_COOKIE").unwrap();
         info!("MANTIS_STRING_COOKIE: {}", ck);
         let result = my_view_page(jar.clone()).await;
         assert!(result.is_ok());
         let body = result.unwrap();
-        find_all_tasks(body.as_str(), "#resolved .widget-body .my-buglist-bug td a").unwrap()
-        .iter()
-        .for_each(|task| {
-            info!("task: {}", task);
-        });
+        find_all_tasks(body.as_str(), "#resolved .widget-body .my-buglist-bug td a")
+            .unwrap()
+            .iter()
+            .for_each(|task| {
+                info!("task: {}", task);
+            });
     }
 
     #[tokio::test]
     async fn test_view_all_set() {
         let jar = Arc::new(Jar::default());
-        let result = login(jar.clone(),"dengxiangcheng", "dxc3434DXC").await;
+        let result = login(jar.clone(), "dengxiangcheng", "dxc3434DXC").await;
         assert!(result.is_ok(), "Login failed");
 
         let param_str = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=29&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=-2&status[]=0&resolution[]=0&filter_by_last_updated_date=1&last_updated_start_month=6&last_updated_start_day=1&last_updated_start_year=2025&last_updated_end_month=6&last_updated_end_day=20&last_updated_end_year=2025&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器";
@@ -316,7 +385,6 @@ mod tests {
         assert!(result.is_ok());
         let body = result.unwrap();
         // info!("body: {}", body);
-
 
         let r = view_all_set_data(&Html::parse_document(body.as_str()));
         let data = r.unwrap();
@@ -349,5 +417,4 @@ mod tests {
         let data = r.unwrap();
         info!("Summary: {:?}", data);
     }
-
 }
