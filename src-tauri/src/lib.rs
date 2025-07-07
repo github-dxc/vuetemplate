@@ -3,6 +3,7 @@ mod model;
 mod utils;
 
 use enums::*;
+use url::Url;
 use utils::*;
 use model::*;
 use chrono::Utc;
@@ -39,11 +40,9 @@ pub fn run() {
             let handle1 = app.handle().clone();
             let handle2 = app.handle().clone();
             //是否更新
-            tauri::async_runtime::spawn(async move {
-                update(handle1).await.unwrap_or_else(|e|info!("error:{}",e));
-              });
+            update_app(handle1);
             //启动定时任务
-            start_timer(handle2.clone());
+            start_timer(handle2);
             Ok(())
         })
         .run(tauri::generate_context!())
@@ -316,11 +315,23 @@ fn start_timer(app: AppHandle) {
 }
 
 // 更新器
-async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
-    if let Some(update) = app.updater()?.check().await? {
-        let mut downloaded = 0;
+fn update_app(app: tauri::AppHandle) {
+    tauri::async_runtime::spawn(async move {
+        update(app).await.unwrap_or_else(|e|info!("update error:{}",e));
+      });
+}
 
-        // alternatively we could also call update.download() and update.install() separately
+async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
+    if let Some(update) = app
+    .updater_builder()
+    .timeout(Duration::from_secs(30))
+    // .proxy("http://127.0.0.1:7897".parse::<Url>().expect("invalid URL"))
+    .build()?
+    .check()
+    .await?
+    {
+
+        let mut downloaded = 0;
         update
         .download_and_install(
             |chunk_length, content_length| {
