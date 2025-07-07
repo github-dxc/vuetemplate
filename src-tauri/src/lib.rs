@@ -98,19 +98,19 @@ async fn api_logout(app: AppHandle) -> Result<(), String> {
 async fn api_bug_list(app: AppHandle) -> Result<BugList, String> {
     let (logined, jar) = {
         let state = app.state::<Mutex<MyState>>();
-        let mut my_state = state.lock().map_err(|e|format!("error:{}",e))?;
+        let my_state = state.lock().map_err(|e|format!("error:{}",e))?;
         
-        my_state.logined = Arc::new(true); // 模拟登录状态
+        // my_state.logined = Arc::new(true); // 模拟登录状态
         (my_state.logined.clone(), my_state.jar.clone())
     };
-    let body = include_str!("view_all_set.html").to_string();//模拟查询数据
+    // let body = include_str!("view_all_set.html").to_string();//模拟查询数据
     if !*logined {
         return Err("未登录".to_string());
     }
     let param_str = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器";
     let param = serde_html_form::from_str::<FindBugListParams>(param_str).map_err(|e|format!("serde_html_form err:{}",e))?;
     // 查询列表
-    // let body = view_all_set(jar.clone(), param.clone()).await.map_err(|e|format!("view_all_set err:{}",e))?;
+    let body = view_all_set(jar.clone(), param.clone()).await.map_err(|e|format!("view_all_set err:{}",e))?;
     // 解析数据
     let data = view_all_set_data(&Html::parse_document(body.as_str())).map_err(|e|format!("view_all_set_data err:{}",e))?;
 
