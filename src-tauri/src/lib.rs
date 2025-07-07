@@ -110,12 +110,12 @@ async fn api_logout(app: AppHandle) -> Result<(), String> {
 async fn api_bug_list(app: AppHandle) -> Result<BugList, String> {
     let (logined, jar) = {
         let state = app.state::<Mutex<MyState>>();
-        let mut my_state = state.lock().map_err(|e| format!("error:{}", e))?;
+        let my_state = state.lock().map_err(|e| format!("error:{}", e))?;
 
-        my_state.logined = Arc::new(true); // 模拟登录状态
+        // my_state.logined = Arc::new(true); // 模拟登录状态
         (my_state.logined.clone(), my_state.jar.clone())
     };
-    let body = include_str!("view_all_set.html").to_string(); //模拟查询数据
+    // let body = include_str!("view_all_set.html").to_string(); //模拟查询数据
     if !*logined {
         return Err("未登录".to_string());
     }
