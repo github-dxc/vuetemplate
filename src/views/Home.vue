@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from '@tauri-apps/api/event';
 import { useRouter } from 'vue-router';
@@ -20,30 +20,23 @@ const enums = ref({
   Category: []
 });
 
-// 定义每行的class
-const tableRowClassName = ({
-  row,
-  rowIndex,
-}) => {
-  const status = row.status;
-  if (status <= 50 || status === 85) {
-    return 'primary-row';
-  } else if (status === 80 || status === 81 || status === 82) {
-    return 'success-row';
-  } else if (status === 83 || status === 84) {
-    return 'warning-row';
-  }
-}
+// 获取Status的值
+const bugStatus = computed(() => {
+  const myMap = new Map();
+  enums.value.Status.forEach(item => {
+    myMap.set(item.key, item.value);
+  });
+  return myMap;
+})
 
-// 根据传入enums的key获取value enum=[{key:1,value:"asd"}]
-function getEnumValue( _enum, key) {
-  if (_enum && _enum.length > 0) {
-    const item = _enum.find(e => e.key === key);
-    console.log("获取枚举值:", key, item);
-    return item ? item.value : key; // 如果找不到对应的key，返回key本身
-  }
-  return key; // 如果_enum为空或未定义，返回key本身
-}
+// 获取Severity的值
+const bugSeverity = computed(() => {
+  const myMap = new Map();
+  enums.value.Severity.forEach(item => {
+    myMap.set(item.key, item.value);
+  });
+  return myMap;
+})
 
 // 根据状态获取颜色
 function getStatusColor(status) {
@@ -58,25 +51,54 @@ function getStatusColor(status) {
   }
 }
 
-// 一键处理已修正
-async function revisedHandle(bug_id) {
-  try {
-    const result = await invoke("api_update_bug", { bug_id: bug_id, status: 81, resolution: 20 });
-    console.log("更新成功", result);
-  } catch (error) {
-    // 更新成功
-    console.error("更新成功");
+// 获取可操作的状态
+const workableStatus =  {
+  10: [50, 90],
+  20: [50, 90],
+  30: [50, 90],
+  40: [50, 90],
+  50: [80, 81, 83, 84],
+  80: [81, 83, 84],
+  81: [82, 90, 85],
+  82: [90, 85],
+  83: [84, 85],
+  84: [90],
+  85: [80, 81, 83, 84],
+  90: [85],
+}
+
+// 获取优先级自定义显示文本
+const priorityText = {
+  10: '-',
+  20: '🔥',
+  30: '🔥',
+  40: '🔥🔥',
+  50: '🔥🔥🔥',
+  60: '🔥🔥🔥🔥',
+}
+
+// 定义每行的class
+const tableRowClassName = ({
+  row,
+  rowIndex,
+}) => {
+  const status = row.status;
+  if (status <= 50 || status === 85) {
+    return 'warning-row';
+  } else if (status === 80 || status === 81) {
+    return 'primary-row';
+  } else if (status === 82) {
+    return 'success-row';
   }
 }
 
-// 一键处理不修改
-async function notReviseHandle(bug_id) {
+async function handleCommand(command) {
+  console.log("处理命令:", command);
   try {
-    const result = await invoke("api_update_bug", { bug_id: bug_id, status: 83, resolution: 70 });
+    const result = await invoke("api_update_bug", { bug_id: command.bug_id, status: command, resolution: 20 });
     console.log("更新成功", result);
   } catch (error) {
-    // 更新成功
-    console.error("更新成功");
+    console.error("更新失败", error);
   }
 }
 
@@ -90,6 +112,7 @@ onMounted(async () => {
     if (enumsData) {
       enums.value = v;
     }
+    // 获取bug列表
     const obj = await invoke("api_bug_list", { });
     console.log(obj);
     if (obj) {
@@ -130,42 +153,68 @@ listen('timer-tick', (event) => {
       </div>
 
       <el-table :data="bugList" style="width: 100%;font-size: 12px" :row-class-name="tableRowClassName">
-        <el-table-column label="ID" width="60" >
+        <el-table-column label="ID" width="60" header-align="center" >
           <template #default="scope">
             <el-link type="primary" :href="'http://bug.test.com/view.php?id=' + scope.row.bug_id" target="_blank">{{ scope.row.bug_id }}</el-link>
           </template>
         </el-table-column>
 
-        <el-table-column prop="project" label="项目名称" width="100" />
-        <el-table-column prop="handler" label="处理人" width="80" />
-        <el-table-column prop="summary" label="摘要" width="200" show-overflow-tooltip>
+        <el-table-column prop="project" label="项目名称" width="100" header-align="center" />
+
+        <el-table-column label="状态" width="80" header-align="center">
+          <template #default="scope">
+            <el-tag :type="getStatusColor(scope.row.status)">{{ bugStatus.get(scope.row.status) }}</el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="handler" label="处理人" width="60" header-align="center" />
+
+        <el-table-column label="摘要" width="200" show-overflow-tooltip header-align="center" >
           <template #default="scope">
             <div class="multi-line-ellipsis">
               {{ scope.row.summary }}
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="priority" label="状态" width="80">
+
+        <el-table-column label="附件" width="60" header-align="center" >
           <template #default="scope">
-            <el-tag :type="getStatusColor(scope.row.status)">{{ getEnumValue(enums.Status,scope.row.status) }}</el-tag>
+            <div v-if="scope.row.attachments>0">
+              <el-link underline icon="PictureFilled">
+                *{{ scope.row.attachments }}
+              </el-link>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180">
+
+        <el-table-column label="优先级" width="70" header-align="center" >
           <template #default="scope">
-            <el-dropdown split-button type="primary" @click="handleClick" @command="handleCommand" size="small">
-              已修正
+            <el-row gutter="20">
+              <el-col style="text-align: center;">
+                {{ priorityText[scope.row.priority] || '-' }}
+              </el-col>
+            </el-row>
+            <el-row gutter="20">
+              <el-col>
+                <el-tag type="">{{ bugSeverity.get(scope.row.severity) || '-' }}</el-tag>
+              </el-col>
+            </el-row>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="操作" width="150" header-align="center" >
+          <template #default="scope">
+            <el-dropdown split-button type="primary" 
+              @click="handleCommand(workableStatus[scope.row.status][0])" @command="handleCommand">
+              {{ bugStatus.get(workableStatus[scope.row.status][0]) }}
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item>不修改</el-dropdown-item>
-                  <el-dropdown-item>Action 2</el-dropdown-item>
-                  <el-dropdown-item>Action 3</el-dropdown-item>
-                  <el-dropdown-item divided>Action 4</el-dropdown-item>
-                  <el-dropdown-item>Action 5</el-dropdown-item>
+                  <el-dropdown-item v-for="(s, i) in workableStatus[scope.row.status]" :key="s" :command="s" :disabled="i === 0">
+                    {{ bugStatus.get(s) }}
+                  </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
-            <el-button type="success" size="small" @click="revisedHandle(scope.row.bug_id)" plain>已修正</el-button>
-            <el-button type="warning" size="small" @click="notReviseHandle(scope.row.bug_id)" plain>不修改</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -177,9 +226,15 @@ listen('timer-tick', (event) => {
   </main>
 </template>
 
+<style>
+.el-button-group .el-button--primary:first-child {
+  width: 75px;
+}
+</style>
+
 <style scoped>
 .box-card {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 40px auto;
 }
 

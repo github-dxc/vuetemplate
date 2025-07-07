@@ -1,22 +1,22 @@
-use serde::{Serialize,Deserialize};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug,Default,Serialize)]
+#[derive(Debug, Default, Serialize)]
 pub struct Bug {
     pub bug_id: i64,
-    pub issue_notes_count: i64,//问题说明数量
-    pub project_id: i64,//项目id
-    pub project: String,//项目
-    pub category_id: i64,//类别ID
-    pub handler_id: i64,//处理人
-    pub handler: String,//处理人名称
-    pub priority: i64,//优先级
-    pub attachments: i64,//附件计数
-    pub severity: i64,//严重性
-    pub status: i64,//状态
-    pub resolution: i64,//处理状况
-    pub date_submitted: i64,//报告日期
-    pub last_updated: i64,//最后更新时间
-    pub summary: String,//摘要
+    pub issue_notes_count: i64, //问题说明数量
+    pub project_id: i64,        //项目id
+    pub project: String,        //项目
+    pub category_id: i64,       //类别ID
+    pub handler_id: i64,        //处理人
+    pub handler: String,        //处理人名称
+    pub priority: i64,          //优先级
+    pub attachments: i64,       //附件计数
+    pub severity: i64,          //严重性
+    pub status: i64,            //状态
+    pub resolution: i64,        //处理状况
+    pub date_submitted: i64,    //报告日期
+    pub last_updated: i64,      //最后更新时间
+    pub summary: String,        //摘要
 }
 
 #[derive(Serialize, Default)]
@@ -29,20 +29,20 @@ pub struct UpdateToken {
 pub struct UpdateBug {
     pub bug_update_token: String,
     pub bug_id: i64,
-    pub last_updated: i64,//更新时间
+    pub last_updated: i64, //更新时间
     pub category_id: i64,
     pub view_state: i64,
-    pub handler_id: i64,//处理人
-    pub priority: i64,//优先级
-    pub severity: i64,//严重性
-    pub reproducibility: i64,//出现频率
-    pub status: i64,//状态
-    pub resolution: i64,//处理状况
-    pub summary: String,//摘要
-    pub description: String,//描述
-    pub additional_information: String,//附注
-    pub steps_to_reproduce: String,//问题重现步骤
-    pub bugnote_text: String,//问题注释
+    pub handler_id: i64,                //处理人
+    pub priority: i64,                  //优先级
+    pub severity: i64,                  //严重性
+    pub reproducibility: i64,           //出现频率
+    pub status: i64,                    //状态
+    pub resolution: i64,                //处理状况
+    pub summary: String,                //摘要
+    pub description: String,            //描述
+    pub additional_information: String, //附注
+    pub steps_to_reproduce: String,     //问题重现步骤
+    pub bugnote_text: String,           //问题注释
 }
 
 #[derive(Debug, Default, Serialize)]
@@ -53,41 +53,41 @@ pub struct BugList {
     pub limit: i64,
 }
 
-#[derive(Debug,Default,Serialize)]
+#[derive(Debug, Default, Serialize)]
 pub struct BugInfo {
     pub bug_id: i64,
-    pub project_id: i64,//项目id
-    pub project: String,//项目
-    pub category_id: i64,//类别ID
-    pub view_state: i64,//查看权限
-    pub date_submitted: i64,//报告日期
-    pub last_updated: i64,//最后更新时间
-    pub reporter_id: i64,//报告员id
-    pub reporter: String,//报告员
-    pub handler_id: i64,//处理人
-    pub handler: String,//处理人名称
-    pub priority: i64,//优先级
-    pub severity: i64,//严重性
-    pub reproducibility: i64,//出现频率
-    pub status: i64,//状态
-    pub resolution: i64,//处理状况
-    pub summary: String,//摘要
-    pub description: String,//描述
-    pub additional_information: String,//附注
-    pub steps_to_reproduce: String,//问题重现步骤
-    pub tags: String,//标签
-    pub bugnote_notes: Vec<BugNote>,//注释列表
-    pub attachments: Vec<FileInfo>,//附件
+    pub project_id: i64,                //项目id
+    pub project: String,                //项目
+    pub category_id: i64,               //类别ID
+    pub view_state: i64,                //查看权限
+    pub date_submitted: i64,            //报告日期
+    pub last_updated: i64,              //最后更新时间
+    pub reporter_id: i64,               //报告员id
+    pub reporter: String,               //报告员
+    pub handler_id: i64,                //处理人
+    pub handler: String,                //处理人名称
+    pub priority: i64,                  //优先级
+    pub severity: i64,                  //严重性
+    pub reproducibility: i64,           //出现频率
+    pub status: i64,                    //状态
+    pub resolution: i64,                //处理状况
+    pub summary: String,                //摘要
+    pub description: String,            //描述
+    pub additional_information: String, //附注
+    pub steps_to_reproduce: String,     //问题重现步骤
+    pub tags: String,                   //标签
+    pub bugnote_notes: Vec<BugNote>,    //注释列表
+    pub attachments: Vec<FileInfo>,     //附件
 }
 
-#[derive(Debug,Default,Serialize)]
+#[derive(Debug, Default, Serialize)]
 pub struct FileInfo {
     pub size: i64,
     pub url: String,
     pub name: String,
 }
 
-#[derive(Debug,Default,Serialize)]
+#[derive(Debug, Default, Serialize)]
 pub struct BugNote {
     pub note_id: i64,
     pub time: i64,
