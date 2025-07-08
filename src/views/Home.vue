@@ -4,6 +4,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from '@tauri-apps/api/event';
 import { useRouter } from 'vue-router';
 
+//------------------data-------------------//
+
 const router = useRouter()
 const bugList = ref([]);
 const total = ref(0);
@@ -92,39 +94,72 @@ const tableRowClassName = ({
   }
 }
 
-async function handleCommand(command) {
-  console.log("处理命令:", command);
+//------------------api-------------------//
+
+async function api_init_data() {
   try {
-    const result = await invoke("api_update_bug", { bug_id: command.bug_id, status: command, resolution: 20 });
-    console.log("更新成功", result);
+    let data = await invoke("api_init_data", { name: "enums" });
+    console.log("api_init_data:", data);
+    let enumsData = JSON.parse(data)
+    if (enumsData) {
+      enums.value = enumsData;
+    }
   } catch (error) {
-    console.error("更新失败", error);
+    console.log(error);
   }
 }
 
-// 初始化
-onMounted(async () => {
+async function api_bug_list(params) {
   try {
-    // 获取枚举数据
-    const enumsData = await invoke("api_init_data", { name: "enums" });
-    console.log("枚举数据:", enumsData);
-    const v = JSON.parse(enumsData)
-    if (enumsData) {
-      enums.value = v;
-    }
     // 获取bug列表
-    const obj = await invoke("api_bug_list", { });
-    console.log(obj);
-    if (obj) {
-        total.value = parseInt(obj.total) || 0;
-        limit.value = parseInt(obj.limit) || 0;
-        page.value = parseInt(obj.page) || 0;
-        bugList.value = obj.bugs || [];
+    let data = await invoke("api_bug_list",params);
+    console.log("api_init_data:", data);
+    if (data) {
+        total.value = parseInt(data.total) || 0;
+        limit.value = parseInt(data.limit) || 0;
+        page.value = parseInt(data.page) || 0;
+        bugList.value = data.bugs || [];
     }
   } catch (error) {
     console.log(error);
     router.push("/login");
   }
+}
+
+async function handleCommand(command) {
+  if (!(command.status && command.bug_id)){
+    return
+  }
+  console.log("处理命令:", command);
+  let status = command.status;
+  let bug_id = command.bug_id;
+  try {
+    let resolution = 0;
+    if (status === 80 || status === 81 || status === 82) {
+      resolution = 20;
+    }else if (status === 83) {
+      resolution = 90;
+    }else if (status === 84) {
+      resolution = 80;
+    }else if (status === 85) {
+      resolution = 30;
+    }
+    const result = await invoke("api_update_bug", { bug_id: bug_id, status: status, resolution: resolution });
+    console.log("更新成功", result);
+    api_bug_list({});
+  } catch (error) {
+    console.error("更新失败", error);
+  }
+}
+
+//------------------vue/tauri-------------------//
+
+// 初始化
+onMounted(async () => {
+    // 初始化枚举数据
+    api_init_data()
+    // 查询bug列表
+    api_bug_list({})
 });
 
 // 监听rust发送的消息
@@ -205,11 +240,11 @@ listen('timer-tick', (event) => {
         <el-table-column label="操作" width="150" header-align="center" >
           <template #default="scope">
             <el-dropdown split-button type="primary" 
-              @click="handleCommand(workableStatus[scope.row.status][0])" @command="handleCommand">
+              @click="handleCommand({status: workableStatus[scope.row.status][0],bug_id: scope.row.bug_id})" @command="handleCommand">
               {{ bugStatus.get(workableStatus[scope.row.status][0]) }}
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item v-for="(s, i) in workableStatus[scope.row.status]" :key="s" :command="s" :disabled="i === 0">
+                  <el-dropdown-item v-for="(s, i) in workableStatus[scope.row.status]" :key="s" :command="{status: s,bug_id: scope.row.bug_id}" :disabled="i === 0">
                     {{ bugStatus.get(s) }}
                   </el-dropdown-item>
                 </el-dropdown-menu>
