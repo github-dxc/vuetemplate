@@ -142,3 +142,10 @@ pub struct FindBugListParams {
     pub search: String,
     pub filter_submit: String,
 }
+
+#[derive(Debug, Default, Serialize, Clone)]
+pub struct VersionInfo {
+    pub current_version: String,
+    pub version: String,
+    pub target: String,
+}

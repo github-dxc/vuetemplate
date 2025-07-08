@@ -13,7 +13,7 @@ use reqwest::cookie::Jar;
 use scraper::Html;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter, Listener, Manager};
 use tauri_plugin_notification::{NotificationExt, PermissionState};
 use tokio::time::{interval, Duration};
 use tauri_plugin_updater::UpdaterExt;
@@ -314,10 +314,15 @@ fn start_timer(app: AppHandle) {
     });
 }
 
-// 更新器
+// 定时查询更新
 fn update_app(app: tauri::AppHandle) {
     tauri::async_runtime::spawn(async move {
-        update(app).await.unwrap_or_else(|e|info!("update error:{}",e));
+        //5分钟查询一次是否可更新
+        let mut ticker = interval(Duration::from_secs(60));
+        loop {
+            ticker.tick().await;
+            update(app.clone()).await.unwrap_or_else(|e|info!("update error:{}",e));
+        }
       });
 }
 
@@ -330,22 +335,36 @@ async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
     .check()
     .await?
     {
-
-        let mut downloaded = 0;
-        update
-        .download_and_install(
-            |chunk_length, content_length| {
-            downloaded += chunk_length;
-            println!("downloaded {downloaded} from {content_length:?}");
-            },
-            || {
-            println!("download finished");
-            },
-        )
-        .await?;
-
-        println!("update installed");
-        app.restart();
+        // 获取更新版本信息
+        let version_info = serde_json::to_string(&VersionInfo{
+            current_version: update.current_version.clone(),
+            version: update.version.clone(),
+            target: update.target.clone()
+        }).unwrap_or("{}".to_string());
+        info!("version_info: {}",version_info);
+        // 通知前端
+        app.emit_str("app-update", version_info)?;
+        // 接受前端确认
+        app.clone().listen("app-update-result", move |event| {
+            // if event.payload() == "ok" {
+            //     //开始下载
+            //     let ok = tauri::async_runtime::spawn(async move {
+            //         let mut downloaded = 0;
+            //         update.download_and_install(|chunk_length, content_length| {
+            //                 downloaded += chunk_length;
+            //                 println!("downloaded {downloaded} from {content_length:?}");
+            //             },
+            //             || {
+            //                 println!("download finished");
+            //             },
+            //         ).await
+            //     });
+            //     if ok.is_ok() {
+            //         println!("update installed");
+            //         app.restart();
+            //     }
+            // };
+        });
     }
 
     Ok(())
