@@ -34,7 +34,8 @@ pub fn run() {
             api_login,
             api_logout,
             api_bug_list,
-            api_update_bug
+            api_update_bug,
+            api_version_update
         ])
         .setup(|app| {
             let handle1 = app.handle().clone();
@@ -191,93 +192,10 @@ async fn api_update_bug(
     bug_update(jar.clone(), bug).await
 }
 
-// 检查更新
+// 更新应用接口
 #[tauri::command(rename_all = "snake_case")]
-async fn version_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
-    if let Some(update) = app
-    .updater_builder()
-    .timeout(Duration::from_secs(30))
-    // .proxy("http://127.0.0.1:7897".parse::<Url>().expect("invalid URL"))
-    .build()?
-    .check()
-    .await?
-    {
-        // 获取更新版本信息
-        let version_info = VersionInfo {
-            current_version: update.current_version.clone(),
-            version: update.version.clone(),
-            target: update.target.clone(),
-        };
-        
-        let version_info_json = serde_json::to_string(&version_info)
-            .unwrap_or_else(|_| "{}".to_string());
-        
-        info!("version_info: {}", version_info_json);
-
-        // 通知前端
-        app.emit("app-update", version_info)?;
-
-        // 克隆必要的数据给闭包使用
-        let app_clone = app.clone();
-        let update_arc = std::sync::Arc::new(std::sync::Mutex::new(Some(update)));
-        
-        // 监听前端确认
-        app.listen("app-update-result", move |event| {
-            let payload = event.payload();
-            if payload == "ok" {
-                let app_handle = app_clone.clone();
-                let update_mutex = update_arc.clone();
-                
-                // 异步处理下载和安装
-                tauri::async_runtime::spawn(async move {
-                    // 从Arc<Mutex<Option<Update>>>中取出update
-                    let update = {
-                        let mut guard = update_mutex.lock().unwrap();
-                        guard.take()
-                    };
-                    
-                    if let Some(update) = update {
-                        match download_and_install_update(app_handle.clone(), update).await {
-                            Ok(_) => {
-                                info!("update installed successfully");
-                                app_handle.restart();
-                            }
-                            Err(e) => {
-                                warn!("update failed: {}", e);
-                                // 通知前端更新失败
-                                let _ = app_handle.emit("app-update-error", format!("更新失败: {}", e));
-                            }
-                        }
-                    }
-                });
-            }
-        });
-    }
-
-    Ok(())
-}
-
-// 发送通知
-fn send_notify(app: AppHandle, title: &str, content: &str) -> Result<(), String> {
-    // 检查通知权限
-    let permission = app
-        .notification()
-        .permission_state()
-        .map_err(|e| format!("获取权限失败: {}", e))?;
-    if permission != PermissionState::Granted {
-        return Err("通知权限未授予".to_string());
-    }
-
-    // 创建并发送通知
-    let notification = app
-        .notification()
-        .builder()
-        .title(title)
-        .body(content)
-        .icon("icons/icon.ico")
-        .show()
-        .map_err(|e| format!("发送通知失败: {}", e))?;
-    Ok(notification)
+async fn api_version_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<String> {
+    version_update(app).await
 }
 
 // 定时任务
@@ -390,10 +308,73 @@ fn update_app(app: tauri::AppHandle) {
         let mut ticker = interval(Duration::from_secs(60));
         loop {
             ticker.tick().await;
-
-            version_update(app.clone()).await.unwrap_or_else(|e|info!("update error:{}",e));
+            let _ = version_update(app.clone()).await;
         }
     });
+}
+
+// 检查更新
+async fn version_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<String> {
+    if let Some(update) = app
+    .updater()?
+    .check()
+    .await?
+    {
+        // 获取更新版本信息
+        let version_info = VersionInfo {
+            current_version: update.current_version.clone(),
+            version: update.version.clone(),
+            target: update.target.clone(),
+        };
+        
+        let version_info_json = serde_json::to_string(&version_info)
+            .unwrap_or_else(|_| "{}".to_string());
+        
+        info!("version_info: {}", version_info_json);
+
+        // 通知前端
+        app.emit("app-update", version_info)?;
+
+        // 克隆必要的数据给闭包使用
+        let app_clone = app.clone();
+        let update_arc = std::sync::Arc::new(std::sync::Mutex::new(Some(update)));
+        
+        // 监听前端确认
+        app.listen("app-update-result", move |event| {
+            let payload = event.payload();
+            if payload == "ok" {
+                let app_handle = app_clone.clone();
+                let update_mutex = update_arc.clone();
+                
+                // 异步处理下载和安装
+                tauri::async_runtime::spawn(async move {
+                    // 从Arc<Mutex<Option<Update>>>中取出update
+                    let update = {
+                        let mut guard = update_mutex.lock().unwrap();
+                        guard.take()
+                    };
+                    
+                    if let Some(update) = update {
+                        match download_and_install_update(app_handle.clone(), update).await {
+                            Ok(_) => {
+                                info!("update installed successfully");
+                                app_handle.restart();
+                            }
+                            Err(e) => {
+                                warn!("update failed: {}", e);
+                                // 通知前端更新失败
+                                let _ = app_handle.emit("app-update-error", format!("更新失败: {}", e));
+                            }
+                        }
+                    }
+                });
+            }
+        });
+        Ok("updating".to_string())
+    }else {
+        info!("Update API does not require an update.");
+        Ok("latest version".to_string())
+    }
 }
 
 // 单独的下载和安装函数
@@ -424,6 +405,29 @@ async fn download_and_install_update(
     )
     .await
     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
+}
+
+// 发送通知
+fn send_notify(app: AppHandle, title: &str, content: &str) -> Result<(), String> {
+    // 检查通知权限
+    let permission = app
+        .notification()
+        .permission_state()
+        .map_err(|e| format!("获取权限失败: {}", e))?;
+    if permission != PermissionState::Granted {
+        return Err("通知权限未授予".to_string());
+    }
+
+    // 创建并发送通知
+    let notification = app
+        .notification()
+        .builder()
+        .title(title)
+        .body(content)
+        .icon("icons/icon.ico")
+        .show()
+        .map_err(|e| format!("发送通知失败: {}", e))?;
+    Ok(notification)
 }
 
 #[cfg(test)]

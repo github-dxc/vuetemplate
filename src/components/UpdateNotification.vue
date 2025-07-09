@@ -56,9 +56,17 @@ const checkForUpdate = async () => {
   updateProgress.value = 0
   
   try {
-    await invoke('version_update')
+    let msg = await invoke('api_version_update');
+    if (msg === "latest version") {
+      ElNotification({
+        title: '提示',
+        message: `你的版本为最新版本。`,
+        type: 'success',
+        duration: 5000
+      })
+    }
   } catch (error) {
-    console.error('检查更新失败:', error)
+    console.error('api_version_update error:', error)
     ElNotification({
       title: '检查更新失败',
       message: `错误: ${error}`,
