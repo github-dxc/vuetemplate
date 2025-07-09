@@ -40,7 +40,7 @@ const bugSeverity = computed(() => {
   return myMap;
 })
 
-// 根据状态获取颜色
+// 获取Status颜色
 function getStatusColor(status) {
   if (status <= 50 || status === 85) {
     return 'primary';
@@ -50,6 +50,17 @@ function getStatusColor(status) {
     return 'warning';
   } else if (status === 90) {
     return 'info';
+  }
+}
+
+// 获取Severity颜色
+function getSeverityColor(severity) {
+  if (severity <= 30) {
+    return 'primary';
+  } else if (severity <= 50) {
+    return 'warning';
+  } else if (severity >= 60) {
+    return 'error';
   }
 }
 
@@ -215,7 +226,7 @@ listen('timer-tick', (event) => {
         <el-table-column label="附件" width="60" header-align="center" >
           <template #default="scope">
             <div v-if="scope.row.attachments>0">
-              <el-link underline icon="PictureFilled">
+              <el-link icon="PictureFilled">
                 *{{ scope.row.attachments }}
               </el-link>
             </div>
@@ -224,14 +235,14 @@ listen('timer-tick', (event) => {
 
         <el-table-column label="优先级" width="70" header-align="center" >
           <template #default="scope">
-            <el-row gutter="20">
+            <el-row :gutter="20">
               <el-col style="text-align: center;">
                 {{ priorityText[scope.row.priority] || '-' }}
               </el-col>
             </el-row>
-            <el-row gutter="20">
+            <el-row :gutter="20">
               <el-col>
-                <el-tag type="">{{ bugSeverity.get(scope.row.severity) || '-' }}</el-tag>
+                <el-tag :type="getSeverityColor(scope.row.severity)">{{ bugSeverity.get(scope.row.severity) || '-' }}</el-tag>
               </el-col>
             </el-row>
           </template>

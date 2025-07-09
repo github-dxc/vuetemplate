@@ -353,7 +353,7 @@ pub fn find_all_tasks(
 // 查询bug_update_token
 pub fn bug_update_token_data(document: &Html) -> Result<String, String> {
     // 创建选择器
-    let selector = Selector::parse("input[type=\"bug_update_token\"]")
+    let selector = Selector::parse("input[name=\"bug_update_token\"]")
         .map_err(|e| format!("Selector 解析失败: {:?}", e))?;
     document
         .select(&selector)
