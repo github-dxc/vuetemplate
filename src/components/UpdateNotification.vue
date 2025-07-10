@@ -21,10 +21,11 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { ElNotification, ElButton } from 'element-plus'
 import { invoke } from "@tauri-apps/api/core";
-import { listen } from '@tauri-apps/api/event';
+import { emit, listen } from '@tauri-apps/api/event';
 
 // 状态管理
 const isChecking = ref(false)
+const isShowing = ref(false)
 const updateProgress = ref(0)
 const currentUpdateInfo = ref(null)
 
@@ -33,6 +34,7 @@ let updateListener = null
 let progressListener = null
 let errorListener = null
 let finishedListener = null
+let noUpdateListener = null
 
 // 存储设置
 const STORAGE_KEY = 'app_update_settings'
@@ -51,22 +53,17 @@ const saveUserSettings = (settings) => {
 // 检查更新
 const checkForUpdate = async () => {
   if (isChecking.value) return
+
+  // 清空用户设置
+  saveUserSettings({ skipVersion: null, autoUpdate: true });
   
   isChecking.value = true
   updateProgress.value = 0
   
   try {
-    let msg = await invoke('api_version_update');
-    if (msg === "latest version") {
-      ElNotification({
-        title: '提示',
-        message: `你的版本为最新版本。`,
-        type: 'success',
-        duration: 5000
-      })
-    }
+    await invoke('api_check_update');
   } catch (error) {
-    console.error('api_version_update error:', error)
+    console.error('api_check_update error:', error)
     ElNotification({
       title: '检查更新失败',
       message: `错误: ${error}`,
@@ -80,35 +77,36 @@ const checkForUpdate = async () => {
 
 // 显示更新通知
 const showUpdateNotification = (updateInfo) => {
+  if (isShowing.value) return
+  isShowing.value = true
   const userSettings = getUserSettings()
   
   // 检查是否跳过此版本
   if (userSettings.skipVersion === updateInfo.version) {
     console.log(`跳过版本 ${updateInfo.version}`)
+    isShowing.value = false
     return
   }
   
-  // 创建自定义通知内容
-  const notificationContent = `
+  const notification = ElNotification({
+    title: '应用更新',
+    dangerouslyUseHTMLString: true,
+    message: `
     <div style="line-height: 1.6;">
       <p><strong>发现新版本!</strong></p>
       <p>当前版本: ${updateInfo.current_version}</p>
       <p>最新版本: ${updateInfo.version}</p>
       <p>目标平台: ${updateInfo.target}</p>
     </div>
-  `
-  
-  const notification = ElNotification({
-    title: '应用更新',
-    dangerouslyUseHTMLString: true,
-    message: notificationContent,
+  `,
     type: 'info',
-    duration: 0, // 不自动关闭
+    duration: 5000,
     showClose: false, // 隐藏默认关闭按钮
     customClass: 'update-notification',
     onClose: () => {
       // 通知关闭时的处理
       console.log('更新通知已关闭')
+      isShowing.value = false
     }
   })
   
@@ -176,27 +174,23 @@ const confirmUpdate = async (updateInfo) => {
   try {
     currentUpdateInfo.value = updateInfo
     
+    // 通知后端开始下载
+    await invoke('api_download_and_install');
+
     // 显示开始下载的通知
     ElNotification({
       title: '开始下载',
       message: '正在下载更新，请稍候...',
       type: 'info',
-      duration: 3000
+      duration: 2000
     })
-    
-    // 通知后端开始下载
-    await invoke('emit', {
-      event: 'app-update-result',
-      payload: 'ok'
-    })
-    
   } catch (error) {
     console.error('确认更新失败:', error)
     ElNotification({
       title: '更新失败',
       message: `错误: ${error}`,
       type: 'error',
-      duration: 5000
+      duration: 2000
     })
   }
 }
@@ -263,8 +257,8 @@ const handleNoUpdate = () => {
   })
 }
 
-// 设置事件监听器
-const setupEventListeners = async () => {
+// 生命周期钩子
+onMounted(async () => {
   try {
     // 监听更新信息
     updateListener = await listen('app-update', (event) => {
@@ -288,17 +282,17 @@ const setupEventListeners = async () => {
     })
     
     // 监听无更新
-    const noUpdateListener = await listen('app-update-none', () => {
+    noUpdateListener = await listen('app-update-none', () => {
       handleNoUpdate()
     })
     
   } catch (error) {
     console.error('设置事件监听器失败:', error)
   }
-}
+})
 
-// 清理事件监听器
-const cleanupEventListeners = () => {
+onUnmounted(() => {
+  // 清理事件监听器
   if (updateListener) {
     updateListener()
     updateListener = null
@@ -315,23 +309,10 @@ const cleanupEventListeners = () => {
     finishedListener()
     finishedListener = null
   }
-}
-
-// 生命周期钩子
-onMounted(() => {
-  setupEventListeners()
-  
-  // 启动时自动检查更新
-  const settings = getUserSettings()
-  if (settings.autoUpdate) {
-    setTimeout(() => {
-      checkForUpdate()
-    }, 2000) // 延迟2秒检查
+  if (noUpdateListener) {
+    noUpdateListener()
+    noUpdateListener = null
   }
-})
-
-onUnmounted(() => {
-  cleanupEventListeners()
 })
 </script>
 

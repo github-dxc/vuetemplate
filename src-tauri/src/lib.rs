@@ -3,7 +3,6 @@ mod model;
 mod utils;
 
 use enums::*;
-use url::Url;
 use utils::*;
 use model::*;
 use chrono::Utc;
@@ -16,7 +15,7 @@ use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, Listener, Manager};
 use tauri_plugin_notification::{NotificationExt, PermissionState};
 use tokio::time::{interval, Duration};
-use tauri_plugin_updater::UpdaterExt;
+use tauri_plugin_updater::{Update, UpdaterExt};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -35,7 +34,8 @@ pub fn run() {
             api_logout,
             api_bug_list,
             api_update_bug,
-            api_version_update
+            api_check_update,
+            api_download_and_install
         ])
         .setup(|app| {
             let handle1 = app.handle().clone();
@@ -57,6 +57,7 @@ struct MyState {
     jar: Arc<Jar>,
     last_bugs: Arc<Mutex<HashMap<i64, Bug>>>, //bugs列表
     data_hash: Arc<u64>,
+    last_version: Arc<Option<Update>>,
 }
 
 // 初始化数据
@@ -189,10 +190,16 @@ async fn api_update_bug(
     bug_update(jar.clone(), bug).await
 }
 
-// 更新应用接口
+// 检查更新
 #[tauri::command(rename_all = "snake_case")]
-async fn api_version_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<String> {
-    version_update(app).await
+async fn api_check_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
+    check_update(app.clone()).await
+}
+
+// 下载更新
+#[tauri::command(rename_all = "snake_case")]
+async fn api_download_and_install(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
+    download_and_install(app.clone()).await
 }
 
 // 定时任务
@@ -305,103 +312,75 @@ fn update_app(app: tauri::AppHandle) {
         let mut ticker = interval(Duration::from_secs(60));
         loop {
             ticker.tick().await;
-            let _ = version_update(app.clone()).await;
+            let _ = check_update(app.clone()).await;
         }
     });
 }
 
 // 检查更新
-async fn version_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<String> {
+async fn check_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
     if let Some(update) = app
     .updater()?
     .check()
     .await?
     {
+        info!("version_info: old:{} new:{} target:{}", update.current_version,update.version,update.target);
+
         // 获取更新版本信息
         let version_info = VersionInfo {
             current_version: update.current_version.clone(),
             version: update.version.clone(),
             target: update.target.clone(),
         };
-        
-        let version_info_json = serde_json::to_string(&version_info)
-            .unwrap_or_else(|_| "{}".to_string());
-        
-        info!("version_info: {}", version_info_json);
+
+        // 保存到全局状态
+        let state = app.state::<Mutex<MyState>>();
+        let mut my_state = state.lock().map_err(|_| tauri_plugin_updater::Error::Network("保存到全局状态失败".to_string()))?;
+        my_state.last_version = Arc::new(Some(update));
 
         // 通知前端
         app.emit("app-update", version_info)?;
-
-        // 克隆必要的数据给闭包使用
-        let app_clone = app.clone();
-        let update_arc = std::sync::Arc::new(std::sync::Mutex::new(Some(update)));
-        
-        // 监听前端确认
-        app.listen("app-update-result", move |event| {
-            let payload = event.payload();
-            if payload == "ok" {
-                let app_handle = app_clone.clone();
-                let update_mutex = update_arc.clone();
-                
-                // 异步处理下载和安装
-                tauri::async_runtime::spawn(async move {
-                    // 从Arc<Mutex<Option<Update>>>中取出update
-                    let update = {
-                        let mut guard = update_mutex.lock().unwrap();
-                        guard.take()
-                    };
-                    
-                    if let Some(update) = update {
-                        match download_and_install_update(app_handle.clone(), update).await {
-                            Ok(_) => {
-                                info!("update installed successfully");
-                                app_handle.restart();
-                            }
-                            Err(e) => {
-                                warn!("update failed: {}", e);
-                                // 通知前端更新失败
-                                let _ = app_handle.emit("app-update-error", format!("更新失败: {}", e));
-                            }
-                        }
-                    }
-                });
-            }
-        });
-        Ok("updating".to_string())
+        Ok(())
     }else {
-        info!("Update API does not require an update.");
-        Ok("latest version".to_string())
+        // 通知前端
+        app.emit("app-update-none", "")?;
+        Ok(())
     }
 }
 
-// 单独的下载和安装函数
-async fn download_and_install_update(
-    app: tauri::AppHandle,
-    update: tauri_plugin_updater::Update,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+// 下载安装
+async fn download_and_install(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
     let mut downloaded = 0;
-    
-    update.download_and_install(
-        |chunk_length, content_length| {
-            downloaded += chunk_length;
-            info!("downloaded {} from {:?}", downloaded, content_length);
-            
-            // 发送下载进度给前端
-            let progress = if let Some(total) = content_length {
-                (downloaded as f64 / total as f64 * 100.0) as u32
-            } else {
-                0
-            };
-            
-            let _ = app.emit("app-update-progress", progress);
-        },
-        || {
-            info!("download finished");
-            let _ = app.emit("app-update-download-finished", ());
-        },
-    )
-    .await
-    .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
+
+    // 从全局状态拿数据
+    let state = app.state::<Mutex<MyState>>();
+    let my_state = state.lock().map_err(|_| tauri_plugin_updater::Error::ReleaseNotFound)?;
+    let last_version: Arc<Option<Update>> = my_state.last_version.clone();
+    if let Some(update) = last_version.as_ref() {
+        return update.download_and_install(
+            |chunk_length, content_length| {
+                downloaded += chunk_length;
+                info!("downloaded {} from {:?}", downloaded, content_length);
+                
+                // 发送下载进度给前端
+                let progress = if let Some(total) = content_length {
+                    (downloaded as f64 / total as f64 * 100.0) as u32
+                } else {
+                    0
+                };
+                
+                let _ = app.emit("app-update-progress", progress);
+            },
+            || {
+                info!("download finished");
+                let _ = app.emit("app-update-download-finished", ());
+            },
+        ).await.or_else(|e|{
+            let _ = app.emit("app-update-error", format!("{}",e));
+            Err(e)
+        })
+    }
+    Err(tauri_plugin_updater::Error::ReleaseNotFound)
 }
 
 // 发送通知
