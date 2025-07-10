@@ -148,13 +148,12 @@ async fn api_update_bug(
         return Err("未登录".to_string());
     }
     // 查询bug详情
-    let bug_update_token;
+    let bug_update_page_token;
     let bug_info;
     {
         let body = my_view_detail(jar.clone(), bug_id).await?;
         let document = Html::parse_document(body.as_str());
-        println!("body{}",body);
-        bug_update_token = bug_update_token_data(&document)?;
+        bug_update_page_token = get_page_token(&document,"bug_update_page_token")?;
         bug_info = my_view_detail_data(&document)?;
     }
     // bug修改页面
@@ -162,13 +161,11 @@ async fn api_update_bug(
         jar.clone(),
         UpdateToken {
             bug_id,
-            bug_update_token,
+            bug_update_page_token,
         },
     )
     .await?;
-    println!("body:{}",body);
-    let bug_update_token = bug_update_token_data(&Html::parse_document(body.as_str()))?;//bug
-    println!("bugtoken:{}",bug_update_token);
+    let bug_update_token = get_page_token(&Html::parse_document(body.as_str()),"bug_update_token")?;
     // 提交bug
     let now = Utc::now();
     let bug = UpdateBug {
@@ -474,37 +471,104 @@ mod tests {
         let result = view_all_set(jar, result.unwrap()).await;
         assert!(result.is_ok());
         let body = result.unwrap();
-        // info!("body: {}", body);
+        // println!("body: {}", body);
 
         let r = view_all_set_data(&Html::parse_document(body.as_str()));
         let data = r.unwrap();
         for a in data.bugs {
-            info!("Summary: {:?}", a);
+            println!("Summary: {:?}", a);
         }
-        info!("Total: {}", data.total);
-        info!("Page: {}", data.page);
-        info!("Limit: {}", data.limit);
+        println!("Total: {}", data.total);
+        println!("Page: {}", data.page);
+        println!("Limit: {}", data.limit);
+    }
+
+    #[tokio::test]
+    async fn test_update_bug() {
+        let jar = Arc::new(Jar::default());
+        let result = login(jar.clone(), "dengxiangcheng", "dxc3434DXC").await;
+        assert!(result.is_ok(), "Login failed");
+
+        let bug_id = 2457;
+        let status = 81;
+        let resolution = 20;
+
+        // 查询bug详情
+        let bug_update_page_token;
+        let bug_info;
+        {
+            let body = my_view_detail(jar.clone(), bug_id).await.unwrap();
+            let document = Html::parse_document(body.as_str());
+            bug_update_page_token = get_page_token(&document,"bug_update_page_token").unwrap();
+            bug_info = my_view_detail_data(&document).unwrap();
+        }
+        // bug修改页面
+        let body = bug_update_page(
+            jar.clone(),
+            UpdateToken {
+                bug_id,
+                bug_update_page_token,
+            },
+        )
+        .await.unwrap();
+        println!("{}",body);
+        let bug_update_token = get_page_token(&Html::parse_document(body.as_str()),"bug_update_token").unwrap();
+
+        let now = Utc::now();
+        let bug = UpdateBug {
+            bug_update_token,
+            bug_id,
+            last_updated: now.timestamp(),
+            category_id: bug_info.category_id,
+            view_state: bug_info.view_state,
+            handler_id: bug_info.handler_id,
+            priority: bug_info.priority,
+            severity: bug_info.severity,
+            reproducibility: bug_info.reproducibility,
+            status: status,
+            resolution: resolution,
+            summary: bug_info.summary,
+            description: bug_info.description,
+            additional_information: "".to_string(),
+            steps_to_reproduce: "".to_string(),
+            bugnote_text: "".to_string(),
+        };
+        let _ = bug_update(jar.clone(), bug).await.map_or_else(
+            |d|{println!("ok:{}",d);Ok(d)},
+            |e|{println!("err:{}",e);Err(e)}
+        );
     }
 
     #[tokio::test]
     async fn test_view_all_set_data() {
         // 读取view_all_set.html文件内容
-        let html_content = include_str!("view_all_set.html");
+        let html_content = include_str!("./example/view_all_set.html");
         let document = Html::parse_document(html_content);
         let r = view_all_set_data(&document);
         assert!(r.is_ok());
         let data = r.unwrap();
-        info!("Summary: {:?}", data);
+        println!("Summary: {:?}", data);
     }
 
     #[tokio::test]
     async fn test_my_view_detail_data() {
         // 读取view_all_set.html文件内容
-        let html_content = include_str!("view.php.html");
+        let html_content = include_str!("./example/view.php.html");
         let document = Html::parse_document(html_content);
         let r = my_view_detail_data(&document);
         assert!(r.is_ok());
         let data = r.unwrap();
-        info!("Summary: {:?}", data);
+        println!("Summary: {:?}", data);
+    }
+
+    #[tokio::test]
+    async fn test_bug_update_token_data() {
+        // 读取view_all_set.html文件内容
+        let html_content = include_str!("./example/bug_update_page.php.html");
+        let document = Html::parse_document(html_content);
+        let result = get_page_token(&document,"bug_update_token");
+        assert!(result.is_ok());
+        let data = result.unwrap();
+        println!("Summary: {:?}", data);
     }
 }
