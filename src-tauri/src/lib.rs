@@ -353,10 +353,14 @@ async fn download_and_install(app: tauri::AppHandle) -> tauri_plugin_updater::Re
     let mut downloaded = 0;
 
     // 从全局状态拿数据
-    let state = app.state::<Mutex<MyState>>();
-    let my_state = state.lock().map_err(|_| tauri_plugin_updater::Error::ReleaseNotFound)?;
-    let last_version: Arc<Option<Update>> = my_state.last_version.clone();
-    if let Some(update) = last_version.as_ref() {
+    let up: Option<Update>;
+    {
+        let state = app.state::<Mutex<MyState>>();
+        let my_state = state.lock().map_err(|_| tauri_plugin_updater::Error::ReleaseNotFound)?;
+        let last_version: Arc<Option<Update>> = my_state.last_version.clone();
+        up = last_version.as_ref().clone();
+    }
+    if let Some(update) = up {
         return update.download_and_install(
             |chunk_length, content_length| {
                 downloaded += chunk_length;
@@ -466,9 +470,9 @@ mod tests {
     async fn test_update_bug() {
         let jar = Arc::new(Jar::default());
         let result = login(jar.clone(), "dengxiangcheng", "dxc3434DXC").await;
-        assert!(result.is_ok(), "Login failed");
+        println!("cookie: {}",result.unwrap());
 
-        let bug_id = 2457;
+        let bug_id = 2448;
         let status = 81;
         let resolution = 20;
 
@@ -481,6 +485,7 @@ mod tests {
             bug_update_page_token = get_page_token(&document,"bug_update_page_token").unwrap();
             bug_info = my_view_detail_data(&document).unwrap();
         }
+        println!("bug_update_page_token: {}",bug_update_page_token);
         // bug修改页面
         let body = bug_update_page(
             jar.clone(),
@@ -490,8 +495,8 @@ mod tests {
             },
         )
         .await.unwrap();
-        println!("{}",body);
         let bug_update_token = get_page_token(&Html::parse_document(body.as_str()),"bug_update_token").unwrap();
+        println!("bug_update_token: {}",bug_update_token);
 
         let now = Utc::now();
         let bug = UpdateBug {
@@ -512,10 +517,11 @@ mod tests {
             steps_to_reproduce: "".to_string(),
             bugnote_text: "".to_string(),
         };
-        let _ = bug_update(jar.clone(), bug).await.map_or_else(
-            |d|{println!("ok:{}",d);Ok(d)},
-            |e|{println!("err:{}",e);Err(e)}
-        );
+        println!("{}", serde_html_form::to_string(&bug).unwrap());
+        // let _ = bug_update(jar.clone(), bug).await.map_or_else(
+        //     |d|{println!("ok:{}",d);Ok(d)},
+        //     |e|{println!("err:{}",e);Err(e)}
+        // );
     }
 
     #[tokio::test]

@@ -46,7 +46,7 @@ pub async fn login(
     headers.insert(USER_AGENT,HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
     headers.insert(HOST, HeaderValue::from_static("bug.test.com"));
-
+    let jar1 = jar.clone();
     // 创建 reqwest 客户端
     let client = Client::builder()
         .timeout(Duration::from_secs(2))
@@ -78,8 +78,9 @@ pub async fn login(
         .await
         .map_err(|e| e.to_string())?;
 
-    let text = resp.text().await.unwrap();
-    Ok(text)
+    resp.text().await?;
+    let cookie = jar1.cookies(&Url::parse("http://bug.test.com").unwrap()).map(|e|format!("{}",e.to_str().unwrap())).ok_or("".to_string())?;
+    Ok(cookie)
 }
 
 // my_view_page 页面
@@ -252,6 +253,10 @@ pub async fn bug_update(jar: Arc<Jar>, bug: UpdateBug) -> Result<String, String>
         .cookie_provider(jar)
         .danger_accept_invalid_certs(true) // --insecure
         .default_headers(headers)
+        .redirect(Policy::custom(|attempt| {
+            // 自定义重定向策略
+            attempt.stop()
+        }))
         .build()
         .map_err(|e| e.to_string())?;
 
