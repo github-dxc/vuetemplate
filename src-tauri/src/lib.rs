@@ -2,20 +2,22 @@ mod enums;
 mod model;
 mod utils;
 
-use enums::*;
-use utils::*;
-use model::*;
 use chrono::Utc;
+use enums::*;
 use env_logger;
 use log::{debug, info, warn};
+use model::*;
 use reqwest::cookie::Jar;
 use scraper::Html;
+use tauri_plugin_store::StoreExt;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, Emitter, Listener, Manager};
+use tauri::{AppHandle, Emitter, Manager, Window, WindowEvent};
 use tauri_plugin_notification::{NotificationExt, PermissionState};
-use tokio::time::{interval, Duration};
 use tauri_plugin_updater::{Update, UpdaterExt};
+use tokio::time::{interval, Duration};
+use serde_json::json;
+use utils::*;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -24,10 +26,11 @@ pub fn run() {
         .filter_level(log::LevelFilter::Info) // 设置日志级别为 Debug
         .init();
     tauri::Builder::default()
+        .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_notification::init())
-        .manage(Mutex::new(MyState::default())) // 注册全局状态
         .plugin(tauri_plugin_opener::init())
+        .manage(Mutex::new(MyState::default())) // 注册全局状态
         .invoke_handler(tauri::generate_handler![
             api_init_data,
             api_login,
@@ -38,13 +41,27 @@ pub fn run() {
             api_download_and_install
         ])
         .setup(|app| {
-            let handle1 = app.handle().clone();
-            let handle2 = app.handle().clone();
-            //是否更新
-            update_app(handle1);
-            //启动定时任务
-            start_timer(handle2);
+            //初始化全局状态
+            let _ = init_global_state(app.handle().clone());
+            //定时更新
+            update_app(app.handle().clone());
+            //定时查询最新数据
+            find_new_data(app.handle().clone());
             Ok(())
+        })
+        .on_window_event(move |window,event| {
+            //window事件
+            match event {
+                //关闭事件
+                WindowEvent::CloseRequested { api, .. } => {
+                    println!("窗口即将关闭，执行清理操作...");
+                    // 保存全局状态
+                    let _ = save_global_state(window.clone());
+                    // 如果你想阻止关闭，可以调用：
+                    // api.prevent_close();
+                }
+                _ => {}
+            }
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -124,7 +141,9 @@ async fn api_bug_list(app: AppHandle) -> Result<BugList, String> {
     let param = serde_html_form::from_str::<FindBugListParams>(param_str)
         .map_err(|e| format!("serde_html_form err:{}", e))?;
     // 查询列表
-    let body = view_all_set(jar.clone(), param.clone()).await.map_err(|e|format!("view_all_set err:{}",e))?;
+    let body = view_all_set(jar.clone(), param.clone())
+        .await
+        .map_err(|e| format!("view_all_set err:{}", e))?;
     // 解析数据
     let data = view_all_set_data(&Html::parse_document(body.as_str()))
         .map_err(|e| format!("view_all_set_data err:{}", e))?;
@@ -154,7 +173,7 @@ async fn api_update_bug(
     {
         let body = my_view_detail(jar.clone(), bug_id).await?;
         let document = Html::parse_document(body.as_str());
-        bug_update_page_token = get_page_token(&document,"bug_update_page_token")?;
+        bug_update_page_token = get_page_token(&document, "bug_update_page_token")?;
         bug_info = my_view_detail_data(&document)?;
     }
     // bug修改页面
@@ -166,7 +185,8 @@ async fn api_update_bug(
         },
     )
     .await?;
-    let bug_update_token = get_page_token(&Html::parse_document(body.as_str()),"bug_update_token")?;
+    let bug_update_token =
+        get_page_token(&Html::parse_document(body.as_str()), "bug_update_token")?;
     // 提交bug
     let now = Utc::now();
     let bug = UpdateBug {
@@ -202,8 +222,28 @@ async fn api_download_and_install(app: tauri::AppHandle) -> tauri_plugin_updater
     download_and_install(app.clone()).await
 }
 
-// 定时任务
-fn start_timer(app: AppHandle) {
+//初始化全局状态
+fn init_global_state(app: AppHandle) -> Result<String,String> {
+    let state = app.state::<Mutex<MyState>>();
+    let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
+    store.set("some-key".to_string(), json!({ "value": 5 }));
+
+
+    Ok("s".to_string())
+}
+
+//保存全局状态
+fn save_global_state(app: Window) -> Result<String,String> {
+    let state = app.state::<Mutex<MyState>>();
+    let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
+    store.set("some-key".to_string(), json!({ "value": 5 }));
+
+
+    Ok("s".to_string())
+}
+
+// 定时查询新数据
+fn find_new_data(app: AppHandle) {
     // 启动一个异步定时任务
     tauri::async_runtime::spawn(async move {
         let state = app.state::<Mutex<MyState>>();
@@ -319,12 +359,11 @@ fn update_app(app: tauri::AppHandle) {
 
 // 检查更新
 async fn check_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
-    if let Some(update) = app
-    .updater()?
-    .check()
-    .await?
-    {
-        info!("version_info: old:{} new:{} target:{}", update.current_version,update.version,update.target);
+    if let Some(update) = app.updater()?.check().await? {
+        info!(
+            "version_info: old:{} new:{} target:{}",
+            update.current_version, update.version, update.target
+        );
 
         // 获取更新版本信息
         let version_info = VersionInfo {
@@ -335,13 +374,15 @@ async fn check_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()>
 
         // 保存到全局状态
         let state = app.state::<Mutex<MyState>>();
-        let mut my_state = state.lock().map_err(|_| tauri_plugin_updater::Error::Network("保存到全局状态失败".to_string()))?;
+        let mut my_state = state
+            .lock()
+            .map_err(|_| tauri_plugin_updater::Error::Network("保存到全局状态失败".to_string()))?;
         my_state.last_version = Arc::new(Some(update));
 
         // 通知前端
         app.emit("app-update", version_info)?;
         Ok(())
-    }else {
+    } else {
         // 通知前端
         app.emit("app-update-none", "")?;
         Ok(())
@@ -356,33 +397,38 @@ async fn download_and_install(app: tauri::AppHandle) -> tauri_plugin_updater::Re
     let up: Option<Update>;
     {
         let state = app.state::<Mutex<MyState>>();
-        let my_state = state.lock().map_err(|_| tauri_plugin_updater::Error::ReleaseNotFound)?;
+        let my_state = state
+            .lock()
+            .map_err(|_| tauri_plugin_updater::Error::ReleaseNotFound)?;
         let last_version: Arc<Option<Update>> = my_state.last_version.clone();
         up = last_version.as_ref().clone();
     }
     if let Some(update) = up {
-        return update.download_and_install(
-            |chunk_length, content_length| {
-                downloaded += chunk_length;
-                info!("downloaded {} from {:?}", downloaded, content_length);
-                
-                // 发送下载进度给前端
-                let progress = if let Some(total) = content_length {
-                    (downloaded as f64 / total as f64 * 100.0) as u32
-                } else {
-                    0
-                };
-                
-                let _ = app.emit("app-update-progress", progress);
-            },
-            || {
-                info!("download finished");
-                let _ = app.emit("app-update-download-finished", ());
-            },
-        ).await.or_else(|e|{
-            let _ = app.emit("app-update-error", format!("{}",e));
-            Err(e)
-        })
+        return update
+            .download_and_install(
+                |chunk_length, content_length| {
+                    downloaded += chunk_length;
+                    info!("downloaded {} from {:?}", downloaded, content_length);
+
+                    // 发送下载进度给前端
+                    let progress = if let Some(total) = content_length {
+                        (downloaded as f64 / total as f64 * 100.0) as u32
+                    } else {
+                        0
+                    };
+
+                    let _ = app.emit("app-update-progress", progress);
+                },
+                || {
+                    info!("download finished");
+                    let _ = app.emit("app-update-download-finished", ());
+                },
+            )
+            .await
+            .or_else(|e| {
+                let _ = app.emit("app-update-error", format!("{}", e));
+                Err(e)
+            });
     }
     Err(tauri_plugin_updater::Error::ReleaseNotFound)
 }
@@ -470,7 +516,7 @@ mod tests {
     async fn test_update_bug() {
         let jar = Arc::new(Jar::default());
         let result = login(jar.clone(), "dengxiangcheng", "dxc3434DXC").await;
-        println!("cookie: {}",result.unwrap());
+        println!("cookie: {}", result.unwrap());
 
         let bug_id = 2491;
         let status = 81;
@@ -482,10 +528,10 @@ mod tests {
         {
             let body = my_view_detail(jar.clone(), bug_id).await.unwrap();
             let document = Html::parse_document(body.as_str());
-            bug_update_page_token = get_page_token(&document,"bug_update_page_token").unwrap();
+            bug_update_page_token = get_page_token(&document, "bug_update_page_token").unwrap();
             bug_info = my_view_detail_data(&document).unwrap();
         }
-        println!("bug_update_page_token: {}",bug_update_page_token);
+        println!("bug_update_page_token: {}", bug_update_page_token);
         // bug修改页面
         let body = bug_update_page(
             jar.clone(),
@@ -494,9 +540,11 @@ mod tests {
                 bug_update_page_token,
             },
         )
-        .await.unwrap();
-        let bug_update_token = get_page_token(&Html::parse_document(body.as_str()),"bug_update_token").unwrap();
-        println!("bug_update_token: {}",bug_update_token);
+        .await
+        .unwrap();
+        let bug_update_token =
+            get_page_token(&Html::parse_document(body.as_str()), "bug_update_token").unwrap();
+        println!("bug_update_token: {}", bug_update_token);
 
         let bug = UpdateBug {
             bug_update_token,
@@ -518,8 +566,14 @@ mod tests {
         };
         println!("{}", serde_html_form::to_string(&bug).unwrap());
         let _ = bug_update(jar.clone(), bug).await.map_or_else(
-            |e|{println!("err:{}",e);Err(e)},
-            |d|{println!("ok:{}",d);Ok(d)}
+            |e| {
+                println!("err:{}", e);
+                Err(e)
+            },
+            |d| {
+                println!("ok:{}", d);
+                Ok(d)
+            },
         );
     }
 
@@ -550,7 +604,7 @@ mod tests {
         // 读取view_all_set.html文件内容
         let html_content = include_str!("./example/bug_update_page.php.html");
         let document = Html::parse_document(html_content);
-        let result = get_page_token(&document,"bug_update_token");
+        let result = get_page_token(&document, "bug_update_token");
         assert!(result.is_ok());
         let data = result.unwrap();
         println!("Summary: {:?}", data);

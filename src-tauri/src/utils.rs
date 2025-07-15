@@ -36,12 +36,24 @@ pub async fn login(
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT,HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
+    );
     headers.insert(CACHE_CONTROL, HeaderValue::from_static("max-age=0"));
-    headers.insert(CONTENT_TYPE,HeaderValue::from_static("application/x-www-form-urlencoded"));
-    headers.insert(CONTENT_LENGTH,HeaderValue::from_str(&body.len().to_string())?);
+    headers.insert(
+        CONTENT_TYPE,
+        HeaderValue::from_static("application/x-www-form-urlencoded"),
+    );
+    headers.insert(
+        CONTENT_LENGTH,
+        HeaderValue::from_str(&body.len().to_string())?,
+    );
     headers.insert(ORIGIN, HeaderValue::from_static("http://bug.test.com"));
-    headers.insert(REFERER,HeaderValue::from_static("http://bug.test.com/login_password_page.php"));
+    headers.insert(
+        REFERER,
+        HeaderValue::from_static("http://bug.test.com/login_password_page.php"),
+    );
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT,HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
@@ -79,7 +91,10 @@ pub async fn login(
         .map_err(|e| e.to_string())?;
 
     resp.text().await?;
-    let cookie = jar1.cookies(&Url::parse("http://bug.test.com").unwrap()).map(|e|format!("{}",e.to_str().unwrap())).ok_or("".to_string())?;
+    let cookie = jar1
+        .cookies(&Url::parse("http://bug.test.com").unwrap())
+        .map(|e| format!("{}", e.to_str().unwrap()))
+        .ok_or("".to_string())?;
     Ok(cookie)
 }
 
@@ -128,12 +143,24 @@ pub async fn view_all_set(
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT,HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
+    );
     headers.insert(CACHE_CONTROL, HeaderValue::from_static("max-age=0"));
-    headers.insert(CONTENT_TYPE,HeaderValue::from_static("application/x-www-form-urlencoded"));
-    headers.insert(CONTENT_LENGTH,HeaderValue::from_str(&body.len().to_string())?);
+    headers.insert(
+        CONTENT_TYPE,
+        HeaderValue::from_static("application/x-www-form-urlencoded"),
+    );
+    headers.insert(
+        CONTENT_LENGTH,
+        HeaderValue::from_str(&body.len().to_string())?,
+    );
     headers.insert(ORIGIN, HeaderValue::from_static("http://bug.test.com"));
-    headers.insert(REFERER,HeaderValue::from_static("http://bug.test.com/view_all_bug_page.php"));
+    headers.insert(
+        REFERER,
+        HeaderValue::from_static("http://bug.test.com/view_all_bug_page.php"),
+    );
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT,HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
@@ -171,7 +198,10 @@ pub async fn my_view_detail(jar: Arc<Jar>, id: i64) -> Result<String, String> {
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
+    );
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
@@ -198,15 +228,24 @@ pub async fn bug_update_page(jar: Arc<Jar>, bug: UpdateToken) -> Result<String, 
 
     // body
     let body = serde_html_form::to_string(&bug).unwrap();
-    let referer = format!("http://bug.test.com/view.php?id={}",bug.bug_id);
+    let referer = format!("http://bug.test.com/view.php?id={}", bug.bug_id);
 
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
-    headers.insert(CONTENT_TYPE,HeaderValue::from_static("application/x-www-form-urlencoded"));
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
+    );
+    headers.insert(
+        CONTENT_TYPE,
+        HeaderValue::from_static("application/x-www-form-urlencoded"),
+    );
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
-    headers.insert(REFERER, HeaderValue::from_str(referer.as_str()).map_err(|e|format!("{}",e))?);
+    headers.insert(
+        REFERER,
+        HeaderValue::from_str(referer.as_str()).map_err(|e| format!("{}", e))?,
+    );
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
 
@@ -241,9 +280,15 @@ pub async fn bug_update(jar: Arc<Jar>, bug: UpdateBug) -> Result<String, String>
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
+    );
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
-    headers.insert(CONTENT_TYPE,HeaderValue::from_static("application/x-www-form-urlencoded"));
+    headers.insert(
+        CONTENT_TYPE,
+        HeaderValue::from_static("application/x-www-form-urlencoded"),
+    );
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
 
@@ -368,7 +413,7 @@ pub fn find_all_tasks(
 // 查询bug_update_token
 pub fn get_page_token(document: &Html, token: &str) -> Result<String, String> {
     // 创建选择器
-    let selector = Selector::parse(format!("input[name=\"{}\"]",token).as_str())
+    let selector = Selector::parse(format!("input[name=\"{}\"]", token).as_str())
         .map_err(|e| format!("Selector 解析失败: {:?}", e))?;
     document
         .select(&selector)
@@ -607,7 +652,11 @@ pub fn my_view_detail_data(document: &Html) -> Result<BugInfo, String> {
     let last_modified_selector = Selector::parse("input[name=\"last_updated\"]").unwrap();
     bug.last_updated = document
         .select(&last_modified_selector)
-        .find_map(|e| e.value().attr("value").map(|e|e.parse::<i64>().unwrap_or(0)))
+        .find_map(|e| {
+            e.value()
+                .attr("value")
+                .map(|e| e.parse::<i64>().unwrap_or(0))
+        })
         .unwrap_or(0);
 
     // reporter_id
@@ -675,7 +724,15 @@ pub fn my_view_detail_data(document: &Html) -> Result<BugInfo, String> {
     let summary_selector = Selector::parse("tbody td.bug-summary").unwrap();
     bug.summary = document
         .select(&summary_selector)
-        .map(|e| e.inner_html().trim().split(":").nth(1).unwrap_or("").trim().to_string())
+        .map(|e| {
+            e.inner_html()
+                .trim()
+                .split(":")
+                .nth(1)
+                .unwrap_or("")
+                .trim()
+                .to_string()
+        })
         .collect::<Vec<String>>()
         .join("")
         .trim()
