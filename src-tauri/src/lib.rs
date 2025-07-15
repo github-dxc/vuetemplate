@@ -472,7 +472,7 @@ mod tests {
         let result = login(jar.clone(), "dengxiangcheng", "dxc3434DXC").await;
         println!("cookie: {}",result.unwrap());
 
-        let bug_id = 2448;
+        let bug_id = 2491;
         let status = 81;
         let resolution = 20;
 
@@ -498,11 +498,10 @@ mod tests {
         let bug_update_token = get_page_token(&Html::parse_document(body.as_str()),"bug_update_token").unwrap();
         println!("bug_update_token: {}",bug_update_token);
 
-        let now = Utc::now();
         let bug = UpdateBug {
             bug_update_token,
             bug_id,
-            last_updated: now.timestamp(),
+            last_updated: bug_info.last_updated,
             category_id: bug_info.category_id,
             view_state: bug_info.view_state,
             handler_id: bug_info.handler_id,
@@ -513,15 +512,15 @@ mod tests {
             resolution: resolution,
             summary: bug_info.summary,
             description: bug_info.description,
-            additional_information: "".to_string(),
-            steps_to_reproduce: "".to_string(),
+            additional_information: bug_info.additional_information,
+            steps_to_reproduce: bug_info.steps_to_reproduce,
             bugnote_text: "".to_string(),
         };
         println!("{}", serde_html_form::to_string(&bug).unwrap());
-        // let _ = bug_update(jar.clone(), bug).await.map_or_else(
-        //     |d|{println!("ok:{}",d);Ok(d)},
-        //     |e|{println!("err:{}",e);Err(e)}
-        // );
+        let _ = bug_update(jar.clone(), bug).await.map_or_else(
+            |e|{println!("err:{}",e);Err(e)},
+            |d|{println!("ok:{}",d);Ok(d)}
+        );
     }
 
     #[tokio::test]

@@ -603,21 +603,11 @@ pub fn my_view_detail_data(document: &Html) -> Result<BugInfo, String> {
         })
         .unwrap_or(0);
 
-    // last_updated 2025-06-17 16:20
-    let last_modified_selector = Selector::parse(".bug-header-data .bug-last-modified").unwrap();
+    // last_updated
+    let last_modified_selector = Selector::parse("input[name=\"last_updated\"]").unwrap();
     bug.last_updated = document
         .select(&last_modified_selector)
-        .find_map(|e| {
-            let date_str = e.inner_html();
-            // 解析为 NaiveDate
-            let date = NaiveDate::parse_from_str(date_str.as_str(), "%Y-%m-%d %H:%M").ok()?;
-            // 设为上海时区的0点
-            let datetime = Shanghai
-                .from_local_datetime(&date.and_hms_opt(0, 0, 0)?)
-                .unwrap();
-            // 转为时间戳（秒）
-            Some(datetime.timestamp())
-        })
+        .find_map(|e| e.value().attr("value").map(|e|e.parse::<i64>().unwrap_or(0)))
         .unwrap_or(0);
 
     // reporter_id
@@ -685,7 +675,7 @@ pub fn my_view_detail_data(document: &Html) -> Result<BugInfo, String> {
     let summary_selector = Selector::parse("tbody td.bug-summary").unwrap();
     bug.summary = document
         .select(&summary_selector)
-        .map(|e| e.inner_html().trim().to_string())
+        .map(|e| e.inner_html().trim().split(":").nth(1).unwrap_or("").trim().to_string())
         .collect::<Vec<String>>()
         .join("")
         .trim()

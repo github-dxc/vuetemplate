@@ -1,4 +1,4 @@
-<script setup>
+<script setup vapor>
 import { ref, onMounted, computed } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from '@tauri-apps/api/event';

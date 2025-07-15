@@ -1,4 +1,4 @@
-<script setup>
+<script setup vapor>
 import { ref, watch, nextTick } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { useRouter } from 'vue-router';

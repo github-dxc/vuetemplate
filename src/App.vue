@@ -1,4 +1,4 @@
-<script setup>
+<script setup vapor>
 import { useRouter } from 'vue-router'
 import UpdateNotification from './components/UpdateNotification.vue'
 // import TopMenu from './components/TopMenu.vue'
