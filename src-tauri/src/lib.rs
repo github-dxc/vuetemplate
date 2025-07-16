@@ -9,6 +9,7 @@ use model::*;
 use reqwest::cookie::Jar;
 use scraper::Html;
 use tauri_plugin_store::StoreExt;
+use url::Url;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, Manager, Window, WindowEvent};
@@ -70,6 +71,7 @@ pub fn run() {
 #[derive(Default)]
 struct MyState {
     logined: Arc<bool>, // 是否登录
+    host: Arc<String>,
     jar: Arc<Jar>,
     last_bugs: Arc<Mutex<HashMap<i64, Bug>>>, //bugs列表
     data_hash: Arc<u64>,
@@ -226,9 +228,19 @@ fn init_global_state(app: AppHandle) -> Result<String,String> {
     let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
 
     let logined = store.get("logined").unwrap_or(Value::from(false));
-    if let Ok(my_state) = state.lock() {
-        // my_state.logined = logined.as_bool()
+    let cookie = store.get("cookie").unwrap_or(Value::from(""));
+    let host = store.get("host").unwrap_or(Value::from("http://bug.test.com"));
+    let url = host.as_str().unwrap_or("").parse::<Url>().unwrap();
+    if let Ok(mut my_state) = state.lock() {
+        my_state.logined = Arc::new(logined.as_bool().unwrap_or(false));
+        my_state.host = Arc::new(host.to_string());
+        let jar = Jar::default();
+        jar.add_cookie_str(cookie.as_str().unwrap_or(""), &url);
+        my_state.jar = Arc::new(jar);
+
     }
+
+
 
 
 
