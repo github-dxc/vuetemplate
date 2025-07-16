@@ -2,7 +2,6 @@ mod enums;
 mod model;
 mod utils;
 
-use chrono::Utc;
 use enums::*;
 use env_logger;
 use log::{debug, info, warn};
@@ -16,7 +15,7 @@ use tauri::{AppHandle, Emitter, Manager, Window, WindowEvent};
 use tauri_plugin_notification::{NotificationExt, PermissionState};
 use tauri_plugin_updater::{Update, UpdaterExt};
 use tokio::time::{interval, Duration};
-use serde_json::json;
+use serde_json::{json, Value};
 use utils::*;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -188,11 +187,10 @@ async fn api_update_bug(
     let bug_update_token =
         get_page_token(&Html::parse_document(body.as_str()), "bug_update_token")?;
     // 提交bug
-    let now = Utc::now();
     let bug = UpdateBug {
         bug_update_token,
         bug_id,
-        last_updated: now.timestamp(),
+        last_updated: bug_info.last_updated,
         category_id: bug_info.category_id,
         view_state: bug_info.view_state,
         handler_id: bug_info.handler_id,
@@ -203,8 +201,8 @@ async fn api_update_bug(
         resolution: resolution,
         summary: bug_info.summary,
         description: bug_info.description,
-        additional_information: "".to_string(),
-        steps_to_reproduce: "".to_string(),
+        additional_information: bug_info.additional_information,
+        steps_to_reproduce: bug_info.steps_to_reproduce,
         bugnote_text: "".to_string(),
     };
     bug_update(jar.clone(), bug).await
@@ -226,7 +224,12 @@ async fn api_download_and_install(app: tauri::AppHandle) -> tauri_plugin_updater
 fn init_global_state(app: AppHandle) -> Result<String,String> {
     let state = app.state::<Mutex<MyState>>();
     let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
-    store.set("some-key".to_string(), json!({ "value": 5 }));
+
+    let logined = store.get("logined").unwrap_or(Value::from(false));
+    if let Ok(my_state) = state.lock() {
+        // my_state.logined = logined.as_bool()
+    }
+
 
 
     Ok("s".to_string())
