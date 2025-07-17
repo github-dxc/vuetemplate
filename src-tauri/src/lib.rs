@@ -30,7 +30,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
-        .manage(Mutex::new(MyState::default())) // 注册全局状态
+        .manage(MyState::default()) // 注册全局状态
         .invoke_handler(tauri::generate_handler![
             api_init_data,
             api_login,
@@ -70,12 +70,13 @@ pub fn run() {
 // 全局状态
 #[derive(Default)]
 struct MyState {
-    logined: Arc<bool>, // 是否登录
-    host: Arc<String>,
-    jar: Arc<Jar>,
+    logined: Arc<Mutex<bool>>, // 是否登录
+    host: Arc<Mutex<String>>,
+    jar: Mutex<Arc<Jar>>,
     last_bugs: Arc<Mutex<HashMap<i64, Bug>>>, //bugs列表
-    data_hash: Arc<u64>,
-    last_version: Arc<Option<Update>>,
+    data_hash: Arc<Mutex<u64>>,
+    last_version: Arc<Mutex<Option<Update>>>,
+    subscription_list: Arc<Mutex<Vec<String>>>,//订阅列表
 }
 
 // 初始化数据
@@ -101,10 +102,11 @@ async fn api_login(app: AppHandle, username: &str, password: &str) -> Result<Str
     match s {
         Ok(_) => {
             // 保存cookie到全局状态
-            let state = app.state::<Mutex<MyState>>();
-            let mut my_state = state.lock().or(Err("获取全局状态失败".to_string()))?;
-            my_state.jar = jar.clone();
-            my_state.logined = Arc::new(true);
+            let state = app.state::<MyState>().clone();
+            let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
+            *logined = true;
+            let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
+            *jar_ = jar;
             return Ok("登录成功".to_string());
         }
         Err(e) => {
@@ -116,11 +118,11 @@ async fn api_login(app: AppHandle, username: &str, password: &str) -> Result<Str
 // 退出登录
 #[tauri::command(rename_all = "snake_case")]
 async fn api_logout(app: AppHandle) -> Result<(), String> {
-    let state = app.state::<Mutex<MyState>>();
-    let mut my_state = state.lock().or(Err("获取全局状态失败".to_string()))?;
-    // 清除cookie
-    my_state.jar = Arc::new(Jar::default());
-    my_state.logined = Arc::new(false);
+    let state = app.state::<MyState>().clone();
+    let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
+    *logined = false;
+    let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
+    *jar_ = Arc::new(Jar::default());
     Ok(())
 }
 
@@ -128,21 +130,19 @@ async fn api_logout(app: AppHandle) -> Result<(), String> {
 #[tauri::command(rename_all = "snake_case")]
 async fn api_bug_list(app: AppHandle) -> Result<BugList, String> {
     let (logined, jar) = {
-        let state = app.state::<Mutex<MyState>>();
-        let my_state = state.lock().map_err(|e| format!("error:{}", e))?;
-
-        // my_state.logined = Arc::new(true); // 模拟登录状态
-        (my_state.logined.clone(), my_state.jar.clone())
+        let state = app.state::<MyState>().clone();
+        let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
+        let jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
+        (*logined,jar_.clone())
     };
-    // let body = include_str!("view_all_set.html").to_string(); //模拟查询数据
-    if !*logined {
+    if !logined {
         return Err("未登录".to_string());
     }
     let param_str = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器";
     let param = serde_html_form::from_str::<FindBugListParams>(param_str)
         .map_err(|e| format!("serde_html_form err:{}", e))?;
     // 查询列表
-    let body = view_all_set(jar.clone(), param.clone())
+    let body = view_all_set(jar, param)
         .await
         .map_err(|e| format!("view_all_set err:{}", e))?;
     // 解析数据
@@ -161,11 +161,12 @@ async fn api_update_bug(
     resolution: i64,
 ) -> Result<String, String> {
     let (logined, jar) = {
-        let state = app.state::<Mutex<MyState>>();
-        let my_state = state.lock().map_err(|e| format!("error:{}", e))?;
-        (my_state.logined.clone(), my_state.jar.clone())
+        let state = app.state::<MyState>().clone();
+        let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
+        let jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
+        (*logined,jar_.clone())
     };
-    if !*logined {
+    if !logined {
         return Err("未登录".to_string());
     }
     // 查询bug详情
@@ -224,21 +225,24 @@ async fn api_download_and_install(app: tauri::AppHandle) -> tauri_plugin_updater
 
 //初始化全局状态
 fn init_global_state(app: AppHandle) -> Result<String,String> {
-    let state = app.state::<Mutex<MyState>>();
+    let state = app.state::<MyState>().clone();
     let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
 
-    let logined = store.get("logined").unwrap_or(Value::from(false));
-    let cookie = store.get("cookie").unwrap_or(Value::from(""));
-    let host = store.get("host").unwrap_or(Value::from("http://bug.test.com"));
-    let url = host.as_str().unwrap_or("").parse::<Url>().unwrap();
-    if let Ok(mut my_state) = state.lock() {
-        my_state.logined = Arc::new(logined.as_bool().unwrap_or(false));
-        my_state.host = Arc::new(host.to_string());
-        let jar = Jar::default();
-        jar.add_cookie_str(cookie.as_str().unwrap_or(""), &url);
-        my_state.jar = Arc::new(jar);
+    let logined_value = store.get("logined").unwrap_or(Value::from(false));
+    let cookie_value = store.get("cookie").unwrap_or(Value::from(""));
+    let host_value = store.get("host").unwrap_or(Value::from("http://bug.test.com"));
+    
+    let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
+    *logined = logined_value.as_bool().unwrap_or(false);
 
-    }
+    let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
+    let jar = Jar::default();
+    let url = host_value.as_str().unwrap_or("").parse::<Url>().unwrap();
+    jar.add_cookie_str(cookie_value.as_str().unwrap_or(""), &url);
+    *jar_ = Arc::new(jar);
+    
+    let mut host = state.host.lock().map_err(|e|format!("lock err:{}",e))?;
+    *host = host_value.to_string();
 
 
 
@@ -249,7 +253,7 @@ fn init_global_state(app: AppHandle) -> Result<String,String> {
 
 //保存全局状态
 fn save_global_state(app: Window) -> Result<String,String> {
-    let state = app.state::<Mutex<MyState>>();
+    let state = app.state::<MyState>().clone();
     let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
     store.set("some-key".to_string(), json!({ "value": 5 }));
 
@@ -261,7 +265,7 @@ fn save_global_state(app: Window) -> Result<String,String> {
 fn find_new_data(app: AppHandle) {
     // 启动一个异步定时任务
     tauri::async_runtime::spawn(async move {
-        let state = app.state::<Mutex<MyState>>();
+        let state = app.state::<MyState>().clone();
         let mut ticker = interval(Duration::from_secs(5));
         // let param = FindBugListParams::default();
         let param_str = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器";
@@ -270,19 +274,13 @@ fn find_new_data(app: AppHandle) {
         let param = result.unwrap_or_default();
         loop {
             ticker.tick().await;
-            // 判断是否登录
-            let (logined, jar) = {
-                if let Ok(my_state) = state.lock() {
-                    (my_state.logined.clone(), my_state.jar.clone())
-                } else {
-                    continue;
-                }
-            };
-            // 如果未登录，则跳过
+            // 判断是否登录，如果未登录，则跳过
+            let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
             if !*logined {
                 info!("未登录，跳过定时任务");
                 continue;
             }
+            let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
             // 查询列表
             let body = match view_all_set(jar.clone(), param.clone()).await {
                 Ok(b) => b,
@@ -309,51 +307,46 @@ fn find_new_data(app: AppHandle) {
                 }
             };
             // 把最新的bug放进全局状态
-            if let Ok(my_state) = state.lock() {
-                // 如果和上条一样则不更新
-                if *(my_state.data_hash.clone()) == get_hash(&resp) {
-                    info!("相同数据");
-                    continue;
-                }
-                let last_bugs = my_state.last_bugs.clone();
-                let result = last_bugs.lock();
-                if let Ok(mut old_map) = result {
-                    // info!("{:?}",*old_map);
-                    let mut new_map = HashMap::new();
-                    for b in data.bugs {
-                        // 判断旧的列表中是否有这个bug,如果没有则发送通知
-                        if old_map.iter().all(|(bgid, bg)| {
-                            (*bgid != b.bug_id) || (*bgid == b.bug_id && bg.status != b.status)
-                        }) {
-                            if matches!(
-                                Status::from(b.status),
-                                Status::New
-                                    | Status::Feedback
-                                    | Status::Acknowledged
-                                    | Status::Confirmed
-                                    | Status::Assigned
-                            ) {
-                                let _ = send_notify(
-                                    app.clone(),
-                                    format!(
-                                        " {} | {} - {} -> {}",
-                                        b.project,
-                                        Category::from(b.category_id).as_str(),
-                                        Severity::from(b.severity).as_str(),
-                                        b.handler
-                                    )
-                                    .as_str(),
-                                    b.summary.as_str(),
-                                );
-                            }
-                        };
-                        new_map.insert(b.bug_id, b);
-                    }
-                    *old_map = new_map;
-                }
-            } else {
+            let data_hash = state.data_hash.lock().map_err(|e|format!("lock err:{}",e))?;
+            // 如果和上条一样则不更新
+            if *data_hash == get_hash(&resp) {
+                info!("相同数据");
                 continue;
             };
+            // 获取上次的bugs
+            let old_map = state.last_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
+            // info!("{:?}",*old_map);
+            let mut new_map = HashMap::new();
+            for b in data.bugs {
+                // 判断旧的列表中是否有这个bug,如果没有则发送通知
+                if old_map.iter().all(|(bgid, bg)| {
+                    (*bgid != b.bug_id) || (*bgid == b.bug_id && bg.status != b.status)
+                }) {
+                    if matches!(
+                        Status::from(b.status),
+                        Status::New
+                            | Status::Feedback
+                            | Status::Acknowledged
+                            | Status::Confirmed
+                            | Status::Assigned
+                    ) {
+                        let _ = send_notify(
+                            app.clone(),
+                            format!(
+                                " {} | {} - {} -> {}",
+                                b.project,
+                                Category::from(b.category_id).as_str(),
+                                Severity::from(b.severity).as_str(),
+                                b.handler
+                            )
+                            .as_str(),
+                            b.summary.as_str(),
+                        );
+                    }
+                };
+                new_map.insert(b.bug_id, b);
+            }
+            *old_map = new_map;
             // 向前端所有窗口广播消息
             let _ = app.emit_str("timer-tick", resp);
         }
@@ -388,11 +381,9 @@ async fn check_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()>
         };
 
         // 保存到全局状态
-        let state = app.state::<Mutex<MyState>>();
-        let mut my_state = state
-            .lock()
-            .map_err(|_| tauri_plugin_updater::Error::Network("保存到全局状态失败".to_string()))?;
-        my_state.last_version = Arc::new(Some(update));
+        let state = app.state::<MyState>().clone();
+        let mut last_version = state.last_version.lock().map_err(|_|tauri_plugin_updater::Error::ReleaseNotFound)?;
+        *last_version = Some(update);
 
         // 通知前端
         app.emit("app-update", version_info)?;
@@ -411,12 +402,9 @@ async fn download_and_install(app: tauri::AppHandle) -> tauri_plugin_updater::Re
     // 从全局状态拿数据
     let up: Option<Update>;
     {
-        let state = app.state::<Mutex<MyState>>();
-        let my_state = state
-            .lock()
-            .map_err(|_| tauri_plugin_updater::Error::ReleaseNotFound)?;
-        let last_version: Arc<Option<Update>> = my_state.last_version.clone();
-        up = last_version.as_ref().clone();
+        let state = app.state::<MyState>().clone();
+        let last_version = state.last_version.lock().map_err(|_|tauri_plugin_updater::Error::ReleaseNotFound)?;
+        up = last_version.clone();
     }
     if let Some(update) = up {
         return update
