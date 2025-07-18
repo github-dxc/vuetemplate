@@ -174,7 +174,7 @@ onMounted(async () => {
 });
 
 // 监听rust发送的消息
-listen('timer-tick', (event) => {
+listen('sub_bugs', (event) => {
   console.log('收到定时消息:', event.payload)
   try {
     const obj = event.payload;

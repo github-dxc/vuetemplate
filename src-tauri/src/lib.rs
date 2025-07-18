@@ -71,12 +71,12 @@ pub fn run() {
 #[derive(Default)]
 struct MyState {
     logined: Arc<Mutex<bool>>, // 是否登录
-    host: Arc<Mutex<String>>,
     jar: Mutex<Arc<Jar>>,
-    last_bugs: Arc<Mutex<HashMap<i64, Bug>>>, //bugs列表
-    data_hash: Arc<Mutex<u64>>,
-    last_version: Arc<Mutex<Option<Update>>>,
-    subscription_list: Arc<Mutex<Vec<String>>>,//订阅列表
+    host: Arc<Mutex<String>>,
+    sub_params: Arc<Mutex<Vec<String>>>,//订阅列表
+    sub_bugs: Arc<Mutex<HashMap<i64, Bug>>>, //bugs列表
+    sub_bugs_hash: Arc<Mutex<HashMap<i64, u64>>>,
+    last_version: Arc<Mutex<Option<Update>>>,//系统版本
 }
 
 // 初始化数据
@@ -285,63 +285,50 @@ fn find_new_data(app: AppHandle) {
                 
                 // 查询列表
                 let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-                let body = match view_all_set(jar, param.clone()).await {
-                    Ok(b) => b,
-                    Err(e) => {
-                        info!("查询列表失败: {}", e);
-                        return Ok(());
-                    }
-                };
+                let body = view_all_set(jar, param.clone()).await.map_err(|e|format!("lock err:{}",e))?;
 
                 // 解析数据
                 let data = view_all_set_data(&Html::parse_document(body.as_str())).map_err(|e|format!("lock err:{}",e))?;
+                let bugs = data.clone();
 
-                // 把data转成string
-                let resp = serde_json::to_string(&data).map_err(|e|format!("lock err:{}",e))?;
-
-                // 获取hash值
-                let data_hash = state.data_hash.lock().map_err(|e|format!("lock err:{}",e))?;
-                if *data_hash == get_hash(&resp) {
-                    info!("相同数据");
-                    return Ok(());
-                };
-
-                // 获取上次的bugs
-                let mut old_map = state.last_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
+                // 上次的bugs、hash
+                let mut old_map = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
+                let mut old_hash = state.sub_bugs_hash.lock().map_err(|e|format!("lock err:{}",e))?;
                 
+                // 构建新bugs、hash
                 let mut new_map = HashMap::new();
+                let mut new_hash = HashMap::new();
+
+                let mut notice_msgs = Vec::new();
+                
                 for b in data.bugs {
-                    // 判断旧的列表中是否有这个bug,如果没有则发送通知
-                    if old_map.iter().all(|(bgid, bg)| {
-                        (*bgid != b.bug_id) || (*bgid == b.bug_id && bg.status != b.status)
-                    }) {
-                        if matches!(
-                            Status::from(b.status),
-                            Status::New
-                                | Status::Feedback
-                                | Status::Acknowledged
-                                | Status::Confirmed
-                                | Status::Assigned
-                        ) {
-                            let _ = send_notify(
-                                app.clone(),
-                                format!(
-                                    " {} | {} - {} -> {}",
-                                    b.project,
-                                    Category::from(b.category_id).as_str(),
-                                    Severity::from(b.severity).as_str(),
-                                    b.handler
-                                )
-                                .as_str(),
-                                b.summary.as_str(),
+                    let bgid = b.bug_id;
+                    let hash = get_hash(&b);
+                    //判断hash值是否一致，不一致则通知,没有也通知
+                    if let None = old_hash.iter().find(|(&k,&v)| k == bgid && v == hash){
+                        new_map.insert(bgid, b.clone());
+                        new_hash.insert(bgid, hash);
+                        //通知
+                        let notice = format!(
+                                " {} | {} - {} -> {}",
+                                b.project,
+                                Category::from(b.category_id).as_str(),
+                                Severity::from(b.severity).as_str(),
+                                b.handler
                             );
-                        }
+                        notice_msgs.push(notice.clone());
+                        let _ = send_notify(
+                            app.clone(),
+                            notice.as_str(),
+                            b.summary.as_str(),
+                        );
                     };
-                    new_map.insert(b.bug_id, b);
                 }
                 *old_map = new_map;
+                *old_hash = new_hash;
                 // 向前端所有窗口广播消息
-                let _ = app.emit_str("timer-tick", resp);
+                let _ = app.emit("sub_bugs", bugs);
+                let _ = app.emit("sub_msgs", notice_msgs);
 
                 Ok(())
             }.await;

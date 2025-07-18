@@ -1,6 +1,8 @@
+use std::clone;
+
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Serialize)]
+#[derive(Debug, Default, Serialize, Hash, Clone)]
 pub struct Bug {
     pub bug_id: i64,
     pub issue_notes_count: i64, //问题说明数量
@@ -45,7 +47,7 @@ pub struct UpdateBug {
     pub bugnote_text: String,           //问题注释
 }
 
-#[derive(Debug, Default, Serialize)]
+#[derive(Debug, Default, Serialize, Clone)]
 pub struct BugList {
     pub bugs: Vec<Bug>,
     pub total: i64,
