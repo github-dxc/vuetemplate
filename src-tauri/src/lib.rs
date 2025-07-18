@@ -273,82 +273,81 @@ fn find_new_data(app: AppHandle) {
             .map_err(|e| info!("serde_html_form err:{}", e));
         let param = result.unwrap_or_default();
         loop {
-            ticker.tick().await;
-            // 判断是否登录，如果未登录，则跳过
-            let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
-            if !*logined {
-                info!("未登录，跳过定时任务");
-                continue;
-            }
-            let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
-            // 查询列表
-            let body = match view_all_set(jar.clone(), param.clone()).await {
-                Ok(b) => b,
-                Err(e) => {
-                    info!("查询列表失败: {}", e);
-                    continue;
-                }
-            };
-            // let body = include_str!("view_all_set.html").to_string();//test
-            // 解析数据
-            let data = match view_all_set_data(&Html::parse_document(body.as_str())) {
-                Ok(d) => d,
-                Err(e) => {
-                    info!("解析数据失败: {}", e);
-                    continue;
-                }
-            };
-            // 把data转成string
-            let resp = match serde_json::to_string(&data) {
-                Ok(s) => s,
-                Err(e) => {
-                    info!("序列化数据失败: {}", e);
-                    continue;
-                }
-            };
-            // 把最新的bug放进全局状态
-            let data_hash = state.data_hash.lock().map_err(|e|format!("lock err:{}",e))?;
-            // 如果和上条一样则不更新
-            if *data_hash == get_hash(&resp) {
-                info!("相同数据");
-                continue;
-            };
-            // 获取上次的bugs
-            let old_map = state.last_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
-            // info!("{:?}",*old_map);
-            let mut new_map = HashMap::new();
-            for b in data.bugs {
-                // 判断旧的列表中是否有这个bug,如果没有则发送通知
-                if old_map.iter().all(|(bgid, bg)| {
-                    (*bgid != b.bug_id) || (*bgid == b.bug_id && bg.status != b.status)
-                }) {
-                    if matches!(
-                        Status::from(b.status),
-                        Status::New
-                            | Status::Feedback
-                            | Status::Acknowledged
-                            | Status::Confirmed
-                            | Status::Assigned
-                    ) {
-                        let _ = send_notify(
-                            app.clone(),
-                            format!(
-                                " {} | {} - {} -> {}",
-                                b.project,
-                                Category::from(b.category_id).as_str(),
-                                Severity::from(b.severity).as_str(),
-                                b.handler
-                            )
-                            .as_str(),
-                            b.summary.as_str(),
-                        );
+            let result: Result<(), String> = async {
+                ticker.tick().await;
+
+                // 判断是否登录，如果未登录，则跳过
+                let logined = *state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
+                if !logined {
+                    info!("未登录，跳过定时任务");
+                    return Ok(());
+                };
+                
+                // 查询列表
+                let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+                let body = match view_all_set(jar, param.clone()).await {
+                    Ok(b) => b,
+                    Err(e) => {
+                        info!("查询列表失败: {}", e);
+                        return Ok(());
                     }
                 };
-                new_map.insert(b.bug_id, b);
+
+                // 解析数据
+                let data = view_all_set_data(&Html::parse_document(body.as_str())).map_err(|e|format!("lock err:{}",e))?;
+
+                // 把data转成string
+                let resp = serde_json::to_string(&data).map_err(|e|format!("lock err:{}",e))?;
+
+                // 获取hash值
+                let data_hash = state.data_hash.lock().map_err(|e|format!("lock err:{}",e))?;
+                if *data_hash == get_hash(&resp) {
+                    info!("相同数据");
+                    return Ok(());
+                };
+
+                // 获取上次的bugs
+                let mut old_map = state.last_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
+                
+                let mut new_map = HashMap::new();
+                for b in data.bugs {
+                    // 判断旧的列表中是否有这个bug,如果没有则发送通知
+                    if old_map.iter().all(|(bgid, bg)| {
+                        (*bgid != b.bug_id) || (*bgid == b.bug_id && bg.status != b.status)
+                    }) {
+                        if matches!(
+                            Status::from(b.status),
+                            Status::New
+                                | Status::Feedback
+                                | Status::Acknowledged
+                                | Status::Confirmed
+                                | Status::Assigned
+                        ) {
+                            let _ = send_notify(
+                                app.clone(),
+                                format!(
+                                    " {} | {} - {} -> {}",
+                                    b.project,
+                                    Category::from(b.category_id).as_str(),
+                                    Severity::from(b.severity).as_str(),
+                                    b.handler
+                                )
+                                .as_str(),
+                                b.summary.as_str(),
+                            );
+                        }
+                    };
+                    new_map.insert(b.bug_id, b);
+                }
+                *old_map = new_map;
+                // 向前端所有窗口广播消息
+                let _ = app.emit_str("timer-tick", resp);
+
+                Ok(())
+            }.await;
+            if let Err(e) = result {
+                info!("error:{}",e);
             }
-            *old_map = new_map;
-            // 向前端所有窗口广播消息
-            let _ = app.emit_str("timer-tick", resp);
         }
     });
 }
