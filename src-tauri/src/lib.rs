@@ -100,11 +100,12 @@ fn api_init_data(_app: AppHandle) -> String {
 #[tauri::command(rename_all = "snake_case")]
 async fn api_login(app: AppHandle, username: &str, password: &str) -> Result<String, String> {
     let jar = Arc::new(Jar::default());
-    let s = login(jar.clone(), username, password).await;
+    let state = app.state::<MyState>().clone();
+    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let s = login(jar.clone(), username, password,&host).await;
     match s {
         Ok(_) => {
             // 保存cookie到全局状态
-            let state = app.state::<MyState>().clone();
             let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
             *logined = true;
             let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
@@ -131,12 +132,10 @@ async fn api_logout(app: AppHandle) -> Result<(), String> {
 // bug列表
 #[tauri::command(rename_all = "snake_case")]
 async fn api_bug_list(app: AppHandle) -> Result<BugList, String> {
-    let (logined, jar) = {
-        let state = app.state::<MyState>().clone();
-        let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
-        let jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
-        (*logined,jar_.clone())
-    };
+    let state = app.state::<MyState>().clone();
+    let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     if !logined {
         return Err("未登录".to_string());
     }
@@ -144,7 +143,7 @@ async fn api_bug_list(app: AppHandle) -> Result<BugList, String> {
     let param = serde_html_form::from_str::<FindBugListParams>(param_str)
         .map_err(|e| format!("serde_html_form err:{}", e))?;
     // 查询列表
-    let body = view_all_set(jar, param)
+    let body = view_all_set(jar, param, &host)
         .await
         .map_err(|e| format!("view_all_set err:{}", e))?;
     // 解析数据
@@ -162,12 +161,10 @@ async fn api_update_bug(
     status: i64,
     resolution: i64,
 ) -> Result<String, String> {
-    let (logined, jar) = {
-        let state = app.state::<MyState>().clone();
-        let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
-        let jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
-        (*logined,jar_.clone())
-    };
+    let state = app.state::<MyState>().clone();
+    let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     if !logined {
         return Err("未登录".to_string());
     }
@@ -175,10 +172,10 @@ async fn api_update_bug(
     let bug_update_page_token;
     let bug_info;
     {
-        let body = my_view_detail(jar.clone(), bug_id).await?;
+        let body = my_view_detail(jar.clone(), bug_id, &host).await?;
         let document = Html::parse_document(body.as_str());
         bug_update_page_token = get_page_token(&document, "bug_update_page_token")?;
-        bug_info = my_view_detail_data(&document)?;
+        bug_info = my_view_detail_data(&document, &host)?;
     }
     // bug修改页面
     let body = bug_update_page(
@@ -187,6 +184,7 @@ async fn api_update_bug(
             bug_id,
             bug_update_page_token,
         },
+        &host,
     )
     .await?;
     let bug_update_token =
@@ -210,7 +208,7 @@ async fn api_update_bug(
         steps_to_reproduce: bug_info.steps_to_reproduce,
         bugnote_text: "".to_string(),
     };
-    bug_update(jar.clone(), bug).await
+    bug_update(jar.clone(), bug, &host).await
 }
 
 // 检查更新
@@ -232,7 +230,7 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
 
     let logined_value = store.get("logined").unwrap_or(Value::from(false));
     let cookie_value = store.get("cookies").unwrap_or(Value::from(""));
-    let host_value = store.get("host").unwrap_or(Value::from("http://bug.test.com"));
+    let host_value = store.get("host").unwrap_or(Value::from("bug.test.com"));
     let sub_params_value = store.get("sub_params").unwrap_or(Value::from(vec![r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器"]));
     let sub_bugs_value = store.get("sub_bugs").unwrap_or(Value::from(""));
     let sub_bugs_hash_value = store.get("sub_bugs_hash").unwrap_or(Value::from(""));
@@ -242,7 +240,7 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
 
     let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
     let jar = Jar::default();
-    let url = host_value.as_str().unwrap_or("").parse::<Url>().unwrap();
+    let url = ("http://".to_string()+host_value.as_str().unwrap_or("")).parse::<Url>().map_err(|e|format!("url parse err:{}",e))?;
     jar.add_cookie_str(cookie_value.as_str().unwrap_or(""), &url);
     *jar_ = Arc::new(jar);
     
@@ -302,7 +300,7 @@ fn find_sub_data(app: AppHandle) {
                 ticker.tick().await;
 
                 // 判断是否登录，如果未登录，则跳过
-                let logined = *state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
+                let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                 if !logined {
                     info!("未登录，跳过定时任务");
                     return Ok(());
@@ -314,12 +312,13 @@ fn find_sub_data(app: AppHandle) {
                 for sub_param in params {
                     let sub_param = sub_param.clone();
                     let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+                    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                     set.spawn(async move {
                         // 查询列表
                         let param = serde_html_form::from_str::<FindBugListParams>(&sub_param)
                             .map_err(|e| format!("serde_html_form err:{}", e))?;
                         
-                        let body = view_all_set(jar, param).await.map_err(|e|format!("lock err:{}",e))?;
+                        let body = view_all_set(jar, param, &host).await.map_err(|e|format!("lock err:{}",e))?;
                         
                         // 解析数据
                         let data = view_all_set_data(&Html::parse_document(body.as_str())).map_err(|e|format!("lock err:{}",e))?;
@@ -501,7 +500,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_login() {
-        let result = login(Arc::new(Jar::default()), "dengxiangcheng", "dxc3434DXC").await;
+        let host = "bug.test.com";
+        let result = login(Arc::new(Jar::default()), "dengxiangcheng", "dxc3434DXC", host).await;
         assert!(result.is_ok());
         if let Ok(text) = result {
             info!("text: {}", text);
@@ -510,12 +510,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_my_view_page() {
+        let host = "bug.test.com";
         let jar = Arc::new(Jar::default());
-        let result = login(jar.clone(), "dengxiangcheng", "dxc3434DXC").await;
+        let result = login(jar.clone(), "dengxiangcheng", "dxc3434DXC", host).await;
         assert!(result.is_ok(), "Login failed");
-        let ck = find_jar_cookies(&jar, "MANTIS_STRING_COOKIE").unwrap();
+        let ck = find_jar_cookies(&jar, "MANTIS_STRING_COOKIE", host).unwrap();
         info!("MANTIS_STRING_COOKIE: {}", ck);
-        let result = my_view_page(jar.clone()).await;
+        let result = my_view_page(jar.clone(), host).await;
         assert!(result.is_ok());
         let body = result.unwrap();
         find_all_tasks(body.as_str(), "#resolved .widget-body .my-buglist-bug td a")
@@ -528,14 +529,15 @@ mod tests {
 
     #[tokio::test]
     async fn test_view_all_set() {
+        let host = "bug.test.com";
         let jar = Arc::new(Jar::default());
-        let result = login(jar.clone(), "dengxiangcheng", "dxc3434DXC").await;
+        let result = login(jar.clone(), "dengxiangcheng", "dxc3434DXC", host).await;
         assert!(result.is_ok(), "Login failed");
 
         let param_str = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=29&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=-2&status[]=0&resolution[]=0&filter_by_last_updated_date=1&last_updated_start_month=6&last_updated_start_day=1&last_updated_start_year=2025&last_updated_end_month=6&last_updated_end_day=20&last_updated_end_year=2025&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器";
         let result = serde_html_form::from_str::<FindBugListParams>(param_str);
         assert!(result.is_ok());
-        let result = view_all_set(jar, result.unwrap()).await;
+        let result = view_all_set(jar, result.unwrap(), host).await;
         assert!(result.is_ok());
         let body = result.unwrap();
         // println!("body: {}", body);
@@ -552,8 +554,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_update_bug() {
+        let host = "bug.test.com";
         let jar = Arc::new(Jar::default());
-        let result = login(jar.clone(), "dengxiangcheng", "dxc3434DXC").await;
+        let result = login(jar.clone(), "dengxiangcheng", "dxc3434DXC", host).await;
         println!("cookie: {}", result.unwrap());
 
         let bug_id = 2491;
@@ -564,10 +567,10 @@ mod tests {
         let bug_update_page_token;
         let bug_info;
         {
-            let body = my_view_detail(jar.clone(), bug_id).await.unwrap();
+            let body = my_view_detail(jar.clone(), bug_id, host).await.unwrap();
             let document = Html::parse_document(body.as_str());
             bug_update_page_token = get_page_token(&document, "bug_update_page_token").unwrap();
-            bug_info = my_view_detail_data(&document).unwrap();
+            bug_info = my_view_detail_data(&document, host).unwrap();
         }
         println!("bug_update_page_token: {}", bug_update_page_token);
         // bug修改页面
@@ -577,6 +580,7 @@ mod tests {
                 bug_id,
                 bug_update_page_token,
             },
+            host,
         )
         .await
         .unwrap();
@@ -603,7 +607,7 @@ mod tests {
             bugnote_text: "".to_string(),
         };
         println!("{}", serde_html_form::to_string(&bug).unwrap());
-        let _ = bug_update(jar.clone(), bug).await.map_or_else(
+        let _ = bug_update(jar.clone(), bug, host).await.map_or_else(
             |e| {
                 println!("err:{}", e);
                 Err(e)
@@ -628,10 +632,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_my_view_detail_data() {
+        let host = "bug.test.com";
         // 读取view_all_set.html文件内容
         let html_content = include_str!("./example/view.php.html");
         let document = Html::parse_document(html_content);
-        let r = my_view_detail_data(&document);
+        let r = my_view_detail_data(&document,host);
         assert!(r.is_ok());
         let data = r.unwrap();
         println!("Summary: {:?}", data);

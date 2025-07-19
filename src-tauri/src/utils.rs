@@ -23,9 +23,11 @@ pub async fn login(
     jar: Arc<Jar>,
     username: &str,
     password: &str,
+    host: &str,
 ) -> Result<String, Box<dyn std::error::Error>> {
     // 地址
-    let url = "http://bug.test.com/login.php";
+    let origin = format!("http://{}",host);
+    let url = origin.to_string()+"/login.php";
 
     // 构建请求体
     let body = format!(
@@ -36,28 +38,16 @@ pub async fn login(
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT,HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(
-        ACCEPT_LANGUAGE,
-        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
-    );
+    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
     headers.insert(CACHE_CONTROL, HeaderValue::from_static("max-age=0"));
-    headers.insert(
-        CONTENT_TYPE,
-        HeaderValue::from_static("application/x-www-form-urlencoded"),
-    );
-    headers.insert(
-        CONTENT_LENGTH,
-        HeaderValue::from_str(&body.len().to_string())?,
-    );
-    headers.insert(ORIGIN, HeaderValue::from_static("http://bug.test.com"));
-    headers.insert(
-        REFERER,
-        HeaderValue::from_static("http://bug.test.com/login_password_page.php"),
-    );
+    headers.insert(CONTENT_TYPE,HeaderValue::from_static("application/x-www-form-urlencoded"));
+    headers.insert(CONTENT_LENGTH,HeaderValue::from_str(&body.len().to_string())?);
+    headers.insert(ORIGIN, HeaderValue::from_str(&origin)?);
+    headers.insert(REFERER,HeaderValue::from_str(&(origin.to_string()+"/login_password_page.php"))?);
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT,HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
-    headers.insert(HOST, HeaderValue::from_static("bug.test.com"));
+    headers.insert(HOST, HeaderValue::from_str(host)?);
     let jar1 = jar.clone();
     // 创建 reqwest 客户端
     let client = Client::builder()
@@ -92,23 +82,24 @@ pub async fn login(
 
     resp.text().await?;
     let cookie = jar1
-        .cookies(&Url::parse("http://bug.test.com").unwrap())
+        .cookies(&Url::parse(&origin).unwrap())
         .map(|e| format!("{}", e.to_str().unwrap()))
         .ok_or("".to_string())?;
     Ok(cookie)
 }
 
 // my_view_page 页面
-pub async fn my_view_page(jar: Arc<Jar>) -> Result<String, Box<dyn std::error::Error>> {
-    let url = "http://bug.test.com/my_view_page.php";
+pub async fn my_view_page(
+    jar: Arc<Jar>,
+    host: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let origin = format!("http://{}",host);
+    let url = origin.to_string()+"/my_view_page.php";
 
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(
-        ACCEPT_LANGUAGE,
-        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
-    );
+    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
@@ -133,9 +124,11 @@ pub async fn my_view_page(jar: Arc<Jar>) -> Result<String, Box<dyn std::error::E
 pub async fn view_all_set(
     jar: Arc<Jar>,
     params: FindBugListParams,
+    host: &str,
 ) -> Result<String, Box<dyn std::error::Error>> {
     // 地址
-    let url = "http://bug.test.com/view_all_set.php";
+    let origin = format!("http://{}",host);
+    let url = origin.to_string()+"/view_all_set.php";
 
     // body
     let body = serde_html_form::to_string(&params).unwrap();
@@ -143,28 +136,16 @@ pub async fn view_all_set(
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT,HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(
-        ACCEPT_LANGUAGE,
-        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
-    );
+    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
     headers.insert(CACHE_CONTROL, HeaderValue::from_static("max-age=0"));
-    headers.insert(
-        CONTENT_TYPE,
-        HeaderValue::from_static("application/x-www-form-urlencoded"),
-    );
-    headers.insert(
-        CONTENT_LENGTH,
-        HeaderValue::from_str(&body.len().to_string())?,
-    );
-    headers.insert(ORIGIN, HeaderValue::from_static("http://bug.test.com"));
-    headers.insert(
-        REFERER,
-        HeaderValue::from_static("http://bug.test.com/view_all_bug_page.php"),
-    );
+    headers.insert(CONTENT_TYPE,HeaderValue::from_static("application/x-www-form-urlencoded"));
+    headers.insert(CONTENT_LENGTH,HeaderValue::from_str(&body.len().to_string())?);
+    headers.insert(ORIGIN, HeaderValue::from_str(&origin)?);
+    headers.insert(REFERER,HeaderValue::from_str(&(origin.to_string()+"/view_all_bug_page.php"))?);
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT,HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
-    headers.insert(HOST, HeaderValue::from_static("bug.test.com"));
+    headers.insert(HOST, HeaderValue::from_str(&origin)?);
 
     // 创建 reqwest 客户端
     let client = Client::builder()
@@ -192,16 +173,18 @@ pub async fn view_all_set(
 }
 
 // my_view_detail 页面
-pub async fn my_view_detail(jar: Arc<Jar>, id: i64) -> Result<String, String> {
-    let url = format!("http://bug.test.com/view.php?id={}", id);
+pub async fn my_view_detail(
+    jar: Arc<Jar>, 
+    id: i64,
+    host: &str,
+) -> Result<String, String> {
+    let origin = format!("http://{}",host);
+    let url = format!("http://{}/view.php?id={}",origin, id);
 
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(
-        ACCEPT_LANGUAGE,
-        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
-    );
+    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
@@ -223,8 +206,13 @@ pub async fn my_view_detail(jar: Arc<Jar>, id: i64) -> Result<String, String> {
 }
 
 // bug_update_page 页面
-pub async fn bug_update_page(jar: Arc<Jar>, bug: UpdateToken) -> Result<String, String> {
-    let url = "http://bug.test.com/bug_update_page.php";
+pub async fn bug_update_page(
+    jar: Arc<Jar>, 
+    bug: UpdateToken,
+    host: &str,
+) -> Result<String, String> {
+    let origin = format!("http://{}",host);
+    let url = origin.to_string()+"/bug_update_page.php";
 
     // body
     let body = serde_html_form::to_string(&bug).unwrap();
@@ -233,19 +221,10 @@ pub async fn bug_update_page(jar: Arc<Jar>, bug: UpdateToken) -> Result<String, 
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(
-        ACCEPT_LANGUAGE,
-        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
-    );
-    headers.insert(
-        CONTENT_TYPE,
-        HeaderValue::from_static("application/x-www-form-urlencoded"),
-    );
+    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(CONTENT_TYPE,HeaderValue::from_static("application/x-www-form-urlencoded"));
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
-    headers.insert(
-        REFERER,
-        HeaderValue::from_str(referer.as_str()).map_err(|e| format!("{}", e))?,
-    );
+    headers.insert(REFERER,HeaderValue::from_str(referer.as_str()).map_err(|e| format!("{}", e))?);
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
 
@@ -271,8 +250,13 @@ pub async fn bug_update_page(jar: Arc<Jar>, bug: UpdateToken) -> Result<String, 
 }
 
 // bug_update 页面
-pub async fn bug_update(jar: Arc<Jar>, bug: UpdateBug) -> Result<String, String> {
-    let url = "http://bug.test.com/bug_update.php";
+pub async fn bug_update(
+    jar: Arc<Jar>, 
+    bug: UpdateBug,
+    host: &str,
+) -> Result<String, String> {
+    let origin = format!("http://{}",host);
+    let url = origin.to_string()+"/bug_update.php";
 
     // body
     let body = serde_html_form::to_string(&bug).unwrap();
@@ -280,15 +264,9 @@ pub async fn bug_update(jar: Arc<Jar>, bug: UpdateBug) -> Result<String, String>
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(
-        ACCEPT_LANGUAGE,
-        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
-    );
+    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
-    headers.insert(
-        CONTENT_TYPE,
-        HeaderValue::from_static("application/x-www-form-urlencoded"),
-    );
+    headers.insert(CONTENT_TYPE,HeaderValue::from_static("application/x-www-form-urlencoded"));
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
 
@@ -318,8 +296,13 @@ pub async fn bug_update(jar: Arc<Jar>, bug: UpdateBug) -> Result<String, String>
 }
 
 // bug_change_status_page 页面
-pub async fn bug_change_status_page(jar: Arc<Jar>, bug: UpdateToken) -> Result<String, String> {
-    let url = "http://bug.test.com/bug_change_status_page.php";
+pub async fn bug_change_status_page(
+    jar: Arc<Jar>, 
+    bug: UpdateToken,
+    host: &str,
+) -> Result<String, String> {
+    let origin = format!("http://{}",host);
+    let url = origin.to_string()+"/bug_change_status_page.php";
 
     // body
     let body = serde_html_form::to_string(&bug).unwrap();
@@ -327,10 +310,7 @@ pub async fn bug_change_status_page(jar: Arc<Jar>, bug: UpdateToken) -> Result<S
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(
-        ACCEPT_LANGUAGE,
-        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
-    );
+    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
@@ -360,8 +340,10 @@ pub async fn bug_change_status_page(jar: Arc<Jar>, bug: UpdateToken) -> Result<S
 pub fn find_jar_cookies(
     jar: &Jar,
     cookie_name: &str,
+    host: &str,
 ) -> Result<String, Box<dyn std::error::Error>> {
-    let url = Url::parse("http://bug.test.com/")?;
+    let origin = format!("http://{}",host);
+    let url = Url::parse(&origin)?;
 
     let cookie_prefix = format!("{}=", cookie_name);
 
@@ -597,7 +579,7 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
 }
 
 // 查询my_view_detail数据
-pub fn my_view_detail_data(document: &Html) -> Result<BugInfo, String> {
+pub fn my_view_detail_data(document: &Html,host: &str) -> Result<BugInfo, String> {
     let mut bug = BugInfo::default();
     // bug_id
     let id_slector = Selector::parse(".bug-header-data .bug-id").unwrap();
@@ -855,7 +837,8 @@ pub fn my_view_detail_data(document: &Html) -> Result<BugInfo, String> {
                         .for_each(|e| {
                             //<a href="file_download.php?file_id=2365&amp;type=bug">image.png</a>&#32;(179,667&#32;字节)&#32;&nbsp;&nbsp;
                             url = format!(
-                                "http://bug.test.com/{}",
+                                "http://{}/{}",
+                                host,
                                 e.value().attr("href").unwrap_or("")
                             );
                             name = e.inner_html().trim().to_string();
