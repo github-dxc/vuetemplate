@@ -83,17 +83,31 @@ struct MyState {
 
 // 初始化数据
 #[tauri::command(rename_all = "snake_case")]
-fn api_init_data(_app: AppHandle) -> String {
+async fn api_init_data(app: AppHandle) -> Result<String, String> {
+    let state = app.state::<MyState>().clone();
+    let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+
+    // 查询项目列表
+    let body = my_view_page(jar.clone(), &host).await.map_err(|e|format!("my_view_page err:{}",e))?;
+    let projects = project_data(&Html::parse_document(body.as_str()))?;
+    
+    // 查询分组列表
+    let body = bug_report_page(jar.clone(), &host).await.map_err(|e|format!("filters_params err:{}",e))?;
+    let category = category_data(&Html::parse_document(body.as_str()))?;
+    
     let mut hm = HashMap::new();
     hm.insert("Priority", Priority::kv());
     hm.insert("Severity", Severity::kv());
     hm.insert("Reproducibility", Reproducibility::kv());
     hm.insert("ViewStatus", ViewStatus::kv());
-    hm.insert("Category", Category::kv());
-    hm.insert("Project", Project::kv());
+    // hm.insert("Category", Category::kv());
+    hm.insert("Category", category);
+    // hm.insert("Project", Project::kv());
+    hm.insert("Project", projects);
     hm.insert("Status", Status::kv());
     hm.insert("Resolution", Resolution::kv());
-    serde_json::to_string(&hm).unwrap_or_else(|_| "{}".to_string())
+    serde_json::to_string(&hm).map_err(|e|format!("serde_json err:{}",e))
 }
 
 // 登录
@@ -102,31 +116,21 @@ async fn api_login(app: AppHandle, username: &str, password: &str) -> Result<Str
     let jar = Arc::new(Jar::default());
     let state = app.state::<MyState>().clone();
     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let s = login(jar.clone(), username, password,&host).await;
-    match s {
-        Ok(_) => {
-            // 保存cookie到全局状态
-            let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
-            *logined = true;
-            let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
-            *jar_ = jar;
-            return Ok("登录成功".to_string());
-        }
-        Err(e) => {
-            return Err(format!("登录失败: {}", e));
-        }
-    }
+    let result = login(jar.clone(), username, password, &host).await.map_err(|e|format!("login err:{}",e))?;
+    info!("result:{}",result);
+
+    // 保存cookie到全局状态
+    let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
+    *logined = true;
+    let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
+    *jar_ = jar;
+    return Ok("login success".to_string());
 }
 
 // 退出登录
 #[tauri::command(rename_all = "snake_case")]
 async fn api_logout(app: AppHandle) -> Result<(), String> {
-    let state = app.state::<MyState>().clone();
-    let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
-    *logined = false;
-    let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
-    *jar_ = Arc::new(Jar::default());
-    Ok(())
+    clear_global_state(app)
 }
 
 // bug列表
@@ -230,7 +234,15 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
 
     let logined_value = store.get("logined").unwrap_or(Value::from(false));
     let cookie_value = store.get("cookies").unwrap_or(Value::from(""));
-    let host_value = store.get("host").unwrap_or(Value::from("bug.test.com"));
+    // let host_value = store.get("host").unwrap_or(Value::from("bug.test.com"));
+    let default_host: &'static str = "localhost:8989";
+    let host_value = store.get("host").unwrap_or(Value::from(default_host));
+    let hv = host_value.as_str().and_then(|v|{
+        if v == "" {
+            return Some(default_host);
+        }
+        Some(v)
+    }).ok_or("host err".to_string())?;
     let sub_params_value = store.get("sub_params").unwrap_or(Value::from(vec![r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器"]));
     let sub_bugs_value = store.get("sub_bugs").unwrap_or(Value::from(""));
     let sub_bugs_hash_value = store.get("sub_bugs_hash").unwrap_or(Value::from(""));
@@ -240,12 +252,12 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
 
     let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
     let jar = Jar::default();
-    let url = ("http://".to_string()+host_value.as_str().unwrap_or("")).parse::<Url>().map_err(|e|format!("url parse err:{}",e))?;
+    let url = ("http://".to_string()+hv).parse::<Url>().map_err(|e|format!("url parse err:{}",e))?;
     jar.add_cookie_str(cookie_value.as_str().unwrap_or(""), &url);
     *jar_ = Arc::new(jar);
     
     let mut host = state.host.lock().map_err(|e|format!("lock err:{}",e))?;
-    *host = host_value.to_string();
+    *host = hv.to_string();
 
     let mut sub_params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?;
     *sub_params = sub_params_value.as_array().ok_or("None".to_string())?.iter().map(|v|v.to_string()).collect();
@@ -286,6 +298,37 @@ fn save_global_state(app: Window) -> Result<(),String> {
     let sub_bugs_hash = state.sub_bugs_hash.lock().map_err(|e|format!("lock err:{}",e))?;
     let json = serde_json::to_string_pretty(&sub_bugs_hash.clone()).map_err(|e|format!("to json err:{}",e))?;
     store.set("sub_bugs_hash", json);
+    Ok(())
+}
+
+// 清空所有状态
+fn clear_global_state(app: AppHandle) -> Result<(),String> {
+    let state = app.state::<MyState>().clone();
+    let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
+
+    let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
+    *logined = false;
+    store.set("logined", false);
+    
+    // let mut host = state.host.lock().map_err(|e|format!("lock err:{}",e))?;
+    // *host = "".to_string();
+    // store.set("host", host.clone());
+
+    let mut jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
+    *jar = Arc::new(Jar::default());
+    store.set("cookies", "".to_string());
+
+    let mut sub_params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?;
+    *sub_params = vec![];
+    store.set("sub_params", sub_params.clone());
+
+    let mut sub_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
+    *sub_bugs = HashMap::default();
+    store.set("sub_bugs", "{}");
+
+    let mut sub_bugs_hash = state.sub_bugs_hash.lock().map_err(|e|format!("lock err:{}",e))?;
+    *sub_bugs_hash = HashMap::default();
+    store.set("sub_bugs_hash", "{}");
     Ok(())
 }
 
@@ -518,13 +561,6 @@ mod tests {
         info!("MANTIS_STRING_COOKIE: {}", ck);
         let result = my_view_page(jar.clone(), host).await;
         assert!(result.is_ok());
-        let body = result.unwrap();
-        find_all_tasks(body.as_str(), "#resolved .widget-body .my-buglist-bug td a")
-            .unwrap()
-            .iter()
-            .for_each(|task| {
-                info!("task: {}", task);
-            });
     }
 
     #[tokio::test]

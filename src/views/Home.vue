@@ -107,6 +107,16 @@ const tableRowClassName = ({
 
 //------------------api-------------------//
 
+async function api_logout() {
+  try {
+    let data = await invoke("api_logout");
+    console.log("api_logout:", data);
+  } catch (error) {
+    console.log(error);
+    router.push('/login')
+  }
+}
+
 async function api_init_data() {
   try {
     let data = await invoke("api_init_data", { name: "enums" });
@@ -196,6 +206,7 @@ listen('sub_bugs', (event) => {
     <el-card class="box-card">
       <div slot="header" class="clearfix">
         <span>Bug 列表</span>
+        <el-button @click="api_logout">退出登录</el-button>
       </div>
 
       <el-table :data="bugList" style="width: 100%;font-size: 12px" :row-class-name="tableRowClassName">

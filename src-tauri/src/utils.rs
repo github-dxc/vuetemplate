@@ -1,8 +1,9 @@
 use crate::enums::*;
 use crate::model::*;
 
-use chrono::{NaiveDate, TimeZone};
+use chrono::{Utc, NaiveDate, TimeZone};
 use chrono_tz::Asia::Shanghai;
+use log::info;
 use reqwest::cookie::{CookieStore, Jar};
 use reqwest::header::{
     HeaderMap, HeaderValue, ACCEPT, ACCEPT_LANGUAGE, CACHE_CONTROL, CONNECTION, CONTENT_LENGTH,
@@ -49,24 +50,19 @@ pub async fn login(
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
     headers.insert(HOST, HeaderValue::from_str(host)?);
     let jar1 = jar.clone();
+    let dst = format!("{}/login_cookie_test.php?return=index.php",origin);
     // 创建 reqwest 客户端
     let client = Client::builder()
         .timeout(Duration::from_secs(2))
         .cookie_provider(jar)
         .danger_accept_invalid_certs(true) // --insecure
         .default_headers(headers)
-        .redirect(Policy::custom(|attempt| {
+        .redirect(Policy::custom(move |attempt| {
             // 自定义重定向策略
-            if attempt.previous().len() > 5 {
-                attempt.error("too many redirects")
-            } else if attempt
-                .url()
-                .as_str()
-                .eq("http://bug.test.com/login_cookie_test.php?return=index.php")
-            {
+            if attempt.url().as_str().eq(dst.as_str()) {
                 attempt.stop()
             } else {
-                attempt.stop()
+                attempt.error("login err")
             }
         }))
         .build()
@@ -80,12 +76,13 @@ pub async fn login(
         .await
         .map_err(|e| e.to_string())?;
 
-    resp.text().await?;
+    let text = resp.text().await?;
     let cookie = jar1
         .cookies(&Url::parse(&origin).unwrap())
         .map(|e| format!("{}", e.to_str().unwrap()))
         .ok_or("".to_string())?;
-    Ok(cookie)
+    info!("login cookie: {}",cookie);
+    Ok(text)
 }
 
 // my_view_page 页面
@@ -179,7 +176,7 @@ pub async fn my_view_detail(
     host: &str,
 ) -> Result<String, String> {
     let origin = format!("http://{}",host);
-    let url = format!("http://{}/view.php?id={}",origin, id);
+    let url = format!("{}/view.php?id={}",origin, id);
 
     // 构建请求头
     let mut headers = HeaderMap::new();
@@ -336,6 +333,72 @@ pub async fn bug_change_status_page(
     Ok(text)
 }
 
+// bug_report_page 页面
+pub async fn bug_report_page(
+    jar: Arc<Jar>, 
+    host: &str,
+) -> Result<String, String> {
+    let origin = format!("http://{}",host);
+    let url = format!("{}/bug_report_page", origin);
+
+    // 构建请求头
+    let mut headers = HeaderMap::new();
+    headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
+    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
+    headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
+    headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
+
+    // 创建 reqwest 客户端
+    let client = Client::builder()
+        .timeout(Duration::from_secs(2))
+        .cookie_provider(jar)
+        .danger_accept_invalid_certs(true) // --insecure
+        .default_headers(headers)
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    // 发送 GET 请求
+    let resp = client.get(url).send().await.map_err(|e| e.to_string())?;
+
+    let text = resp.text().await.map_err(|e| e.to_string())?;
+    Ok(text)
+}
+
+// 查询条件列表（单独获取某一项）
+pub async fn filters_params(
+    jar: Arc<Jar>, 
+    params: FiltersParams,
+    host: &str,
+) -> Result<String, String> {
+    let origin = format!("http://{}",host);
+    let url = format!("{}/return_dynamic_filters?view_type={}&filter_target={}&filter_id=3&_={}", 
+        origin, params.view_type, params.filter_target, Utc::now().timestamp_millis());
+
+    // 构建请求头
+    let mut headers = HeaderMap::new();
+    headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
+    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
+    headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
+    headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
+
+    // 创建 reqwest 客户端
+    let client = Client::builder()
+        .timeout(Duration::from_secs(2))
+        .cookie_provider(jar)
+        .danger_accept_invalid_certs(true) // --insecure
+        .default_headers(headers)
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    // 发送 GET 请求
+    let resp = client.get(url).send().await.map_err(|e| e.to_string())?;
+
+    let text = resp.text().await.map_err(|e| e.to_string())?;
+    Ok(text)
+}
+
 // 查询 Jar 中的 Cookie
 pub fn find_jar_cookies(
     jar: &Jar,
@@ -362,34 +425,6 @@ pub fn find_jar_cookies(
         .ok_or_else(|| format!("未找到名为 {} 的 Cookie", cookie_name))?;
 
     Ok(cookie_value.to_string())
-}
-
-// 查询符合条件的节点
-pub fn find_all_tasks(
-    html_content: &str,
-    selector_text: &str,
-) -> Result<Vec<String>, Box<dyn std::error::Error>> {
-    // 解析 HTML
-    let document = Html::parse_document(html_content);
-
-    // 创建选择器
-    let selector =
-        Selector::parse(selector_text).map_err(|e| format!("Selector 解析失败: {:?}", e))?;
-
-    // 收集所有匹配元素的文本
-    let results: Vec<String> = document
-        .select(&selector)
-        .map(|element| {
-            let text = element.text().collect::<Vec<_>>().join("");
-            text
-        })
-        .collect();
-
-    if results.is_empty() {
-        Err("未找到任何匹配的链接元素".into())
-    } else {
-        Ok(results)
-    }
 }
 
 // 查询bug_update_token
@@ -492,7 +527,7 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
                     //  handler
                     bug.handler = e.inner_html();
                     e.value().attr("href").and_then(|href| {
-                        href.split('=').nth(1).and_then(|id| id.parse::<i64>().ok())
+                        href.split('=').last().and_then(|id| id.parse::<i64>().ok())
                     })
                 })
                 .unwrap_or(0);
@@ -650,7 +685,7 @@ pub fn my_view_detail_data(document: &Html,host: &str) -> Result<BugInfo, String
             bug.reporter = e.inner_html();
             e.value()
                 .attr("href")
-                .and_then(|href| href.split('=').nth(1).and_then(|id| id.parse::<i64>().ok()))
+                .and_then(|href| href.split('=').last().and_then(|id| id.parse::<i64>().ok()))
         })
         .unwrap_or(0);
 
@@ -663,7 +698,7 @@ pub fn my_view_detail_data(document: &Html,host: &str) -> Result<BugInfo, String
             bug.handler = e.inner_html();
             e.value()
                 .attr("href")
-                .and_then(|href| href.split('=').nth(1).and_then(|id| id.parse::<i64>().ok()))
+                .and_then(|href| href.split('=').last().and_then(|id| id.parse::<i64>().ok()))
         })
         .unwrap_or(0);
 
@@ -872,6 +907,40 @@ pub fn my_view_detail_data(document: &Html,host: &str) -> Result<BugInfo, String
         .collect();
 
     Ok(bug)
+}
+
+// 查询项目列表数据
+pub fn project_data(document: &Html) -> Result<Vec<KV>, String> {
+    let slector = Selector::parse("#projects-list .project-link").unwrap();
+    let r: Vec<KV> = document
+        .select(&slector)
+        .filter_map(|e| {
+            let value = e.inner_html().replace('\u{A0}', "").trim().to_string();
+            let key = e.value().attr("href").and_then(|href| {
+                href.split('=').last().and_then(|ids| {
+                    ids.split(";").last().and_then(|id|{
+                        id.parse::<i64>().ok()
+                    })
+                })
+            })?;
+            Some(KV{key,value})
+        })
+        .collect();
+    Ok(r)
+}
+
+// 查询分类列表数据
+pub fn category_data(document: &Html) -> Result<Vec<KV>, String> {
+    let slector = Selector::parse("#category_id option").unwrap();
+    let r: Vec<KV> = document
+        .select(&slector)
+        .filter_map(|e| {
+            let value = e.inner_html().replace("[所有项目]", "").trim().to_string();
+            let key = e.value().attr("value").and_then(|id|id.parse::<i64>().ok())?;
+            Some(KV{key,value})
+        })
+        .collect();
+    Ok(r)
 }
 
 pub fn get_hash<T: Hash>(t: &T) -> u64 {

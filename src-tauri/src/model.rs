@@ -149,3 +149,10 @@ pub struct VersionInfo {
     pub version: String,
     pub target: String,
 }
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct FiltersParams {
+    pub view_type: String,
+    pub filter_target: String,
+}
+

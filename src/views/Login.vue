@@ -13,7 +13,7 @@ const passwordInputRef = ref(null);
 
 async function login() {
   try {
-    const result = await invoke("api_login", { username: "dengxiangcheng", password: "dxc3434DXC" });
+    const result = await invoke("api_login", { username: username.value, password: password.value });
     console.log("登录成功", result);
     router.push("/home");
   } catch (error) {
