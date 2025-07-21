@@ -97,6 +97,7 @@ pub struct BugNote {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct FindBugListParams {
+    #[serde(default, rename = "type")]
     pub r#type: i64,
     pub view_type: String,
     #[serde(default, rename = "reporter_id[]")]

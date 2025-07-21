@@ -142,7 +142,7 @@ pub async fn view_all_set(
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT,HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
-    headers.insert(HOST, HeaderValue::from_str(&origin)?);
+    headers.insert(HOST, HeaderValue::from_str(host)?);
 
     // 创建 reqwest 客户端
     let client = Client::builder()
@@ -569,7 +569,7 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
                 .unwrap_or(0);
 
             // summary
-            let summary_selector = Selector::parse(".column-summary a").unwrap();
+            let summary_selector = Selector::parse(".column-summary").unwrap();
             bug.summary = element
                 .select(&summary_selector)
                 .map(|e| e.inner_html().trim().to_string())
@@ -577,7 +577,6 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
                 .join("")
                 .trim()
                 .to_string();
-
             bug
         })
         .collect();

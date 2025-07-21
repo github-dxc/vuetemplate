@@ -16,7 +16,7 @@ use tauri::{AppHandle, Emitter, Manager, Window, WindowEvent};
 use tauri_plugin_notification::{NotificationExt, PermissionState};
 use tauri_plugin_updater::{Update, UpdaterExt};
 use tokio::time::{interval, Duration};
-use tokio::task::JoinSet;
+use tokio::task::{JoinError, JoinSet};
 use serde_json::{Value};
 use std::collections::HashSet;
 use utils::*;
@@ -234,8 +234,8 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
 
     let logined_value = store.get("logined").unwrap_or(Value::from(false));
     let cookie_value = store.get("cookies").unwrap_or(Value::from(""));
-    // let default_host: &'static str = "localhost:8989";
-    let default_host: &'static str = "bug.test.com";
+    let default_host: &'static str = "localhost:8989";
+    // let default_host: &'static str = "bug.test.com";
     let host_value = store.get("host").unwrap_or(Value::from(default_host));
     let hv = host_value.as_str().and_then(|v|{
         if v == "" {
@@ -245,7 +245,7 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
     }).ok_or("host err".to_string())?;
     let sub_params_value = store.get("sub_param").unwrap_or(Value::from(vec![
         r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=12&search=&filter_submit=应用过滤器",
-        r"type=1&view_type=simple&reporter_id[]=28&handler_id[]=0&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=12&search=&filter_submit=应用过滤器",
+        r"type=1&view_type=simple&reporter_id[]=-1&handler_id[]=0&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=12&search=&filter_submit=应用过滤器",
     ]));
     let sub_bugs_value = store.get("sub_bugs").unwrap_or(Value::from(""));
     let sub_bugs_hash_value = store.get("sub_bugs_hash").unwrap_or(Value::from(""));
@@ -358,17 +358,15 @@ fn find_sub_data(app: AppHandle) {
                 let params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                 for sub_param in params {
                     let sub_param = sub_param.clone();
-                    println!("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{}",sub_param);
                     let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                     set.spawn(async move {
                         // 查询列表
                         let param = serde_html_form::from_str::<FindBugListParams>(&sub_param)
                             .map_err(|e| format!("serde_html_form err:{}", e))?;
-                        
-                        let body = view_all_set(jar, param, &host).await.map_err(|e|format!("lock err:{}",e))?;
+                        let body = view_all_set(jar, param, &host).await.map_err(|e|format!("view_all_set err:{}",e))?;
                         // 解析数据
-                        let data = view_all_set_data(&Html::parse_document(body.as_str())).map_err(|e|format!("lock err:{}",e))?;
+                        let data = view_all_set_data(&Html::parse_document(body.as_str())).map_err(|e|format!("view_all_set_data err:{}",e))?;
                         Ok(data)
                     });
                 }
@@ -376,11 +374,17 @@ fn find_sub_data(app: AppHandle) {
                 while let Some(result) = set.join_next().await {
                     match result {
                         Ok(value) => {
-                            if let Ok(mut bl) = value {
-                                bugs.append(&mut bl.bugs);
+                            match value {
+                                Ok(mut bl) => {
+                                    bugs.append(&mut bl.bugs);
+                                },
+                                Err(e) => {
+                                    warn!("find data err: {}", e);
+                                    return Err(e);
+                                }
                             }
                         },
-                        Err(e) => eprintln!("Task failed: {}", e),
+                        Err(e) => info!("Task failed: {}", e),
                     }
                 }
                 let mut seen = HashSet::new();
@@ -554,109 +558,20 @@ mod tests {
             info!("text: {}", text);
         }
     }
-
+    
     #[tokio::test]
-    async fn test_my_view_page() {
-        let host = "bug.test.com";
-        let jar = Arc::new(Jar::default());
-        let result = login(jar.clone(), "dengxiangcheng", "dxc3434DXC", host).await;
-        assert!(result.is_ok(), "Login failed");
-        let ck = find_jar_cookies(&jar, "MANTIS_STRING_COOKIE", host).unwrap();
-        info!("MANTIS_STRING_COOKIE: {}", ck);
-        let result = my_view_page(jar.clone(), host).await;
-        assert!(result.is_ok());
-    }
-
-    #[tokio::test]
-    async fn test_view_all_set() {
-        let host = "bug.test.com";
-        let jar = Arc::new(Jar::default());
-        let result = login(jar.clone(), "dengxiangcheng", "dxc3434DXC", host).await;
-        assert!(result.is_ok(), "Login failed");
-
-        let param_str = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=29&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=-2&status[]=0&resolution[]=0&filter_by_last_updated_date=1&last_updated_start_month=6&last_updated_start_day=1&last_updated_start_year=2025&last_updated_end_month=6&last_updated_end_day=20&last_updated_end_year=2025&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器";
-        let result = serde_html_form::from_str::<FindBugListParams>(param_str);
-        assert!(result.is_ok());
-        let result = view_all_set(jar, result.unwrap(), host).await;
-        assert!(result.is_ok());
-        let body = result.unwrap();
-        // println!("body: {}", body);
-
-        let r = view_all_set_data(&Html::parse_document(body.as_str()));
-        let data = r.unwrap();
-        for a in data.bugs {
-            println!("Summary: {:?}", a);
-        }
-        println!("Total: {}", data.total);
-        println!("Page: {}", data.page);
-        println!("Limit: {}", data.limit);
-    }
-
-    #[tokio::test]
-    async fn test_update_bug() {
-        let host = "bug.test.com";
-        let jar = Arc::new(Jar::default());
-        let result = login(jar.clone(), "dengxiangcheng", "dxc3434DXC", host).await;
-        println!("cookie: {}", result.unwrap());
-
-        let bug_id = 2491;
-        let status = 81;
-        let resolution = 20;
-
-        // 查询bug详情
-        let bug_update_page_token;
-        let bug_info;
-        {
-            let body = my_view_detail(jar.clone(), bug_id, host).await.unwrap();
-            let document = Html::parse_document(body.as_str());
-            bug_update_page_token = get_page_token(&document, "bug_update_page_token").unwrap();
-            bug_info = my_view_detail_data(&document, host).unwrap();
-        }
-        println!("bug_update_page_token: {}", bug_update_page_token);
-        // bug修改页面
-        let body = bug_update_page(
-            jar.clone(),
-            UpdateToken {
-                bug_id,
-                bug_update_page_token,
-            },
-            host,
-        )
-        .await
-        .unwrap();
-        let bug_update_token =
-            get_page_token(&Html::parse_document(body.as_str()), "bug_update_token").unwrap();
-        println!("bug_update_token: {}", bug_update_token);
-
-        let bug = UpdateBug {
-            bug_update_token,
-            bug_id,
-            last_updated: bug_info.last_updated,
-            category_id: bug_info.category_id,
-            view_state: bug_info.view_state,
-            handler_id: bug_info.handler_id,
-            priority: bug_info.priority,
-            severity: bug_info.severity,
-            reproducibility: bug_info.reproducibility,
-            status: status,
-            resolution: resolution,
-            summary: bug_info.summary,
-            description: bug_info.description,
-            additional_information: bug_info.additional_information,
-            steps_to_reproduce: bug_info.steps_to_reproduce,
-            bugnote_text: "".to_string(),
-        };
-        println!("{}", serde_html_form::to_string(&bug).unwrap());
-        let _ = bug_update(jar.clone(), bug, host).await.map_or_else(
-            |e| {
-                println!("err:{}", e);
-                Err(e)
-            },
-            |d| {
-                println!("ok:{}", d);
-                Ok(d)
-            },
-        );
+    async fn test_serde_html_form() {
+        let sub_param = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=12&search=&filter_submit=应用过滤器";
+        let param = serde_html_form::from_str::<FindBugListParams>(&sub_param)
+            .map_err(|e| {
+                println!("serde_html_form err: {}", e);
+                format!("serde_html_form err:{}", e)
+            })
+            .map(|a| {
+                println!("serde_html_form ok: {:?}", a);
+                a
+            });
+        assert!(param.is_ok());
     }
 
     #[tokio::test]

@@ -189,10 +189,11 @@ listen('sub_bugs', (event) => {
   try {
     const obj = event.payload;
     if (obj) {
-      total.value = parseInt(obj.total) || 0;
-      limit.value = parseInt(obj.limit) || 0;
-      page.value = parseInt(obj.page) || 0;
-      bugList.value = obj.bugs || [];
+      // total.value = parseInt(obj.total) || 0;
+      // limit.value = parseInt(obj.limit) || 0;
+      // page.value = parseInt(obj.page) || 0;
+      // bugList.value = obj.bugs || [];
+      bugList.value = obj;
     };
   } catch (error) {
     console.error('解析 JSON 失败:', error);
