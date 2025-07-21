@@ -915,7 +915,7 @@ pub fn project_data(document: &Html) -> Result<Vec<KV>, String> {
     let r: Vec<KV> = document
         .select(&slector)
         .filter_map(|e| {
-            let value = e.inner_html().replace('\u{A0}', "").trim().to_string();
+            let value = e.inner_html().replace("&nbsp;", "").trim().to_string();
             let key = e.value().attr("href").and_then(|href| {
                 href.split('=').last().and_then(|ids| {
                     ids.split(";").last().and_then(|id|{
