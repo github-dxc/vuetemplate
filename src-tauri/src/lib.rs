@@ -8,6 +8,7 @@ use log::{debug, info, warn};
 use model::*;
 use reqwest::cookie::{CookieStore, Jar};
 use scraper::Html;
+use serde::Serialize;
 use tauri_plugin_store::StoreExt;
 use url::Url;
 use std::collections::HashMap;
@@ -16,7 +17,7 @@ use tauri::{AppHandle, Emitter, Manager, Window, WindowEvent};
 use tauri_plugin_notification::{NotificationExt, PermissionState};
 use tauri_plugin_updater::{Update, UpdaterExt};
 use tokio::time::{interval, Duration};
-use tokio::task::{JoinError, JoinSet};
+use tokio::task::{JoinSet};
 use serde_json::{Value};
 use std::collections::HashSet;
 use utils::*;
@@ -91,11 +92,11 @@ async fn api_init_data(app: AppHandle) -> Result<String, String> {
     // 查询项目列表
     let body = my_view_page(jar.clone(), &host).await.map_err(|e|format!("my_view_page err:{}",e))?;
     let projects = project_data(&Html::parse_document(body.as_str()))?;
-    
+
     // 查询分组列表
     let body = bug_report_page(jar.clone(), &host).await.map_err(|e|format!("filters_params err:{}",e))?;
     let category = category_data(&Html::parse_document(body.as_str()))?;
-    
+
     let mut hm = HashMap::new();
     hm.insert("Priority", Priority::kv());
     hm.insert("Severity", Severity::kv());
@@ -110,6 +111,18 @@ async fn api_init_data(app: AppHandle) -> Result<String, String> {
     serde_json::to_string(&hm).map_err(|e|format!("serde_json err:{}",e))
 }
 
+// 初始化bugs数据
+#[tauri::command(rename_all = "snake_case")]
+async fn api_init_my_state(app: AppHandle) -> Result<Vec<Bug>, String> {
+    let state = app.state::<MyState>().clone();
+    
+    // 查询缓存的bug列表
+    let sub_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let mut bugs:Vec<Bug> = sub_bugs.into_iter().map(|(_,bug)|bug).collect();
+    bugs.sort_by_key(|b|std::cmp::Reverse(b.last_updated));
+    Ok(bugs)
+}
+    
 // 登录
 #[tauri::command(rename_all = "snake_case")]
 async fn api_login(app: AppHandle, username: &str, password: &str) -> Result<String, String> {
@@ -403,10 +416,10 @@ fn find_sub_data(app: AppHandle) {
                 for b in bugs.clone() {
                     let bgid = b.bug_id;
                     let hash = get_hash(&b);
+                    new_map.insert(bgid, b.clone());
+                    new_hash.insert(bgid, hash);
                     //判断hash值是否一致，不一致则通知,没有也通知
                     if let None = old_hash.iter().find(|(&k,&v)| k == bgid && v == hash){
-                        new_map.insert(bgid, b.clone());
-                        new_hash.insert(bgid, hash);
                         //通知
                         let notice = format!(
                                 " {} | {} - {} -> {}",
@@ -423,12 +436,14 @@ fn find_sub_data(app: AppHandle) {
                         );
                     };
                 }
-                *old_map = new_map;
-                *old_hash = new_hash;
                 // 向前端所有窗口广播消息
-                let _ = app.emit("sub_bugs", bugs);
-                let _ = app.emit("sub_msgs", notice_msgs);
-
+                if notice_msgs.len() > 0 {
+                    *old_map = new_map;
+                    *old_hash = new_hash;
+                    bugs.sort_by_key(|b| std::cmp::Reverse(b.last_updated));
+                    let _ = app.emit("sub_bugs", bugs);
+                    let _ = app.emit("sub_msgs", notice_msgs);
+                }
                 Ok(())
             }.await;
             if let Err(e) = result {

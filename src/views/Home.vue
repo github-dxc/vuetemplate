@@ -134,7 +134,7 @@ async function api_bug_list(params) {
   try {
     // 获取bug列表
     let data = await invoke("api_bug_list",params);
-    console.log("api_init_data:", data);
+    console.log("api_bug_list:", data);
     if (data) {
         total.value = parseInt(data.total) || 0;
         limit.value = parseInt(data.limit) || 0;

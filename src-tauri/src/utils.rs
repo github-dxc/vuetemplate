@@ -570,13 +570,10 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
 
             // summary
             let summary_selector = Selector::parse(".column-summary").unwrap();
-            bug.summary = element
+            bug.summary = document
                 .select(&summary_selector)
-                .map(|e| e.inner_html().trim().to_string())
-                .collect::<Vec<String>>()
-                .join("")
-                .trim()
-                .to_string();
+                .map(|e| e.text().collect::<Vec<_>>().join(""))
+                .collect::<Vec<String>>().join("").trim().to_owned();
             bug
         })
         .collect();
