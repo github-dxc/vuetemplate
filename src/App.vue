@@ -6,7 +6,7 @@ import UpdateNotification from './components/UpdateNotification.vue'
 const router = useRouter()
 
 function goHome() {
-  router.push('/')
+  router.push('/Demo')
 }
 function goLogin() {
   router.push('/login')
