@@ -1,12 +1,10 @@
 <script setup vapor>
 import { useRouter } from 'vue-router'
-import UpdateNotification from './components/UpdateNotification.vue'
-// import TopMenu from './components/TopMenu.vue'
 
 const router = useRouter()
 
 function goHome() {
-  router.push('/Demo')
+  router.push('/')
 }
 function goLogin() {
   router.push('/login')
@@ -20,8 +18,6 @@ function goLogin() {
       <button @click="goHome">跳转首页</button>
       <button @click="goLogin">跳转登录页</button>
       <router-view />
-      <!-- 更新组件 - 全局使用 -->
-      <UpdateNotification />
     </div>
   </main>
 </template>

@@ -10,7 +10,8 @@
       <p>© 2024 Tencent. All rights reserved.</p>
     </div>
     <div class="about-actions">
-      <el-button type="primary">检查更新</el-button>
+      <!-- 更新组件 - 全局使用 -->
+      <UpdateNotification />
       <el-button>用户协议</el-button>
       <el-button>隐私政策</el-button>
     </div>
@@ -19,6 +20,7 @@
 
 <script setup>
 import { ChatDotRound } from '@element-plus/icons-vue';
+import UpdateNotification from './UpdateNotification.vue'
 </script>
 
 <style scoped>
