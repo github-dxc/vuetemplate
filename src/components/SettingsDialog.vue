@@ -42,7 +42,7 @@
         </div>
 
         <div v-if="activeSettingMenu === 'account'" class="setting-panel">
-          <AccountSettingsPanel :user-avatar="user-avatar" @logout="$emit('logout')" />
+          <AccountSettingsPanel :user-avatar="user-avatar" />
         </div>
         <div v-else-if="activeSettingMenu === 'general'" class="setting-panel">
           <GeneralSettingsPanel :settings="settings" @update:settings="$emit('update:settings', $event)" />
@@ -95,7 +95,6 @@ defineEmits([
   'update:settings', 
   'update:plugins',
   'close', 
-  'logout', 
   'choose-file-path', 
   'clear-cache', 
   'edit-shortcut'

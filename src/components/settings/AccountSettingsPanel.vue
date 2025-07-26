@@ -16,15 +16,29 @@
     <p>可在手机微信上关闭。</p>
   </div>
   <div class="logout-section">
-    <el-button text type="primary" @click="$emit('logout')">退出登录</el-button>
+    <el-button text type="primary" @click="logout">退出登录</el-button>
   </div>
 </template>
 
 <script setup>
+import { useUserStore } from '../../store'
+import { useRouter } from 'vue-router';
+
+const router = useRouter()
+
+const userStore = useUserStore()
+
+async function logout() {
+  try {
+    await userStore.logout();
+    router.push("Login");
+  } catch (error) {
+    console.error('登录失败:', error)
+  }
+}
 defineProps({
   userAvatar: String
 });
-defineEmits(['logout']);
 </script>
 
 <style scoped>
