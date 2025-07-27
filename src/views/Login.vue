@@ -15,7 +15,7 @@
     </div>
     <p>Click to log in to the bug system.</p>
 
-    <form class="row" @submit.prevent="handleSubmit">
+    <div class="row">
       <div v-if="showUsername" class="input-group">
         <input
           class="greet-input"
@@ -40,7 +40,7 @@
         <div v-if="showPassword && password == ''">Back</div>
         <div v-if="showPassword && password !== ''">Login</div>
       </button>
-    </form>
+    </div>
   </main>
 </template>
 
@@ -49,6 +49,7 @@ import { ref, onMounted, nextTick } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { useRouter } from 'vue-router';
 import { useUserStore } from "../store";
+import { ElMessage } from 'element-plus';
 
 const router = useRouter()
 const username = ref("");
@@ -66,6 +67,11 @@ async function login() {
   } catch (error) {
     // 登录失败
     console.error("登录失败");
+    ElMessage({
+      showClose: true,
+      message: 'Login failed. ' + error,
+      type: 'error',
+    });
   }
 }
 

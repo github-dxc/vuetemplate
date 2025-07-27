@@ -7,7 +7,7 @@
     <el-table :data="bugList" style="width: 100%;font-size: 12px" :row-class-name="tableRowClassName">
       <el-table-column label="ID" width="60" header-align="center">
         <template #default="scope">
-          <el-link type="primary" :href="'http://bug.test.com/view.php?id=' + scope.row.bug_id" target="_blank">{{
+          <el-link type="primary" :href="'http://bug.test.com/view.php?id=' + scope.row?.bug_id" target="_blank">{{
             scope.row.bug_id }}</el-link>
         </template>
       </el-table-column>
