@@ -1,7 +1,54 @@
+<template>
+  <main class="container">
+    <h1>Welcome to Tauri + Vue</h1>
+
+    <div class="row">
+      <a href="https://vitejs.dev" target="_blank">
+        <img src="/vite.svg" class="logo vite" alt="Vite logo" />
+      </a>
+      <a href="https://tauri.app" target="_blank">
+        <img src="/tauri.svg" class="logo tauri" alt="Tauri logo" />
+      </a>
+      <a href="https://vuejs.org/" target="_blank">
+        <img src="../assets/vue.svg" class="logo vue" alt="Vue logo" />
+      </a>
+    </div>
+    <p>Click to log in to the bug system.</p>
+
+    <form class="row" @submit.prevent="handleSubmit">
+      <div v-if="showUsername" class="input-group">
+        <input
+          class="greet-input"
+          ref="usernameInputRef"
+          v-model="username"
+          placeholder="Enter a username..."
+          @keyup.enter="nextEvent"
+        />
+      </div>
+      <div v-if="showPassword" class="input-group">
+        <input
+          class="greet-input"
+          ref="passwordInputRef"
+          v-model="password"
+          type="password"
+          placeholder="Enter a password..."
+          @keyup.enter="nextEvent"
+        />
+      </div>
+      <button @click="nextEvent">
+        <div v-if="showUsername && password == ''">Next</div>
+        <div v-if="showPassword && password == ''">Back</div>
+        <div v-if="showPassword && password !== ''">Login</div>
+      </button>
+    </form>
+  </main>
+</template>
+
 <script setup vapor>
-import { ref, watch, nextTick } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { useRouter } from 'vue-router';
+import { useUserStore } from "../store";
 
 const router = useRouter()
 const username = ref("");
@@ -49,53 +96,13 @@ function handleSubmit(event) {
   nextEvent();
 }
 
+onMounted(async () => {
+  const userStore = useUserStore();
+  if (userStore.isLoggedIn) {
+    router.push("Login");
+  }
+})
 </script>
-
-<template>
-  <main class="container">
-    <h1>Welcome to Tauri + Vue</h1>
-
-    <div class="row">
-      <a href="https://vitejs.dev" target="_blank">
-        <img src="/vite.svg" class="logo vite" alt="Vite logo" />
-      </a>
-      <a href="https://tauri.app" target="_blank">
-        <img src="/tauri.svg" class="logo tauri" alt="Tauri logo" />
-      </a>
-      <a href="https://vuejs.org/" target="_blank">
-        <img src="../assets/vue.svg" class="logo vue" alt="Vue logo" />
-      </a>
-    </div>
-    <p>Click to log in to the bug system.</p>
-
-    <form class="row" @submit.prevent="handleSubmit">
-      <div v-if="showUsername" class="input-group">
-        <input
-          class="greet-input"
-          ref="usernameInputRef"
-          v-model="username"
-          placeholder="Enter a username..."
-          @keyup.enter="nextEvent"
-        />
-      </div>
-      <div v-if="showPassword" class="input-group">
-        <input
-          class="greet-input"
-          ref="passwordInputRef"
-          v-model="password"
-          type="password"
-          placeholder="Enter a password..."
-          @keyup.enter="nextEvent"
-        />
-      </div>
-      <button @click="nextEvent">
-        <div v-if="showUsername && password == ''">Next</div>
-        <div v-if="showPassword && password == ''">Back</div>
-        <div v-if="showPassword && password !== ''">Login</div>
-      </button>
-    </form>
-  </main>
-</template>
 
 <style scoped>
 .logo.vite:hover {
@@ -104,6 +111,27 @@ function handleSubmit(event) {
 
 .logo.vue:hover {
   filter: drop-shadow(0 0 2em #249b73);
+}
+
+.container {
+  padding-top: 20vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+input,button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  color: #0f0f0f;
+  background-color: #ffffff;
+  transition: border-color 0.25s;
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
 }
 
 </style>
@@ -122,15 +150,6 @@ function handleSubmit(event) {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
-}
-
-.container {
-  margin: 0;
-  padding-top: 10vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: center;
 }
 
 .logo {
@@ -161,20 +180,6 @@ a:hover {
 
 h1 {
   text-align: center;
-}
-
-input,
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  color: #0f0f0f;
-  background-color: #ffffff;
-  transition: border-color 0.25s;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
 }
 
 button {

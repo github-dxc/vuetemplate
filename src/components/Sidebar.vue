@@ -1,7 +1,7 @@
 <template>
   <div class="sidebar">
     <div class="avatar-section">
-      <el-avatar :size="40" :src="userAvatar" />
+      <el-avatar shape="square" :size="50" :src="userAvatar" />
     </div>
     
     <div class="menu-section">

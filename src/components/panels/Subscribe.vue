@@ -1,82 +1,84 @@
 <template>
-  <main class="container">
-    <el-card class="box-card">
-      <div slot="header" class="clearfix">
-        <span>Bug 列表</span>
-      </div>
+  <div class="content-panel">
+    <div class="panel-header">
+      <h3>订阅</h3>
+    </div>
 
-      <el-table :data="bugList" style="width: 100%;font-size: 12px" :row-class-name="tableRowClassName">
-        <el-table-column label="ID" width="60" header-align="center" >
-          <template #default="scope">
-            <el-link type="primary" :href="'http://bug.test.com/view.php?id=' + scope.row.bug_id" target="_blank">{{ scope.row.bug_id }}</el-link>
-          </template>
-        </el-table-column>
+    <el-table :data="bugList" style="width: 100%;font-size: 12px" :row-class-name="tableRowClassName">
+      <el-table-column label="ID" width="60" header-align="center">
+        <template #default="scope">
+          <el-link type="primary" :href="'http://bug.test.com/view.php?id=' + scope.row.bug_id" target="_blank">{{
+            scope.row.bug_id }}</el-link>
+        </template>
+      </el-table-column>
 
-        <el-table-column prop="project" label="项目名称" width="100" header-align="center" />
+      <el-table-column prop="project" label="项目名称" width="100" header-align="center" />
 
-        <el-table-column label="状态" width="80" header-align="center">
-          <template #default="scope">
-            <el-tag :type="getStatusColor(scope.row.status)">{{ bugStatus.get(scope.row.status) }}</el-tag>
-          </template>
-        </el-table-column>
+      <el-table-column label="状态" width="80" header-align="center">
+        <template #default="scope">
+          <el-tag :type="getStatusColor(scope.row.status)">{{ bugStatus.get(scope.row.status) }}</el-tag>
+        </template>
+      </el-table-column>
 
-        <el-table-column prop="handler" label="处理人" width="60" header-align="center" />
+      <el-table-column prop="handler" label="处理人" width="60" header-align="center" />
 
-        <el-table-column label="摘要" width="200" show-overflow-tooltip header-align="center" >
-          <template #default="scope">
-            <div class="multi-line-ellipsis">
-              {{ scope.row.summary }}
-            </div>
-          </template>
-        </el-table-column>
+      <el-table-column label="摘要" width="200" show-overflow-tooltip header-align="center">
+        <template #default="scope">
+          <div class="multi-line-ellipsis">
+            {{ scope.row.summary }}
+          </div>
+        </template>
+      </el-table-column>
 
-        <el-table-column label="附件" width="60" header-align="center" >
-          <template #default="scope">
-            <div v-if="scope.row.attachments>0">
-              <el-link icon="PictureFilled">
-                *{{ scope.row.attachments }}
-              </el-link>
-            </div>
-          </template>
-        </el-table-column>
+      <el-table-column label="附件" width="60" header-align="center">
+        <template #default="scope">
+          <div v-if="scope.row.attachments > 0">
+            <el-link icon="PictureFilled">
+              *{{ scope.row.attachments }}
+            </el-link>
+          </div>
+        </template>
+      </el-table-column>
 
-        <el-table-column label="优先级" width="70" header-align="center" >
-          <template #default="scope">
-            <el-row :gutter="20">
-              <el-col style="text-align: center;">
-                {{ priorityText[scope.row.priority] || '-' }}
-              </el-col>
-            </el-row>
-            <el-row :gutter="20">
-              <el-col>
-                <el-tag :type="getSeverityColor(scope.row.severity)">{{ bugSeverity.get(scope.row.severity) || '-' }}</el-tag>
-              </el-col>
-            </el-row>
-          </template>
-        </el-table-column>
+      <el-table-column label="优先级" width="70" header-align="center">
+        <template #default="scope">
+          <el-row :gutter="20">
+            <el-col style="text-align: center;">
+              {{ priorityText[scope.row.priority] || '-' }}
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col>
+              <el-tag :type="getSeverityColor(scope.row.severity)">{{ bugSeverity.get(scope.row.severity) || '-'
+                }}</el-tag>
+            </el-col>
+          </el-row>
+        </template>
+      </el-table-column>
 
-        <el-table-column label="操作" width="150" header-align="center" >
-          <template #default="scope">
-            <el-dropdown split-button type="primary" 
-              @click="handleCommand({status: workableStatus[scope.row.status][0],bug_id: scope.row.bug_id})" @command="handleCommand">
-              {{ bugStatus.get(workableStatus[scope.row.status][0]) }}
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item v-for="(s, i) in workableStatus[scope.row.status]" :key="s" :command="{status: s,bug_id: scope.row.bug_id}" :disabled="i === 0">
-                    {{ bugStatus.get(s) }}
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </template>
-        </el-table-column>
-      </el-table>
+      <el-table-column label="操作" width="150" header-align="center">
+        <template #default="scope">
+          <el-dropdown split-button type="primary"
+            @click="handleCommand({ status: workableStatus[scope.row.status][0], bug_id: scope.row.bug_id })"
+            @command="handleCommand">
+            {{ bugStatus.get(workableStatus[scope.row.status][0]) }}
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item v-for="(s, i) in workableStatus[scope.row.status]" :key="s"
+                  :command="{ status: s, bug_id: scope.row.bug_id }" :disabled="i === 0">
+                  {{ bugStatus.get(s) }}
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </template>
+      </el-table-column>
+    </el-table>
 
-      <div class="pagination">
-        <el-pagination background layout="prev, pager, next" :total="total" :page="page" />
-      </div>
-    </el-card>
-  </main>
+    <div class="pagination">
+      <el-pagination background layout="prev, pager, next" :total="total" :page="page" />
+    </div>
+  </div>
 </template>
 <script setup vapor>
 import { ref, onMounted, computed } from "vue";
@@ -145,7 +147,7 @@ function getSeverityColor(severity) {
 }
 
 // 获取可操作的状态
-const workableStatus =  {
+const workableStatus = {
   10: [50, 90],
   20: [50, 90],
   30: [50, 90],
@@ -203,13 +205,10 @@ async function api_init_data() {
 async function api_bug_list(params) {
   try {
     // 获取bug列表
-    let data = await invoke("api_bug_list",params);
-    console.log("api_bug_list:", data);
+    let data = await invoke("api_init_bugs", params);
+    console.log("api_init_bugs:", data);
     if (data) {
-        total.value = parseInt(data.total) || 0;
-        limit.value = parseInt(data.limit) || 0;
-        page.value = parseInt(data.page) || 0;
-        bugList.value = data.bugs || [];
+      bugList.value = data || [];
     }
   } catch (error) {
     console.log(error);
@@ -218,7 +217,7 @@ async function api_bug_list(params) {
 }
 
 async function handleCommand(command) {
-  if (!(command.status && command.bug_id)){
+  if (!(command.status && command.bug_id)) {
     return
   }
   console.log("处理命令:", command);
@@ -228,11 +227,11 @@ async function handleCommand(command) {
     let resolution = 0;
     if (status === 80 || status === 81 || status === 82) {
       resolution = 20;
-    }else if (status === 83) {
+    } else if (status === 83) {
       resolution = 90;
-    }else if (status === 84) {
+    } else if (status === 84) {
       resolution = 80;
-    }else if (status === 85) {
+    } else if (status === 85) {
       resolution = 30;
     }
     const result = await invoke("api_update_bug", { bug_id: bug_id, status: status, resolution: resolution });
@@ -247,10 +246,10 @@ async function handleCommand(command) {
 
 // 初始化
 onMounted(async () => {
-    // 初始化枚举数据
-    api_init_data()
-    // 查询bug列表
-    api_bug_list({})
+  // 初始化枚举数据
+  api_init_data()
+  // 查询bug列表
+  api_bug_list({})
 });
 
 // 监听rust发送的消息
@@ -279,9 +278,25 @@ listen('sub_bugs', (event) => {
 </style>
 
 <style scoped>
-.box-card {
-  max-width: 1000px;
-  margin: 40px auto;
+.content-panel {
+  flex: 1;
+  background: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e8e8e8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
 }
 
 .pagination {
@@ -291,11 +306,13 @@ listen('sub_bugs', (event) => {
 
 .multi-line-ellipsis {
   display: -webkit-box;
-  -webkit-line-clamp: 2; /* 限制显示两行 */
+  -webkit-line-clamp: 2;
+  /* 限制显示两行 */
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: normal; /* 允许换行 */
+  white-space: normal;
+  /* 允许换行 */
 }
 
 ::v-deep(.warning-row) {
@@ -309,5 +326,4 @@ listen('sub_bugs', (event) => {
 ::v-deep(.primary-row) {
   --el-table-tr-bg-color: var(--el-color-primary-light-9);
 }
-
 </style>

@@ -5,7 +5,7 @@ import Login from '../views/Login.vue'
 const routes = [
   {
     path: '/',
-    redirect: '/home' // 设置默认路由
+    redirect: '/login' // 设置默认路由
   },
   {
     path: '/home',

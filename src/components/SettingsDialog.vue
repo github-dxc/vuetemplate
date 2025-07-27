@@ -118,7 +118,7 @@ const minimizeSettings = () => {
 /* Settings dialog styles from original file */
 .settings-dialog { --el-dialog-padding-primary: 0; }
 .settings-dialog .el-dialog__body { padding: 0; }
-.settings-container { display: flex; height: 600px; background: #f5f5f5; }
+.settings-container { display: flex; height: 500px; background: #f5f5f5; }
 .settings-sidebar { width: 200px; background: white; border-right: 1px solid #e8e8e8; padding: 20px 0; }
 .settings-menu-item { display: flex; align-items: center; padding: 12px 20px; cursor: pointer; transition: background 0.3s; position: relative; }
 .settings-menu-item:hover { background: #f8f8f8; }

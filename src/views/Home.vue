@@ -102,6 +102,7 @@ const editShortcut = (shortcut) => {
 .app-container {
   display: flex;
   height: 100vh;
-  background: #f5f5f5;
+  width: 100%;
+  background: #e9e7e6;
 }
 </style>

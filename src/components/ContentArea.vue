@@ -31,5 +31,4 @@ const singlePanelComponent = computed(() => {
 /* Content area styles from original file */
 .content-area { flex: 1; display: flex; flex-direction: column; }
 .single-layout { height: 100%; display: flex; flex-direction: column; }
-.welcome-page { display: flex; align-items: center; justify-content: center; height: 100%; background: white; }
 </style>

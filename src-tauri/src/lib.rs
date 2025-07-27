@@ -36,6 +36,7 @@ pub fn run() {
         .manage(MyState::default()) // 注册全局状态
         .invoke_handler(tauri::generate_handler![
             api_init_data,
+            api_init_bugs,
             api_login,
             api_logout,
             api_bug_list,
@@ -113,7 +114,7 @@ async fn api_init_data(app: AppHandle) -> Result<String, String> {
 
 // 初始化bugs数据
 #[tauri::command(rename_all = "snake_case")]
-async fn api_init_my_state(app: AppHandle) -> Result<Vec<Bug>, String> {
+async fn api_init_bugs(app: AppHandle) -> Result<Vec<Bug>, String> {
     let state = app.state::<MyState>().clone();
     
     // 查询缓存的bug列表
@@ -143,7 +144,8 @@ async fn api_login(app: AppHandle, username: &str, password: &str) -> Result<Str
 // 退出登录
 #[tauri::command(rename_all = "snake_case")]
 async fn api_logout(app: AppHandle) -> Result<(), String> {
-    clear_global_state(app)
+    clear_global_state(app.clone())?;
+    init_global_state(app)
 }
 
 // bug列表
