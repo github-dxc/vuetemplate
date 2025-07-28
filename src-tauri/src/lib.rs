@@ -18,6 +18,7 @@ use tauri_plugin_notification::{NotificationExt, PermissionState};
 use tauri_plugin_updater::{Update, UpdaterExt};
 use tokio::time::{interval, Duration};
 use tokio::task::{JoinSet};
+use tokio::signal;
 use serde_json::{Value};
 use std::collections::HashSet;
 use utils::*;
@@ -51,18 +52,25 @@ pub fn run() {
             update_app(app.handle().clone());
             //定时查询订阅数据
             find_sub_data(app.handle().clone());
+            //注册关闭回调
+            close_app_callback(app.handle().clone());
             Ok(())
         })
         .on_window_event(move |window,event| {
-            //window事件
             match event {
                 //关闭事件
                 WindowEvent::CloseRequested { api, .. } => {
                     println!("窗口即将关闭，执行清理操作...");
-                    // 保存全局状态
-                    let _ = save_global_state(window.clone());
+                    let r = save_global_state(window.app_handle().clone());
+                    match r {
+                        Ok(_) => println!("handle exec ok"),
+                        Err(msg) => println!("handle exec err: {}",msg)
+                    }
                     // 如果你想阻止关闭，可以调用：
                     // api.prevent_close();
+                }
+                WindowEvent::Destroyed => {
+                    println!("window closed");
                 }
                 _ => {}
             }
@@ -289,7 +297,7 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
 }
 
 //保存全局状态
-fn save_global_state(app: Window) -> Result<(),String> {
+fn save_global_state(app: AppHandle) -> Result<(),String> {
     let state = app.state::<MyState>().clone();
     let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
 
@@ -301,8 +309,8 @@ fn save_global_state(app: Window) -> Result<(),String> {
     store.set("host", host.clone());
 
     let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
-    let url = host.parse::<Url>().map_err(|e|format!("parse err:{}",e))?;
-    let hv = jar.cookies(&url).ok_or("None".to_string())?;
+    let url = format!("http://{}",host).parse::<Url>().map_err(|e|format!("parse err:{}",e))?;
+    let hv = jar.cookies(&url).ok_or("cookies err".to_string())?;
     let cookies = hv.to_str().map_err(|e|format!("cookies err:{}",e))?;
     store.set("cookies", cookies);
 
@@ -559,6 +567,21 @@ fn send_notify(app: AppHandle, title: &str, content: &str) -> Result<(), String>
         .show()
         .map_err(|e| format!("发送通知失败: {}", e))?;
     Ok(notification)
+}
+
+// 关闭app回调
+fn close_app_callback(app: AppHandle) {
+    tauri::async_runtime::spawn(async move {
+        signal::ctrl_c().await.expect("failed to listen for event");
+        println!("收到 Ctrl+C，执行清理操作...");
+        let r = save_global_state(app.clone());
+        match r {
+            Ok(_) => println!("handle exec ok"),
+            Err(msg) => println!("handle exec err: {}",msg)
+        }
+        app.exit(0);
+    });
+    
 }
 
 #[cfg(test)]

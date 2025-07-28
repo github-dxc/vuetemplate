@@ -38,7 +38,7 @@ import {
 import Sidebar from '../components/Sidebar.vue';
 import ContentArea from '../components/ContentArea.vue';
 import SettingsDialog from '../components/SettingsDialog.vue';
-import Subscribe from '../components/panels/Subscribe.vue';
+import SubscribePanel from '../components/panels/SubscribePanel.vue';
 import ChatPanel from '../components/panels/ChatPanel.vue';
 import ContactsFilesPanel from '../components/panels/ContactsFilesPanel.vue';
 
@@ -48,7 +48,7 @@ const userAvatar = ref('https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e
 
 const activeMenu = ref('subscribe');
 const menuList = ref([  
-  { id: 'subscribe', title: '订阅', icon: View, component: Subscribe },
+  { id: 'subscribe', title: '订阅', icon: View, component: SubscribePanel },
   { id: 'chat', title: '聊天', icon: ChatDotRound, badge: 3, component: ChatPanel },
   { id: 'contacts', title: '通讯录', icon: User },
   { id: 'files', title: '文件传输', icon: Document, component: ContactsFilesPanel },
