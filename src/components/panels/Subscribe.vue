@@ -4,76 +4,78 @@
       <h3>订阅</h3>
     </div>
 
-    <el-table :data="bugList" style="width: 100%;font-size: 12px" :row-class-name="tableRowClassName">
-      <el-table-column label="BugID" width="60" header-align="center">
-        <template #default="scope">
-          <el-link type="primary" :href="'http://bug.test.com/view.php?id=' + scope.row?.bug_id" target="_blank">{{
-            scope.row.bug_id }}</el-link>
-        </template>
-      </el-table-column>
+    <div class="table-container">
+      <el-table :data="bugList" style="width: 100%;font-size: 12px" :row-class-name="tableRowClassName">
+        <el-table-column label="BugID" width="60" header-align="center">
+          <template #default="scope">
+            <el-link type="primary" :href="'http://bug.test.com/view.php?id=' + scope.row?.bug_id" target="_blank">{{
+              scope.row.bug_id }}</el-link>
+          </template>
+        </el-table-column>
 
-      <el-table-column prop="project" label="项目名称" width="100" header-align="center" />
+        <el-table-column prop="project" label="项目名称" width="100" header-align="center" />
 
-      <el-table-column label="状态" width="80" header-align="center">
-        <template #default="scope">
-          <el-tag :type="getStatusColor(scope.row.status)">{{ bugStatus.get(scope.row.status) }}</el-tag>
-        </template>
-      </el-table-column>
+        <el-table-column label="状态" width="80" header-align="center">
+          <template #default="scope">
+            <el-tag :type="getStatusColor(scope.row.status)">{{ bugStatus.get(scope.row.status) }}</el-tag>
+          </template>
+        </el-table-column>
 
-      <el-table-column prop="handler" label="处理人" width="100" header-align="center" />
+        <el-table-column prop="handler" label="处理人" width="100" header-align="center" />
 
-      <el-table-column label="摘要" width="200" show-overflow-tooltip header-align="center">
-        <template #default="scope">
-          <div class="multi-line-ellipsis">
-            {{ scope.row.summary }}
-          </div>
-        </template>
-      </el-table-column>
+        <el-table-column label="摘要" width="200" show-overflow-tooltip header-align="center">
+          <template #default="scope">
+            <div class="multi-line-ellipsis">
+              {{ scope.row.summary }}
+            </div>
+          </template>
+        </el-table-column>
 
-      <el-table-column label="附件" width="60" header-align="center">
-        <template #default="scope">
-          <div v-if="scope.row.attachments > 0">
-            <el-link icon="PictureFilled">
-              *{{ scope.row.attachments }}
-            </el-link>
-          </div>
-        </template>
-      </el-table-column>
+        <el-table-column label="附件" width="60" header-align="center">
+          <template #default="scope">
+            <div v-if="scope.row.attachments > 0">
+              <el-link icon="PictureFilled">
+                *{{ scope.row.attachments }}
+              </el-link>
+            </div>
+          </template>
+        </el-table-column>
 
-      <el-table-column label="优先级" width="70" header-align="center">
-        <template #default="scope">
-          <el-row :gutter="20">
-            <el-col style="text-align: center;">
-              {{ priorityText[scope.row.priority] || '-' }}
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col>
-              <el-tag :type="getSeverityColor(scope.row.severity)">{{ bugSeverity.get(scope.row.severity) || '-'
+        <el-table-column label="优先级" width="70" header-align="center">
+          <template #default="scope">
+            <el-row :gutter="20">
+              <el-col style="text-align: center;">
+                {{ priorityText[scope.row.priority] || '-' }}
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
+              <el-col>
+                <el-tag :type="getSeverityColor(scope.row.severity)">{{ bugSeverity.get(scope.row.severity) || '-'
                 }}</el-tag>
-            </el-col>
-          </el-row>
-        </template>
-      </el-table-column>
+              </el-col>
+            </el-row>
+          </template>
+        </el-table-column>
 
-      <el-table-column label="操作" width="150" header-align="center">
-        <template #default="scope">
-          <el-dropdown split-button type="primary"
-            @click="handleCommand({ status: workableStatus[scope.row.status][0], bug_id: scope.row.bug_id })"
-            @command="handleCommand">
-            {{ bugStatus.get(workableStatus[scope.row.status][0]) }}
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item v-for="(s, i) in workableStatus[scope.row.status]" :key="s"
-                  :command="{ status: s, bug_id: scope.row.bug_id }" :disabled="i === 0">
-                  {{ bugStatus.get(s) }}
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </template>
-      </el-table-column>
-    </el-table>
+        <el-table-column label="操作" width="150" header-align="center">
+          <template #default="scope">
+            <el-dropdown split-button type="primary"
+              @click="handleCommand({ status: workableStatus[scope.row.status][0], bug_id: scope.row.bug_id })"
+              @command="handleCommand">
+              {{ bugStatus.get(workableStatus[scope.row.status][0]) }}
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-for="(s, i) in workableStatus[scope.row.status]" :key="s"
+                    :command="{ status: s, bug_id: scope.row.bug_id }" :disabled="i === 0">
+                    {{ bugStatus.get(s) }}
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
     <div class="pagination">
       <el-pagination background layout="prev, pager, next" :total="total" :page="page" />
@@ -278,6 +280,12 @@ listen('sub_bugs', (event) => {
 </style>
 
 <style scoped>
+.table-container {
+  flex: 1;
+  padding: 24px;
+  background: transparent;
+}
+
 .content-panel {
   flex: 1;
   background: white;

@@ -21,6 +21,7 @@
 <script setup>
 import { ChatDotRound } from '@element-plus/icons-vue';
 import UpdateNotification from './UpdateNotification.vue'
+
 </script>
 
 <style scoped>

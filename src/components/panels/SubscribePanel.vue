@@ -16,7 +16,7 @@
         size="default"
         :header-cell-style="{ background: '#f8fafc', color: '#374151', fontWeight: '600' }"
       >
-        <el-table-column label="BugID" width="80" align="center" header-align="center">
+        <el-table-column label="BugID" width="80" header-align="center">
           <template #default="scope">
             <el-link 
               type="primary" 
@@ -29,7 +29,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="project" label="项目名称" width="120" align="center" header-align="center">
+        <el-table-column prop="project" label="项目名称" width="120" header-align="center">
           <template #default="scope">
             <div class="project-name">
               <el-icon class="project-icon"><Folder /></el-icon>
@@ -38,25 +38,19 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="状态" width="100" align="center" header-align="center">
+        <el-table-column label="状态" width="100" header-align="center">
           <template #default="scope">
             <el-tag 
-              :type="getStatusColor(scope.row.status)" 
-              size="default"
-              round
-              effect="light"
+              :type="getStatusColor(scope.row.status)"
             >
               {{ bugStatus.get(scope.row.status) }}
             </el-tag>
           </template>
         </el-table-column>
 
-        <el-table-column prop="handler" label="处理人" width="110" align="center" header-align="center">
+        <el-table-column prop="handler" label="处理人" width="110" header-align="center">
           <template #default="scope">
             <div class="handler-info">
-              <el-avatar :size="24" class="handler-avatar">
-                {{ scope.row.handler?.charAt(0) || '?' }}
-              </el-avatar>
               <span class="handler-name">{{ scope.row.handler || '未分配' }}</span>
             </div>
           </template>
@@ -74,8 +68,8 @@
         <el-table-column label="附件" width="80" align="center" header-align="center">
           <template #default="scope">
             <div v-if="scope.row.attachments > 0" class="attachment-info">
-              <el-badge :value="scope.row.attachments" type="primary" class="attachment-badge">
-                <el-icon class="attachment-icon"><PictureFilled /></el-icon>
+              <el-badge :value="scope.row.attachments" type="primary" class="attachment-badge" :max="9">
+                <el-link class="attachment-icon" icon="PictureFilled" ></el-link>
               </el-badge>
             </div>
             <span v-else class="no-attachment">-</span>
@@ -91,7 +85,6 @@
               <el-tag 
                 :type="getSeverityColor(scope.row.severity)" 
                 size="small"
-                round
                 effect="plain"
                 class="severity-tag"
               >
@@ -121,7 +114,6 @@
                     :disabled="i === 0"
                     class="dropdown-item"
                   >
-                    <el-icon v-if="!i" class="current-status"><Check /></el-icon>
                     {{ bugStatus.get(s) }}
                   </el-dropdown-item>
                 </el-dropdown-menu>
@@ -432,12 +424,6 @@ listen('sub_bugs', (event) => {
   justify-content: center;
 }
 
-.handler-avatar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  font-size: 12px;
-  font-weight: 600;
-}
-
 .handler-name {
   font-size: 12px;
   color: #4b5563;
@@ -466,16 +452,24 @@ listen('sub_bugs', (event) => {
 .attachment-info {
   display: flex;
   justify-content: center;
+  align-items: center;
+  height: 30px;
+  margin-top: 4px;
 }
 
 .attachment-badge :deep(.el-badge__content) {
-  background: #10b981;
+  background: #eb6969;
+  margin-top: 5px;
+  width: 14px;
+  height: 14px;
+  padding: 0;
   border: none;
 }
 
 .attachment-icon {
   color: #10b981;
-  font-size: 18px;
+  margin-top: 2px;
+  font-size: 25px;
 }
 
 .no-attachment {

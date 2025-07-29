@@ -14,7 +14,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, markRaw } from 'vue';
 
 const props = defineProps({
   currentMenu: Object,
@@ -22,7 +22,8 @@ const props = defineProps({
 });
 
 const singlePanelComponent = computed(() => {
-  return props.currentMenu?.component;
+  const component = props.currentMenu?.component;
+  return component ? markRaw(component) : null;
 });
 
 </script>

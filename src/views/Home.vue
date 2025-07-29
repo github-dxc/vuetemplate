@@ -32,7 +32,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { 
-  ChatDotRound, User, Document, Star, View
+  ChatDotRound, User, Document, Star, Bell
 } from '@element-plus/icons-vue';
 
 import Sidebar from '../components/Sidebar.vue';
@@ -40,7 +40,6 @@ import ContentArea from '../components/ContentArea.vue';
 import SettingsDialog from '../components/SettingsDialog.vue';
 import SubscribePanel from '../components/panels/SubscribePanel.vue';
 import ChatPanel from '../components/panels/ChatPanel.vue';
-import ContactsFilesPanel from '../components/panels/ContactsFilesPanel.vue';
 
 
 // All state from the original file is moved here to be the single source of truth.
@@ -48,10 +47,10 @@ const userAvatar = ref('https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e
 
 const activeMenu = ref('subscribe');
 const menuList = ref([  
-  { id: 'subscribe', title: '订阅', icon: View, component: SubscribePanel },
+  { id: 'subscribe', title: '订阅', icon: Bell, component: SubscribePanel },
   { id: 'chat', title: '聊天', icon: ChatDotRound, badge: 3, component: ChatPanel },
   { id: 'contacts', title: '通讯录', icon: User },
-  { id: 'files', title: '文件传输', icon: Document, component: ContactsFilesPanel },
+  { id: 'files', title: '文件传输', icon: Document },
   { id: 'favorites', title: '收藏', icon: Star }
 ]);
 

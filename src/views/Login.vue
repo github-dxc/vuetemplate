@@ -154,9 +154,9 @@ function closeSettingsModal(event) {
   }
 }
 
-function saveHostConfig() {
+async function saveHostConfig() {
   try {
-    await changeHost(hostConfig.value);
+    await changeHost({host: hostConfig.value});
   } catch (error) {
     ElMessage({
       showClose: true,
@@ -180,7 +180,7 @@ onMounted(async () => {
   }
 
   try {
-    hostConfig.value = await changeHost("");
+    hostConfig.value = await changeHost({host: ""});
   } catch (error) {
     ElMessage({
       showClose: true,
