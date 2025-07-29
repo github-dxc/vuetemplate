@@ -38,6 +38,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             api_init_data,
             api_init_bugs,
+            api_change_host,
             api_login,
             api_logout,
             api_bug_list,
@@ -118,6 +119,18 @@ async fn api_init_data(app: AppHandle) -> Result<String, String> {
     hm.insert("Status", Status::kv());
     hm.insert("Resolution", Resolution::kv());
     serde_json::to_string(&hm).map_err(|e|format!("serde_json err:{}",e))
+}
+
+// 修改host地址
+#[tauri::command(rename_all = "snake_case")]
+async fn api_change_host(app: AppHandle, host: &str) -> Result<String, String> {
+    let state = app.state::<MyState>().clone();
+
+    let mut state_host = state.host.lock().map_err(|e|format!("lock err:{}",e))?;
+    if host != "" {
+        *state_host = host.to_string();
+    }
+    Ok(state_host.clone())
 }
 
 // 初始化bugs数据

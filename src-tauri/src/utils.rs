@@ -26,6 +26,7 @@ pub async fn login(
     password: &str,
     host: &str,
 ) -> Result<String, Box<dyn std::error::Error>> {
+    println!("{},{},{}",username,password,host);
     // 地址
     let origin = format!("http://{}",host);
     let url = origin.to_string()+"/login.php";

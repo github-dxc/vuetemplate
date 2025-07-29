@@ -13,3 +13,7 @@ export const logout = async () => {
   return await invoke("api_logout");
 };
 
+export const changeHost = async (host) => {
+  console.log('变更host');
+  return await invoke("api_change_host",host);
+};
