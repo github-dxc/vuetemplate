@@ -56,7 +56,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="摘要" min-width="250" show-overflow-tooltip header-align="center">
+        <el-table-column label="摘要" min-width="auto" show-overflow-tooltip header-align="center">
           <template #default="scope">
             <div class="summary-content">
               <el-icon class="summary-icon"><Document /></el-icon>
@@ -338,6 +338,11 @@ listen('sub_bugs', (event) => {
 <style scoped>
 .content-panel {
   flex: 1;
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%; 
+  height: 100%;
+  overflow: auto;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   display: flex;
   flex-direction: column;
@@ -371,8 +376,13 @@ listen('sub_bugs', (event) => {
 
 .table-container {
   flex: 1;
-  padding: 24px;
+  padding: 20px;
+  height: 60%;
   background: transparent;
+}
+
+.table-container .el-table {
+  height: 100%;
 }
 
 .custom-table {
@@ -447,6 +457,13 @@ listen('sub_bugs', (event) => {
   font-size: 13px;
   line-height: 1.4;
   color: #374151;
+  /* 限制显示两行 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
 }
 
 .attachment-info {

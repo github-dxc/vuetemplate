@@ -280,8 +280,8 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
         Some(v)
     }).ok_or("host err".to_string())?;
     let sub_params_value = store.get("sub_param").unwrap_or(Value::from(vec![
-        r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=12&search=&filter_submit=应用过滤器",
-        r"type=1&view_type=simple&reporter_id[]=-1&handler_id[]=0&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=12&search=&filter_submit=应用过滤器",
+        r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=last_updated&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=12&search=&filter_submit=应用过滤器",
+        r"type=1&view_type=simple&reporter_id[]=-1&handler_id[]=0&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=last_updated&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=12&search=&filter_submit=应用过滤器",
     ]));
     let sub_bugs_value = store.get("sub_bugs").unwrap_or(Value::from(""));
     let sub_bugs_hash_value = store.get("sub_bugs_hash").unwrap_or(Value::from(""));
@@ -394,6 +394,7 @@ fn find_sub_data(app: AppHandle) {
                 let params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                 for sub_param in params {
                     let sub_param = sub_param.clone();
+                    println!("11111:{}",sub_param);
                     let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                     set.spawn(async move {
@@ -403,6 +404,7 @@ fn find_sub_data(app: AppHandle) {
                         let body = view_all_set(jar, param, &host).await.map_err(|e|format!("view_all_set err:{}",e))?;
                         // 解析数据
                         let data = view_all_set_data(&Html::parse_document(body.as_str())).map_err(|e|format!("view_all_set_data err:{}",e))?;
+                        println!("2222:{}",data.bugs.iter().size_hint().0);
                         Ok(data)
                     });
                 }
