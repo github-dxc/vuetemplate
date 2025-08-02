@@ -149,6 +149,7 @@ pub struct VersionInfo {
     pub current_version: String,
     pub version: String,
     pub target: String,
+    pub update_time: i64,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

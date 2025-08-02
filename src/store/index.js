@@ -19,10 +19,17 @@ export const useUserStore = defineStore('user', {
     },
     
     // 认证token
-    token: localStorage.getItem('token') || '',
+    token: '',
     
     // 加载状态
     loading: false,
+
+    // 版本信息
+    version: {
+        currentVersion: "0.1.0",
+        lastVersion: "0.1.0",
+        updateTime: Math.floor(Date.now() / 1000),
+    },
     
     // 系统设置
     setting: {
@@ -41,6 +48,10 @@ export const useUserStore = defineStore('user', {
         header: true,
         footer: true,
         breadcrumb: true
+      },
+      update: {
+        skipVersion: '0.0.0',
+        autoUpdate: false,
       }
     }
   }),
@@ -62,7 +73,13 @@ export const useUserStore = defineStore('user', {
     currentTheme: (state) => state.setting.theme,
     
     // 是否加载中
-    isLoading: (state) => state.loading
+    isLoading: (state) => state.loading,
+
+    // 获取更新配置
+    updateInfo: (state) => state.setting.update,
+
+    // 版本信息
+    versionInfo: (state) => state.version,
   },
 
   actions: {
@@ -74,46 +91,52 @@ export const useUserStore = defineStore('user', {
     // 设置token
     setToken(token) {
       this.token = token
-      if (token) {
-        localStorage.setItem('token', token)
-      } else {
-        localStorage.removeItem('token')
-      }
     },
     
     // 设置加载状态
     setLoading(status) {
       this.loading = status
     },
+
+    // 设置版本信息
+    setVersion(version) {
+      this.version = version || {}
+    },
     
-    // 更新设置
-    updateSetting(settingPath, value) {
-      const keys = settingPath.split('.')
-      let current = this.setting
-      
-      for (let i = 0; i < keys.length - 1; i++) {
-        if (!current[keys[i]]) {
-          current[keys[i]] = {}
+    // 批量更新设置，只更新非null和非undefined的值（包括对象和数组内部）
+    updateSetting(setting) {
+      const isValid = (val) => val !== null && val !== undefined;
+      const deepUpdate = (target, source) => {
+        for (const key in source) {
+          if (Object.prototype.hasOwnProperty.call(source, key)) {
+            const val = source[key];
+            if (Array.isArray(val)) {
+              if (!Array.isArray(target[key])) target[key] = [];
+              for (let i = 0; i < val.length; i++) {
+                if (isValid(val[i])) {
+                  target[key][i] = val[i];
+                }
+              }
+            } else if (typeof val === 'object' && val !== null) {
+              if (!target[key] || typeof target[key] !== 'object') target[key] = {};
+              deepUpdate(target[key], val);
+            } else if (isValid(val)) {
+              target[key] = val;
+            }
+          }
         }
-        current = current[keys[i]]
-      }
-      
-      current[keys[keys.length - 1]] = value
-      
-      // 保存到localStorage
-      localStorage.setItem('userSetting', JSON.stringify(this.setting))
+      };
+      deepUpdate(this.setting, setting);
     },
     
     // 切换主题
     toggleTheme() {
       this.setting.theme = this.setting.theme === 'light' ? 'dark' : 'light'
-      localStorage.setItem('userSetting', JSON.stringify(this.setting))
     },
     
     // 切换侧边栏
     toggleSidebar() {
       this.setting.sidebar.collapsed = !this.setting.sidebar.collapsed
-      localStorage.setItem('userSetting', JSON.stringify(this.setting))
     },
     
     // 登录
@@ -217,25 +240,7 @@ export const useUserStore = defineStore('user', {
         this.setLoading(false)
       }
     },
-    
-    // 初始化store（从localStorage恢复设置）
-    initStore() {
-      // 恢复设置
-      const savedSetting = localStorage.getItem('userSetting')
-      if (savedSetting) {
-        try {
-          this.setting = { ...this.setting, ...JSON.parse(savedSetting) }
-        } catch (error) {
-          console.warn('Failed to parse saved settings:', error)
-        }
-      }
-      
-      // 如果有token，尝试获取用户信息
-      if (this.token) {
-        this.fetchUserInfo()
-      }
-    },
-    
+
     // 重置store到初始状态
     resetStore() {
       this.user = {

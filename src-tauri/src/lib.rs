@@ -503,6 +503,7 @@ async fn check_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()>
             current_version: update.current_version.clone(),
             version: update.version.clone(),
             target: update.target.clone(),
+            update_time: update.date.map_or(0,|t| t.unix_timestamp())
         };
 
         // 保存到全局状态

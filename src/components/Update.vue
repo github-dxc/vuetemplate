@@ -1,33 +1,27 @@
 <template>
   <div class="update-container">
-    <!-- 主要内容区域 -->
-    <div class="main-content">
-      <el-button @click="checkForUpdate" :loading="isChecking">
-        检查更新
-      </el-button>
-      
-      <div v-if="updateProgress > 0" class="progress-container">
-        <el-progress 
-          :percentage="updateProgress" 
-          :status="updateProgress === 100 ? 'success' : 'primary'"
-        />
-        <p>正在下载更新: {{ updateProgress }}%</p>
-      </div>
+    <div v-if="updateProgress > 0" class="progress-container">
+      <el-progress 
+        :percentage="updateProgress" 
+        :status="updateProgress === 100 ? 'success' : 'primary'"
+      />
+      <p>正在下载更新: {{ updateProgress }}%</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { ElNotification, ElButton } from 'element-plus'
-import { invoke } from "@tauri-apps/api/core";
-import { emit, listen } from '@tauri-apps/api/event';
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ElNotification } from 'element-plus'
+import { listen } from '@tauri-apps/api/event';
+import { useUserStore } from '../store';
+import { downloadAndInstall } from '../api';
 
 // 状态管理
-const isChecking = ref(false)
+const userStore = useUserStore()
 const isShowing = ref(false)
 const updateProgress = ref(0)
-const currentUpdateInfo = ref(null)
+const updateSetting = computed(() => userStore.updateInfo)
 
 // 事件监听器引用
 let updateListener = null
@@ -36,53 +30,19 @@ let errorListener = null
 let finishedListener = null
 let noUpdateListener = null
 
-// 存储设置
-const STORAGE_KEY = 'app_update_settings'
-
-// 获取用户设置
-const getUserSettings = () => {
-  const settings = localStorage.getItem(STORAGE_KEY)
-  return settings ? JSON.parse(settings) : { skipVersion: null, autoUpdate: true }
-}
-
-// 保存用户设置
-const saveUserSettings = (settings) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
-}
-
-// 检查更新
-const checkForUpdate = async () => {
-  if (isChecking.value) return
-
-  // 清空用户设置
-  saveUserSettings({ skipVersion: null, autoUpdate: true });
-  
-  isChecking.value = true
-  updateProgress.value = 0
-  
-  try {
-    await invoke('api_check_update');
-  } catch (error) {
-    console.error('api_check_update error:', error)
-    ElNotification({
-      title: '检查更新失败',
-      message: `错误: ${error}`,
-      type: 'error',
-      duration: 5000
-    })
-  } finally {
-    isChecking.value = false
-  }
-}
-
 // 显示更新通知
 const showUpdateNotification = (updateInfo) => {
   if (isShowing.value) return
+
+  // 检查是否已启用自动更新
   isShowing.value = true
-  const userSettings = getUserSettings()
+  if (updateSetting.autoUpdate) {
+    console.log('自动更新已启用，跳过通知')
+    return;
+  }
   
   // 检查是否跳过此版本
-  if (userSettings.skipVersion === updateInfo.version) {
+  if (updateSetting.skipVersion === updateInfo.version) {
     console.log(`跳过版本 ${updateInfo.version}`)
     isShowing.value = false
     return
@@ -172,10 +132,8 @@ const addCustomButtons = (notificationEl, updateInfo, notification) => {
 // 确认更新
 const confirmUpdate = async (updateInfo) => {
   try {
-    currentUpdateInfo.value = updateInfo
-    
     // 通知后端开始下载
-    await invoke('api_download_and_install');
+    await downloadAndInstall();
 
     // 显示开始下载的通知
     ElNotification({
@@ -197,9 +155,7 @@ const confirmUpdate = async (updateInfo) => {
 
 // 跳过版本
 const skipVersion = (version) => {
-  const settings = getUserSettings()
-  settings.skipVersion = version
-  saveUserSettings(settings)
+  userStore.updateSetting({ update: {skipVersion: version, autoUpdate: false } })
   
   ElNotification({
     title: '已跳过',
@@ -263,6 +219,14 @@ onMounted(async () => {
     // 监听更新信息
     updateListener = await listen('app-update', (event) => {
       console.log('收到更新信息:', event.payload)
+
+      // 保存最新版本信息到状态管理
+      userStore.setVersion({
+        currentVersion: event.payload.current_version,
+        lastVersion: event.payload.version,
+        updateTime: event.payload.update_time,
+      })
+
       showUpdateNotification(event.payload)
     })
     
@@ -318,18 +282,12 @@ onUnmounted(() => {
 
 <style scoped>
 .update-container {
-  padding: 20px;
-}
-
-.main-content {
-  max-width: 800px;
-  margin: 0 auto;
+  position: absolute;
 }
 
 .progress-container {
   margin-top: 20px;
   padding: 20px;
-  background: #f5f5f5;
   border-radius: 8px;
 }
 

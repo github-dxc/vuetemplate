@@ -3,7 +3,7 @@
     <el-avatar :size="80" :src="userAvatar" />
     <div class="profile-info">
       <h2>等风来</h2>
-      <p class="wechat-id">微信号：dxc3434</p>
+      <p class="wechat-id">帐号：dxc3434</p>
     </div>
   </div>
   <div class="login-options">
@@ -12,8 +12,7 @@
     <el-button size="large">关闭</el-button>
   </div>
   <div class="login-tip">
-    <p>开启后，在本机登录微信时无需手机确认，</p>
-    <p>可在手机微信上关闭。</p>
+    <p>开启后，自动登录之前的用户</p>
   </div>
   <div class="logout-section">
     <el-button text type="primary" @click="logout">退出登录</el-button>
@@ -21,12 +20,15 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { useUserStore } from '../../store'
 import { useRouter } from 'vue-router';
 
 const router = useRouter()
 
 const userStore = useUserStore()
+
+const userAvatar = ref('https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png');
 
 async function logout() {
   try {
@@ -36,9 +38,6 @@ async function logout() {
     console.error('登录失败:', error)
   }
 }
-defineProps({
-  userAvatar: String
-});
 </script>
 
 <style scoped>

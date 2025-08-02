@@ -5,7 +5,7 @@
       <span>文件保存位置</span>
       <div class="file-path">
         <el-input :model-value="settings.filePath" readonly />
-        <el-button @click="$emit('choose-file-path')">更改</el-button>
+        <el-button @click="">更改</el-button>
       </div>
     </div>
     <div class="setting-item">
@@ -22,16 +22,15 @@
     <h3>清理缓存</h3>
     <div class="cache-info">
       <p>当前缓存大小：156MB</p>
-      <el-button type="primary" @click="$emit('clear-cache')">清理缓存</el-button>
+      <el-button type="primary" @click="">清理缓存</el-button>
     </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
-  settings: Object
-});
-defineEmits(['choose-file-path', 'clear-cache']);
+import { ref } from 'vue';
+
+const settings = ref({filePath: 'C:\\Users\\Username\\Documents\\WeChat Files', autoDownloadLimit: '10'});
 </script>
 
 <style scoped>

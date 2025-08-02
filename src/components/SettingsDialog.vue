@@ -15,7 +15,7 @@
           :key="setting.id"
           class="settings-menu-item"
           :class="{ active: activeSettingMenu === setting.id }"
-          @click="$emit('update:active-setting-menu', setting.id)"
+          @click="activeSettingMenu = setting.id"
         >
           <el-icon class="menu-icon">
             <component :is="setting.icon" />
@@ -32,9 +32,6 @@
       <div class="settings-content">
         <div class="settings-header">
           <div class="header-actions">
-            <el-button text @click="minimizeSettings">
-              <el-icon><Minus /></el-icon>
-            </el-button>
             <el-button text @click="$emit('close')">
               <el-icon><Close /></el-icon>
             </el-button>
@@ -42,23 +39,16 @@
         </div>
 
         <div v-if="activeSettingMenu === 'account'" class="setting-panel">
-          <AccountSettingsPanel :user-avatar="user-avatar" />
+          <AccountSettingsPanel />
         </div>
         <div v-else-if="activeSettingMenu === 'general'" class="setting-panel">
-          <GeneralSettingsPanel :settings="settings" @update:settings="$emit('update:settings', $event)" />
+          <GeneralSettingsPanel />
         </div>
         <div v-else-if="activeSettingMenu === 'files'" class="setting-panel">
-          <FileSettingsPanel 
-            :settings="settings" 
-            @choose-file-path="$emit('choose-file-path')"
-            @clear-cache="$emit('clear-cache')"
-          />
+          <FileSettingsPanel />
         </div>
         <div v-else-if="activeSettingMenu === 'shortcuts'" class="setting-panel">
-          <ShortcutSettingsPanel :shortcuts="shortcuts" @edit-shortcut="$emit('edit-shortcut', $event)" />
-        </div>
-        <div v-else-if="activeSettingMenu === 'plugins'" class="setting-panel">
-          <PluginSettingsPanel :plugins="plugins" @update:plugins="$emit('update:plugins', $event)" />
+          <ShortcutSettingsPanel />
         </div>
         <div v-else-if="activeSettingMenu === 'about'" class="setting-panel">
           <AboutPanel />
@@ -69,49 +59,34 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, markRaw } from 'vue';
 import { 
-  UserFilled, Tools, FolderOpened, School, Monitor, InfoFilled, Close, Minus 
+  UserFilled, Tools, FolderOpened, School, InfoFilled, Close, Minus 
 } from '@element-plus/icons-vue';
 import AccountSettingsPanel from './settings/AccountSettingsPanel.vue';
 import GeneralSettingsPanel from './settings/GeneralSettingsPanel.vue';
 import FileSettingsPanel from './settings/FileSettingsPanel.vue';
 import ShortcutSettingsPanel from './settings/ShortcutSettingsPanel.vue';
-import PluginSettingsPanel from './settings/PluginSettingsPanel.vue';
 import AboutPanel from './settings/AboutPanel.vue';
 
 defineProps({
   visible: Boolean,
-  userAvatar: String,
-  activeSettingMenu: String,
-  settings: Object,
-  shortcuts: Array,
-  plugins: Array
 });
 
 defineEmits([
-  'update:visible', 
-  'update:active-setting-menu', 
-  'update:settings', 
-  'update:plugins',
-  'close', 
-  'choose-file-path', 
-  'clear-cache', 
-  'edit-shortcut'
+  'close',
 ]);
+
+const activeSettingMenu = ref('account');
 
 const settingsMenu = ref([
-  { id: 'account', title: '账号设置', icon: UserFilled },
-  { id: 'general', title: '通用设置', icon: Tools },
-  { id: 'files', title: '文件管理', icon: FolderOpened },
-  { id: 'shortcuts', title: '快捷键', icon: School },
-  { id: 'plugins', title: '插件', icon: Monitor, badge: 'NEW' },
-  { id: 'about', title: '关于微信', icon: InfoFilled }
+  { id: 'account', title: '账号设置', icon: markRaw(UserFilled) },
+  { id: 'general', title: '通用设置', icon: markRaw(Tools) },
+  { id: 'files', title: '文件管理', icon: markRaw(FolderOpened) },
+  { id: 'shortcuts', title: '快捷键', icon: markRaw(School) },
+  { id: 'about', title: '关于我们', icon: markRaw(InfoFilled) }
 ]);
 
-const minimizeSettings = () => {
-  console.log('最小化设置窗口');
-};
 </script>
 
 <style scoped>

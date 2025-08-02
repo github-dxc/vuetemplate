@@ -1,16 +1,20 @@
 <template>
-  <div class="setting-group">
+  <!-- <div class="setting-group">
     <h3>启动设置</h3>
-    <el-checkbox v-model="localSettings.autoStart">开机自动启动微信</el-checkbox>
+    <el-checkbox v-model="localSettings.autoStart">开机自动启动</el-checkbox>
     <el-checkbox v-model="localSettings.minimizeToTray">启动时最小化到系统托盘</el-checkbox>
-  </div>
+  </div> -->
   <div class="setting-group">
+    <h3>更新设置</h3>
+    <el-checkbox v-model="localSettings.autoUpdate" @change="userStore.updateSetting({update: {autoUpdate: autoUpdate}})">自动更新</el-checkbox>
+  </div>
+  <!-- <div class="setting-group">
     <h3>消息设置</h3>
     <el-checkbox v-model="localSettings.soundNotification">声音提醒</el-checkbox>
     <el-checkbox v-model="localSettings.desktopNotification">桌面通知</el-checkbox>
     <el-checkbox v-model="localSettings.showMessagePreview">显示消息预览</el-checkbox>
-  </div>
-  <div class="setting-group">
+  </div> -->
+  <!-- <div class="setting-group">
     <h3>界面设置</h3>
     <div class="setting-item">
       <span>界面缩放</span>
@@ -21,21 +25,28 @@
         <el-option label="150%" value="1.5" />
       </el-select>
     </div>
-  </div>
+  </div> -->
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref } from 'vue';
+import { useUserStore } from '../../store';
 
-const props = defineProps({
-  settings: Object
-});
-const emit = defineEmits(['update:settings']);
+const userStore = useUserStore()
 
-const localSettings = computed({
-  get: () => props.settings,
-  set: (val) => emit('update:settings', val)
+const localSettings = ref({
+  autoUpdate: userStore.updateInfo.autoUpdate || false,
+
+  // autoStart: true,
+  // minimizeToTray: false,
+  // soundNotification: true,
+  // desktopNotification: true,
+  // showMessagePreview: false,
+  // uiScale: '1',
+  // filePath: 'C:\\Users\\Username\\Documents\\WeChat Files',
+  // autoDownloadLimit: '10'
 });
+
 </script>
 
 <style scoped>
