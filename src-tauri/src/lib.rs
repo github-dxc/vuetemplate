@@ -299,7 +299,7 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
     *host = hv.to_string();
 
     let mut sub_params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?;
-    *sub_params = sub_params_value.as_array().ok_or("None".to_string())?.iter().map(|v|v.to_string()).collect();
+    *sub_params = sub_params_value.as_array().ok_or("None".to_string())?.iter().map(|v|v.as_str().unwrap_or("").to_owned()).collect();
 
     let mut sub_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
     *sub_bugs = serde_json::from_str(sub_bugs_value.as_str().unwrap_or("")).map_err(|e|format!("lock err:{}",e))?;
@@ -394,7 +394,6 @@ fn find_sub_data(app: AppHandle) {
                 let params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                 for sub_param in params {
                     let sub_param = sub_param.clone();
-                    println!("11111:{}",sub_param);
                     let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                     set.spawn(async move {
@@ -404,7 +403,6 @@ fn find_sub_data(app: AppHandle) {
                         let body = view_all_set(jar, param, &host).await.map_err(|e|format!("view_all_set err:{}",e))?;
                         // 解析数据
                         let data = view_all_set_data(&Html::parse_document(body.as_str())).map_err(|e|format!("view_all_set_data err:{}",e))?;
-                        println!("2222:{}",data.bugs.iter().size_hint().0);
                         Ok(data)
                     });
                 }
