@@ -9,19 +9,19 @@ use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct KV {
-    pub key: i64,
+    pub key: String,
     pub value: String,
 }
 
 // 查找数据的特征
 pub trait VecExtKV {
-    fn find_by_key(&self, key: i64) -> Option<&KV>;
+    fn find_by_key<S: AsRef<str>>(&self, key: S) -> Option<&KV>;
     fn find_by_value<S: AsRef<str>>(&self, value: S) -> Option<&KV>;
 }
 
 impl VecExtKV for Vec<KV> {
-    fn find_by_key(&self, key: i64) -> Option<&KV> {
-        self.iter().find(|kv| kv.key == key)
+    fn find_by_key<S: AsRef<str>>(&self, key: S) -> Option<&KV> {
+        self.iter().find(|kv| kv.key == key.as_ref())
     }
     fn find_by_value<S: AsRef<str>>(&self, value: S) -> Option<&KV> {
         self.iter().find(|kv| kv.value == value.as_ref())
@@ -58,7 +58,7 @@ impl Priority {
         *self as i64
     }
     pub fn kv() -> Vec<KV> {
-        PRIORITY_VALUE.iter().map(|d|KV{key:d.0.as_i64(),value:d.1.into()}).collect()
+        PRIORITY_VALUE.iter().map(|d|KV{key:d.0.to_string(),value:d.1.into()}).collect()
     }
 }
 impl std::fmt::Display for Priority {
@@ -126,7 +126,7 @@ impl Severity {
         *self as i64
     }
     pub fn kv() -> Vec<KV> {
-        SERVERITY_VALUE.iter().map(|d|KV{key:d.0.as_i64(),value:d.1.into()}).collect()
+        SERVERITY_VALUE.iter().map(|d|KV{key:d.0.to_string(),value:d.1.into()}).collect()
     }
 }
 impl std::fmt::Display for Severity {
@@ -207,7 +207,7 @@ impl Status {
         *self as i64
     }
     pub fn kv() -> Vec<KV> {
-        STATUS_VALUE.iter().map(|d|KV{key:d.0.as_i64(),value:d.1.into()}).collect()
+        STATUS_VALUE.iter().map(|d|KV{key:d.0.to_string(),value:d.1.into()}).collect()
     }
 }
 impl std::fmt::Display for Status {
@@ -279,7 +279,7 @@ impl Resolution {
         *self as i64
     }
     pub fn kv() -> Vec<KV> {
-        RESOLUTION_VALUE.iter().map(|d|KV{key:d.0.as_i64(),value:d.1.into()}).collect()
+        RESOLUTION_VALUE.iter().map(|d|KV{key:d.0.to_string(),value:d.1.into()}).collect()
     }
 }
 impl std::fmt::Display for Resolution {
@@ -329,7 +329,7 @@ impl ViewStatus {
         *self as i64
     }
     pub fn kv() -> Vec<KV> {
-        VIEW_STATUS_VALUE.iter().map(|d|KV{key:d.0.as_i64(),value:d.1.into()}).collect()
+        VIEW_STATUS_VALUE.iter().map(|d|KV{key:d.0.to_string(),value:d.1.into()}).collect()
     }
 }
 impl std::fmt::Display for ViewStatus {
@@ -391,7 +391,7 @@ impl Reproducibility {
         *self as i64
     }
     pub fn kv() -> Vec<KV> {
-        REPRODUCIBILITY_VALUE.iter().map(|d|KV{key:d.0.as_i64(),value:d.1.into()}).collect()
+        REPRODUCIBILITY_VALUE.iter().map(|d|KV{key:d.0.to_string(),value:d.1.into()}).collect()
     }
 }
 impl std::fmt::Display for Reproducibility {

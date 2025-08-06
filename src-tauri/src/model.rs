@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct Bug {
     pub bug_id: i64,
     pub issue_notes_count: i64, //问题说明数量
-    pub project_id: i64,        //项目id
+    pub project_id: String,        //项目id
     pub project: String,        //项目
     pub category_id: i64,       //类别ID
     pub handler_id: i64,        //处理人
@@ -56,7 +56,7 @@ pub struct BugList {
 #[derive(Debug, Default, Serialize)]
 pub struct BugInfo {
     pub bug_id: i64,
-    pub project_id: i64,                //项目id
+    pub project_id: String,                //项目id
     pub project: String,                //项目
     pub category_id: i64,               //类别ID
     pub view_state: i64,                //查看权限
@@ -115,7 +115,7 @@ pub struct FindBugListParams {
     pub view_state: i64,
     pub sticky: i64,
     #[serde(default, rename = "category_id[]")]
-    pub category_id: Vec<i64>,
+    pub category_id: Vec<String>,
     #[serde(default, rename = "hide_status[]")]
     pub hide_status: Vec<i64>,
     #[serde(default, rename = "status[]")]
@@ -156,5 +156,6 @@ pub struct VersionInfo {
 pub struct FiltersParams {
     pub view_type: String,
     pub filter_target: String,
+    pub data_filter_id: String
 }
 

@@ -340,7 +340,7 @@ pub async fn bug_report_page(
     host: &str,
 ) -> Result<String, String> {
     let origin = format!("http://{}",host);
-    let url = format!("{}/bug_report_page", origin);
+    let url = format!("{}/bug_report_page.php", origin);
 
     // 构建请求头
     let mut headers = HeaderMap::new();
@@ -400,45 +400,6 @@ pub async fn filters_params(
     Ok(text)
 }
 
-// 查询 Jar 中的 Cookie
-pub fn find_jar_cookies(
-    jar: &Jar,
-    cookie_name: &str,
-    host: &str,
-) -> Result<String, Box<dyn std::error::Error>> {
-    let origin = format!("http://{}",host);
-    let url = Url::parse(&origin)?;
-
-    let cookie_prefix = format!("{}=", cookie_name);
-
-    let cookies = jar
-        .cookies(&url)
-        .ok_or_else(|| format!("URL {} 没有关联的 Cookie", url))?;
-
-    let cookie_str = cookies
-        .to_str()
-        .map_err(|e| format!("Cookie 字符串解析失败: {}", e))?;
-
-    let cookie_value = cookie_str
-        .split(';')
-        .find(|s| s.trim().starts_with(&cookie_prefix))
-        .and_then(|s| s.trim().strip_prefix(&cookie_prefix))
-        .ok_or_else(|| format!("未找到名为 {} 的 Cookie", cookie_name))?;
-
-    Ok(cookie_value.to_string())
-}
-
-// 查询bug_update_token
-pub fn get_page_token(document: &Html, token: &str) -> Result<String, String> {
-    // 创建选择器
-    let selector = Selector::parse(format!("input[name=\"{}\"]", token).as_str())
-        .map_err(|e| format!("Selector 解析失败: {:?}", e))?;
-    document
-        .select(&selector)
-        .find_map(|e| e.value().attr("value").map(|s| s.to_string()))
-        .ok_or("not found".to_string())
-}
-
 // 查询view_all_set数据
 pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<KV>) -> Result<BugList, Box<dyn std::error::Error>> {
     // 创建选择器
@@ -484,7 +445,7 @@ pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<
             
             bug.category_id = element
                 .select(&category_selector)
-                .find_map(|e|category_kv.find_by_value(e.text().last().unwrap_or("").trim()).map(|kv|kv.key))
+                .find_map(|e|category_kv.find_by_value(e.text().last().unwrap_or("").trim()).and_then(|kv|kv.key.parse::<i64>().ok()))
                 .unwrap_or(0);
 
             // project_id
@@ -494,9 +455,9 @@ pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<
                 .find_map(|e| {
                     // project
                     bug.project = e.inner_html().trim().to_string();
-                    project_kv.find_by_value(bug.project.as_str()).map(|kv|kv.key)
+                    project_kv.find_by_value(bug.project.as_str()).map(|kv|kv.key.clone())
                 })
-                .unwrap_or(0);
+                .unwrap_or("".to_owned());
 
             // severity
             let severity_selector = Selector::parse(".column-severity").unwrap();
@@ -628,15 +589,15 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
         .find_map(|e| {
             // project
             bug.project = e.inner_html().trim().to_string();
-            project_kv.find_by_value(bug.project.as_str()).map(|kv|kv.key)
+            project_kv.find_by_value(bug.project.as_str()).map(|kv| kv.key.clone())
         })
-        .unwrap_or(0);
+        .unwrap_or("".to_owned());
 
     // category_id
     let category_selector = Selector::parse(".bug-header-data .bug-category").unwrap();
     bug.category_id = document
         .select(&category_selector)
-        .find_map(|e|category_kv.find_by_value(e.text().last().unwrap_or("").trim()).map(|kv|kv.key))
+        .find_map(|e|category_kv.find_by_value(e.text().last().unwrap_or("").trim()).and_then(|kv|kv.key.parse::<i64>().ok()))
         .unwrap_or(0);
 
     // view_status
@@ -915,18 +876,13 @@ pub fn project_data(document: &Html) -> Result<Vec<KV>, String> {
         .filter_map(|e| {
             let value = e.inner_html().replace("&nbsp;", "").trim().to_string();
             let key = e.value().attr("href").and_then(|href| {
-                href.split('=').last().and_then(|ids| {
-                    ids.split(";").last().and_then(|id|{
-                        id.parse::<i64>().ok()
-                    })
-                })
+                href.split('=').last().and_then(|ids| Some(ids.to_owned()))
             })?;
             Some(KV{key,value})
         })
         .collect();
     Ok(r)
 }
-
 // 查询分类列表数据
 pub fn category_data(document: &Html) -> Result<Vec<KV>, String> {
     let slector = Selector::parse("#category_id option").unwrap();
@@ -934,11 +890,47 @@ pub fn category_data(document: &Html) -> Result<Vec<KV>, String> {
         .select(&slector)
         .filter_map(|e| {
             let value = e.inner_html().replace("[所有项目]", "").trim().to_string();
-            let key = e.value().attr("value").and_then(|id|id.parse::<i64>().ok())?;
+            let key = e.value().attr("value").map(|id|id.to_owned())?;
             Some(KV{key,value})
         })
         .collect();
     Ok(r)
+}
+
+// 查询过滤参数
+pub fn filters_data(document: &Html) -> Result<Vec<KV>, String> {
+    let slector = Selector::parse(".input-xs option").unwrap();
+    let r: Vec<KV> = document
+        .select(&slector)
+        .filter_map(|e| {
+            let value = e.inner_html().trim().to_string();
+            let key = e.value().attr("value").and_then(|id|Some(id.to_owned()))?;
+            Some(KV{key,value})
+        })
+        .collect();
+    Ok(r)
+}
+
+// 查询bug_update_token
+pub fn get_page_token(document: &Html, token: &str) -> Result<String, String> {
+    // 创建选择器
+    let selector = Selector::parse(format!("input[name=\"{}\"]", token).as_str())
+        .map_err(|e| format!("Selector 解析失败: {:?}", e))?;
+    document
+        .select(&selector)
+        .find_map(|e| e.value().attr("value").map(|s| s.to_string()))
+        .ok_or("not found".to_string())
+}
+
+// 查询data-filter_id
+pub fn get_data_filter_id(document: &Html) -> Result<String, String> {
+    // 创建选择器
+    let selector = Selector::parse(".dynamic-filter-expander")
+        .map_err(|e| format!("Selector 解析失败: {:?}", e))?;
+    document
+        .select(&selector)
+        .find_map(|e| e.value().attr("data-filter_id").map(|s| s.to_string()))
+        .ok_or("not found".to_string())
 }
 
 pub fn get_hash<T: Hash>(t: &T) -> u64 {

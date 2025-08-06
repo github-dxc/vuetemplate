@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+	<meta name="robots" content="noindex,follow" />
+	<title>提交问题 - MantisBT</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+	<link rel="stylesheet" type="text/css" href="http://bug.test.com/css/default.css?cache_key=991bb728eea2923f36cfa9c64025e9ae" />
+	<link rel="stylesheet" type="text/css" href="http://bug.test.com/css/dropzone-5.5.0.min.css" />
+	<link rel="stylesheet" type="text/css" href="http://bug.test.com/css/bootstrap-3.4.1.min.css" />
+	<link rel="stylesheet" type="text/css" href="http://bug.test.com/css/font-awesome-4.7.0.min.css" />
+	<link rel="stylesheet" type="text/css" href="http://bug.test.com/css/fonts.css?cache_key=991bb728eea2923f36cfa9c64025e9ae" />
+	<link rel="stylesheet" type="text/css" href="http://bug.test.com/css/bootstrap-datetimepicker-4.17.47.min.css" />
+	<link rel="stylesheet" type="text/css" href="http://bug.test.com/css/ace.min.css?cache_key=991bb728eea2923f36cfa9c64025e9ae" />
+	<link rel="stylesheet" type="text/css" href="http://bug.test.com/css/ace-mantis.css?cache_key=991bb728eea2923f36cfa9c64025e9ae" />
+	<link rel="stylesheet" type="text/css" href="http://bug.test.com/css/ace-skins.min.css?cache_key=991bb728eea2923f36cfa9c64025e9ae" />
+
+	<link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
+	<link rel="search" type="application/opensearchdescription+xml" title="MantisBT：全文搜索" href="http://bug.test.com/browser_search_plugin.php?type=text"/>
+	<link rel="search" type="application/opensearchdescription+xml" title="MantisBT：按问题Id搜索" href="http://bug.test.com/browser_search_plugin.php?type=id"/>
+	<script type="text/javascript" src="/javascript_config.php?cache_key=990a348b488b9c163bcdc2bc816bb905"></script>
+	<script type="text/javascript" src="/javascript_translations.php?cache_key=aaa06b70c166522c6368bc2bbf601c96"></script>
+	<script type="text/javascript" src="/js/jquery-2.2.4.min.js"></script>
+	<script type="text/javascript" src="/js/dropzone-5.5.0.min.js"></script>
+	<script type="text/javascript" src="/js/common.js"></script>
+</head>
+<body class="skin-3">
+<style>
+* { font-family: "Open Sans"; } 
+h1, h2, h3, h4, h5 { font-family: "Open Sans"; } 
+</style>
+<div id="navbar" class="navbar navbar-default navbar-collapse navbar-fixed-top noprint"><div id="navbar-container" class="navbar-container"><button id="menu-toggler" type="button" class="navbar-toggle menu-toggler pull-left hidden-lg hidden-md" data-target="#sidebar"><span class="sr-only">Toggle sidebar</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button><div class="navbar-header"><a href="/my_view_page.php" class="navbar-brand"><span class="smaller-75"> MantisBT </span></a><button type="button" class="navbar-toggle navbar-toggle collapsed pull-right hidden-sm hidden-md hidden-lg" data-toggle="collapse" data-target=".navbar-buttons,.navbar-menu"><span class="sr-only">Toggle user menu</span><i class="fa fa-user ace-icon fa-2x white" ></i> </button></div><div class="navbar-buttons navbar-header navbar-collapse collapse"><ul class="nav ace-nav">
+<li class="grey" id="dropdown_projects_menu">
+<a data-toggle="dropdown" href="#" class="dropdown-toggle">
+&#160;EasyLink&#160;
+<i class="fa fa-angle-down ace-icon bigger-110" ></i>
+</a>
+<ul id="projects-list" class=" dropdown-menu dropdown-menu-right dropdown-yellow dropdown-caret dropdown-close">
+<li><div class="projects-searchbox"><input class="search form-control input-md" placeholder="搜索" /></div></li>
+<li class="divider"></li>
+<li><div class="scrollable-menu">
+<ul class="list dropdown-yellow no-margin">
+<li><a class="project-link" href="/set_project.php?project_id=0">所有项目</a></li>
+<li class="divider"></li>
+<li class="active"><a class="project-link" href="/set_project.php?project_id=22">EasyLink</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=22;24">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EasyLink-用户端</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=22;23">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EasyLink-管理端</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=9">云计算</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=9;11">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云计算-用户端</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=9;10">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云计算-管理端</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=9;21">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云计算-线上问题</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=26">云计算海外版</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=26;30">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pre环境-云计算海外版-用户端</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=26;31">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pre环境-云计算海外版-管理端</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=26;28">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云计算海外版-用户端</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=26;27">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云计算海外版-管理端</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=13">云转码</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=13;16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云转码-用户端</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=13;17">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云转码-管理端</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=12">证书系统</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=25">资源管理系统</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=25;33">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pre环境-资源管理系统</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=25;32">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Test环境-资源管理系统</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=18">钱包</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=18;20">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;钱包-用户端</a></li>
+<li><a class="project-link" href="/set_project.php?project_id=18;19">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;钱包-管理端</a></li>
+</ul>
+</div>
+</li>
+</ul>
+</li>
+<li class="grey"><a data-toggle="dropdown" href="#" class="dropdown-toggle"><i class="fa fa-user ace-icon fa-2x white" ></i> <span class="user-info">dengxiangcheng</span><i class="fa fa-angle-down ace-icon" ></i></a><ul class="user-menu dropdown-menu dropdown-menu-right dropdown-yellow dropdown-caret dropdown-close"><li><a href="/account_page.php"><i class="fa fa-user ace-icon" ></i> 个人资料</a></li><li><a href="http://bug.test.com/issues_rss.php?username=dengxiangcheng&amp;key=LyRq8A-GncRBx54p5wi_WYsCgfNimr_yE4rJRSKZ8bUVgQfZuht1Qs2CNpEtac4EiIdc8n2UmChB7fNMLdcr&amp;project_id=22"><i class="fa fa-rss-square orange ace-icon" ></i> RSS</a></li><li class="divider"></li><li><a href="/logout_page.php"><i class="fa fa-sign-out ace-icon" ></i> 注销</a></li></ul></li></ul></div></div></div><div class="main-container" id="main-container">
+<div id="sidebar" class="sidebar sidebar-fixed responsive compact "><ul class="nav nav-list"><li>
+<a href="/my_view_page.php">
+<i class="fa fa-dashboard menu-icon" ></i>
+<span class="menu-text"> 我的视图 </span>
+</a>
+<b class="arrow"></b>
+</li>
+<li>
+<a href="/view_all_bug_page.php">
+<i class="fa fa-list-alt menu-icon" ></i>
+<span class="menu-text"> 查看问题 </span>
+</a>
+<b class="arrow"></b>
+</li>
+<li class="active">
+<a href="/bug_report_page.php">
+<i class="fa fa-edit menu-icon" ></i>
+<span class="menu-text"> 提交问题 </span>
+</a>
+<b class="arrow"></b>
+</li>
+<li>
+<a href="/changelog_page.php">
+<i class="fa fa-retweet menu-icon" ></i>
+<span class="menu-text"> 变更日志 </span>
+</a>
+<b class="arrow"></b>
+</li>
+<li>
+<a href="/roadmap_page.php">
+<i class="fa fa-road menu-icon" ></i>
+<span class="menu-text"> 路线图 </span>
+</a>
+<b class="arrow"></b>
+</li>
+</ul><div id="sidebar-btn" class="sidebar-toggle sidebar-collapse"><i data-icon2="ace-icon fa fa-angle-double-right" data-icon1="ace-icon fa fa-angle-double-left"
+		class="ace-icon fa fa-angle-double-left"></i></div></div><div class="main-content">
+<div id="breadcrumbs" class="breadcrumbs noprint">
+<ul class="breadcrumb">
+  <li><i class="fa fa-user home-icon active" ></i>  <a href="/account_page.php">dengxiangcheng ( 邓祥成 ) </a>
+  <span class="label hidden-xs label-default arrowed">开发人员</span></li>
+</ul>
+<div class="nav-recent hidden-xs">最近浏览的: <a href="/view.php?id=2583" title="[已关闭] test" class="resolved">0002583</a>, <a href="/view.php?id=2580" title="[已解决] 【官网-购买页面】变更套餐时间后，选择套餐变了" class="resolved">0002580</a>, <a href="/view.php?id=2574" title="[已关闭] 【邮件】续费失败邮件通知价格单位错误" class="resolved">0002574</a>, <a href="/view.php?id=2558" title="[已分配] 【云计算-区域管理】新建区域，计算节点、镜像管理、查看IP网络名称报错">0002558</a>, <a href="/view.php?id=2564" title="[已关闭] 【余额】充值成功有两个提示语" class="resolved">0002564</a></div><div id="nav-search" class="nav-search"><form class="form-search" method="post" action="/jump_to_bug.php"><span class="input-icon"><input type="text" name="bug_id" autocomplete="off" class="nav-search-input" placeholder="问题 #"><i class="fa fa-search ace-icon nav-search-icon" ></i></span></form></div>
+</div>
+  <div class="page-content">
+<div class="row">
+<div class="col-md-12 col-xs-12">
+<form id="report_bug_form"
+	method="post" enctype="multipart/form-data"	action="bug_report.php">
+<input type="hidden" name="bug_report_token" value="2025080654AN0ZWkE7y_D_BNSZuWcIxxjBTTYv8Q"/><input type="hidden" name="m_id" value="0" />
+<input type="hidden" name="project_id" value="22" />
+<div class="widget-box widget-color-blue2">
+	<div class="widget-header widget-header-small">
+		<h4 class="widget-title lighter">
+				<i class="fa fa-edit ace-icon" ></i>				输入问题详情		</h4>
+	</div>
+<div class="widget-body dz-clickable">
+<div class="widget-main no-padding">
+<div class="table-responsive">
+<table class="table table-bordered table-condensed">
+	<tr>
+		<th class="category width-30">
+			<span class="required">*</span> 			<label for="category_id">
+				分类			</label>
+		</th>
+		<td>
+						<select id="category_id" name="category_id" class="autofocus input-sm" tabindex="1" required>
+				<option value="" disabled hidden selected="selected">(请选择)</option>
+<option value="1">[所有项目] General</option>
+<option value="6">[所有项目] UI设计</option>
+<option value="5">[所有项目] 产品设计</option>
+<option value="8">[所有项目] 前端</option>
+<option value="9">[所有项目] 后端</option>
+<option value="10">[所有项目] 大数据</option>
+<option value="11">[所有项目] 安卓客户端</option>
+			</select>
+		</td>
+	</tr>
+
+	<tr>
+		<th class="category">
+			<label for="reproducibility">出现频率</label>
+		</th>
+		<td>
+			<select tabindex="2" id="reproducibility" name="reproducibility" class="input-sm">
+				<option value="10">总是</option><option value="30">有时</option><option value="50">随机</option><option value="70" selected="selected">没有试验</option><option value="90">无法重现</option><option value="100">不适用</option>			</select>
+		</td>
+	</tr>
+	<tr>
+		<th class="category">
+			<label for="severity">严重性</label>
+		</th>
+		<td>
+			<select tabindex="3" id="severity" name="severity" class="input-sm">
+				<option value="10">新功能</option><option value="20">细节</option><option value="30">文字</option><option value="40">小调整</option><option value="50" selected="selected">小错误</option><option value="60">很严重</option><option value="70">崩溃</option><option value="80">宕机</option>			</select>
+		</td>
+	</tr>
+	<tr>
+		<th class="category">
+			<label for="priority">优先级</label>
+		</th>
+		<td>
+			<select tabindex="4" id="priority" name="priority" class="input-sm">
+				<option value="10">无</option><option value="20">低</option><option value="30" selected="selected">中</option><option value="40">高</option><option value="50">紧急</option><option value="60">非常紧急</option>			</select>
+		</td>
+	</tr>
+	<tr>
+		<th class="category">
+			<label for="profile_id">选择平台配置</label>
+		</th>
+		<td>
+						
+<div id="profile_open" class=" collapse-closed noprint">			或填写&nbsp;&nbsp;<a id="profile_open_link" class="collapse-link noprint"><i class="fa fa-chevron-up bigger-120" title="-"></i></a>			<table class="table-bordered table-condensed">
+				<tr>
+					<th class="category width-30">
+						<label for="platform">平台</label>
+					</th>
+					<td>
+						<input type="text" id="platform" name="platform" class="typeahead input-sm" autocomplete = "off" size="32" maxlength="32" tabindex="5" value="" />					</td>
+				</tr>
+				<tr>
+					<th class="category">
+						<label for="os">操作系统</label>
+					</th>
+					<td>
+						<input type="text" id="os" name="os" class="typeahead input-sm" autocomplete = "off" size="32" maxlength="32" tabindex="6" value="" />					</td>
+				</tr>
+				<tr>
+					<th class="category">
+						<label for="os_build">操作系统版本</label>
+					</th>
+					<td>
+						<input type="text" id="os_build" name="os_build" class="typeahead input-sm" autocomplete = "off" size="16" maxlength="16" tabindex="7" value="" />					</td>
+				</tr>
+			</table>
+			</div>
+<div id="profile_closed" class="collapse-section-closed  collapse-open">			或填写&nbsp;&nbsp;<a id="profile_closed_link" class="collapse-link noprint"><i class="fa fa-chevron-down bigger-120" title="+"></i></a>			</div>		</td>
+	</tr>
+
+	<tr>
+		<th class="category">
+			<label for="handler_id">分派给</label>
+		</th>
+		<td>
+			<select tabindex="8" id="handler_id" name="handler_id" class="input-sm">
+				<option value="0" selected="selected"></option>
+				<option value="1" >administrator</option><option value="19" >liujx</option><option value="4" >Misso</option><option value="2" >余勇德 (yuland)</option><option value="3" >冉伟 (ranwei)</option><option value="20" >刘佳鑫 (liujiaxin)</option><option value="28" >刘思婷 (manman)</option><option value="5" >刘鲜 (liuxian)</option><option value="10" >吴飞鹏 (wufeipeng)</option><option value="7" >周祯人 (zhouzhenren)</option><option value="12" >唐元彬 (tangyuanbin)</option><option value="25" >唐平 (tangping)</option><option value="14" >张桎菱 (zhangzhiling)</option><option value="24" >张茏 (zhanglong)</option><option value="27" >朱兆峰 (zhuzhaofeng)</option><option value="13" >柳文莉 (liuwenli)</option><option value="26" >涂佳杨 (tujiayang)</option><option value="18" >王克 (wangke)</option><option value="16" >王建 (wangjian)</option><option value="11" >田风云 (tianfy)</option><option value="8" >赵义博 (zhaoyibo)</option><option value="9" >邓家祥 (dengjiaxiang)</option><option value="29" >邓祥成 (dengxiangcheng)</option><option value="21" >邱泓瑀 (qiuhongyu@test.com)</option><option value="15" >阮浪 (ruanlang)</option><option value="23" >陈俊 (bigcity)</option><option value="6" >陈全杰 (chenquanjie)</option><option value="17" >雷宇 (laya)</option>			</select>
+		</td>
+	</tr>
+
+
+
+
+	<tr>
+		<th class="category">
+			<span class="required">*</span>
+			<label for="summary">摘要</label>
+		</th>
+		<td>
+			<input tabindex="9" type="text" id="summary" name="summary" size="105" maxlength="128" value="" required />
+		</td>
+	</tr>
+	<tr>
+		<th class="category">
+			<span class="required">*</span>
+			<label for="description">描述</label>
+		</th>
+		<td>
+						<textarea class="form-control" tabindex="10" id="description" name="description" cols="80" rows="10" required>
+</textarea>
+		</td>
+	</tr>
+
+		<tr>
+			<th class="category">
+				<label for="steps_to_reproduce">问题重现步骤</label>
+			</th>
+			<td>
+								<textarea class="form-control" tabindex="11" id="steps_to_reproduce" name="steps_to_reproduce" cols="80" rows="10">
+</textarea>
+			</td>
+		</tr>
+
+	<tr>
+		<th class="category">
+			<label for="additional_info">附注</label>
+		</th>
+		<td>
+						<textarea class="form-control" tabindex="12" id="additional_info" name="additional_info" cols="80" rows="10">
+</textarea>
+		</td>
+	</tr>
+	<tr>
+		<th class="category">
+			<label for="attach_tag">添加标签</label>
+		</th>
+		<td>
+				<label class="inline small">
+		(用","分割)	</label>
+	<input type="hidden" id="tag_separator" value="," />
+	<input type="text" name="tag_string" id="tag_string"
+		   class="input-sm" size="40" tabindex="13"		   value="" />
+	<select class="input-sm" tabindex="14" name="tag_select" id="tag_select">
+		<option value="0">现有标签</option><option value="1" title="">交互问题</option><option value="2" title="">代码错误</option><option value="12" title="">其它问题</option><option value="3" title="">兼容问题</option><option value="4" title="">安全相关</option><option value="5" title="">安装部署</option><option value="6" title="">弱网问题</option><option value="7" title="">性能问题</option><option value="8" title="">文案优化</option><option value="9" title="">易用性类</option><option value="10" title="">界面问题</option><option value="11" title="">需求设计</option>	</select>
+		</td>
+	</tr>
+	<tr>
+		<th class="category">
+			<label for="ufile[]">上传文件</label>
+			<br />
+			<span class="small" title="最大文件大小: 2,097,152 字节">最大文件大小: 2,048 KiB</span>		</th>
+		<td>
+				<div id="dropzone-preview-template" class="hidden">
+		<div class="dz-preview dz-file-preview">
+			<div class="dz-filename"><span data-dz-name></span></div>
+			<img data-dz-thumbnail />
+			<div class="dz-error-message">
+				<div class="dz-error-mark"><span><i class="fa fa-times-circle " ></i></span></div>
+				<span data-dz-errormessage></span>
+			</div>
+			<div class="dz-size" data-dz-size></div>
+			<div class="progress progress-small progress-striped active">
+				<div class="progress-bar progress-bar-success" data-dz-uploadprogress></div>
+			</div>
+			<a class="btn btn-primary btn-white btn-round btn-xs" data-dz-remove>
+				移除文件			</a>
+		</div>
+	</div>
+				<input type="hidden" name="max_file_size" value="2097152" />
+			<div class="dropzone center" data-force-fallback="false"
+	data-max-filesize-bytes="2097152"
+	data-max-filename-length="250"
+	data-accepted-files=""
+	data-default-message="通过拖放，选择或粘贴来附加文件。"
+	data-fallback-message="您的浏览器不支持拖放文件上传。"
+	data-fallback-text=""
+	data-file-too-big="文件太大（{{filesize}}MiB）。最大文件大小：{{maxFilesize}}MiB。"
+	data-invalid-file-type="您不能上传此类型的文件。"
+	data-response-error="服务器响应了{{statusCode}}代码。"
+	data-cancel-upload="取消上传"
+	data-cancel-upload-confirmation="您确定要取消此次上传么？"
+	data-remove-file=""
+	data-remove-file-confirmation=""
+	data-max-files-exceeded="您不能上传更多文件。"
+	data-dropzone-not-supported="Dropzone.js不支持旧浏览器！"	data-dropzone_multiple_files_too_big="下列文件超出了最大文件限制（{{maxFilesize}} MiB）：{{files}}"	data-dropzone_multiple_filenames_too_long="以下文件名称太长（最多 {{maxFilenameLength}} 个字符）：{{files}}">
+				<i class="fa fa-cloud-upload upload-icon ace-icon blue fa-3x" ></i>				<br>
+				<span class="bigger-150 grey">通过拖放，选择或粘贴来附加文件。</span>
+				<div id="dropzone-previews-box" class="dropzone-previews dz-max-files-reached"></div>
+			</div>
+			<div class="fallback">
+				<div class="dz-message" data-dz-message></div>
+				<input tabindex="15" id="ufile[]" name="ufile[]" type="file" size="60" />
+			</div>
+		</td>
+	</tr>
+
+	<tr>
+		<th class="category">
+			查看权限		</th>
+		<td>
+			<label>
+				<input tabindex="16" type="radio" class="ace" name="view_state" value="10"  checked="checked" />
+				<span class="lbl padding-6">公开</span>
+			</label>
+			&#160;&#160;&#160;&#160;
+			<label>
+				<input tabindex="17" type="radio" class="ace" name="view_state" value="50"  />
+				<span class="lbl padding-6">私有</span>
+			</label>
+		</td>
+	</tr>
+	<tr>
+		<th class="category">
+			继续报告		</th>
+		<td>
+			<label>
+				<input tabindex="18" type="checkbox" class="ace" id="report_stay" name="report_stay"  />
+				<span class="lbl padding-6">报告更多的问题</span>
+			</label>
+		</td>
+	</tr>
+</table>
+</div>
+</div>
+<div class="widget-toolbox padding-8 clearfix">
+	<span class="required pull-right"> * 必填</span>
+	<input tabindex="19" type="submit" class="btn btn-primary btn-white btn-round" value="提交问题" />
+</div>
+</div>
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+<div class="clearfix"></div>
+<div class="space-20"></div>
+<div class="footer noprint">
+<div class="footer-inner">
+<div class="footer-content">
+<div class="col-md-6 col-xs-12 no-padding">
+<address>
+<strong>Powered by <a href="https://www.mantisbt.org" title="bug tracking software">MantisBT </a></strong> <br>
+<small>Copyright &copy; 2000 - 2025 MantisBT Team</small><br><small>联系<a href="mailto:webmaster@example.com" title="Contact the webmaster via e-mail.">管理员</a>获取援助</small><br>
+</address>
+</div>
+<div class="col-md-6 col-xs-12">
+<div class="pull-right" id="powered-by-mantisbt-logo">
+<a href="https://www.mantisbt.org" title="Mantis Bug Tracker: a free and open source web based bug tracking system."><img src="/images/mantis_logo.png" width="102" height="35" alt="Powered by Mantis Bug Tracker: a free and open source web based bug tracking system." /></a>
+</div>
+</div>
+</div>
+</div>
+</div>
+<a class="btn-scroll-up btn btn-sm btn-inverse display" id="btn-scroll-up" href="#">
+<i class="fa fa-angle-double-up ace-icon icon-only bigger-110" ></i>
+</a>
+</div>
+	<script type="text/javascript" src="/js/bootstrap-3.4.1.min.js"></script>
+	<script type="text/javascript" src="/js/moment-with-locales-2.29.4.min.js"></script>
+	<script type="text/javascript" src="/js/bootstrap-datetimepicker-4.17.47.min.js"></script>
+	<script type="text/javascript" src="/js/typeahead.jquery-1.3.4.min.js"></script>
+	<script type="text/javascript" src="/js/list-2.3.1.min.js"></script>
+	<script type="text/javascript" src="/js/ace.min.js"></script>
+</body>
+</html>

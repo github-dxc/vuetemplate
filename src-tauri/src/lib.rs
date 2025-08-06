@@ -110,6 +110,7 @@ async fn api_init_data(app: AppHandle) -> Result<String, String> {
     {
         let mut project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?;
         *project_kv = project_kv.clone();
+        println!("projects:{:?}",projects.clone())
     }
 
     // 查询分组列表
@@ -118,6 +119,7 @@ async fn api_init_data(app: AppHandle) -> Result<String, String> {
     {
         let mut catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
         *catgory_kv = category.clone();
+        println!("catgory:{:?}",category.clone())
     }
 
     let mut hm = HashMap::new();
@@ -460,7 +462,7 @@ fn find_sub_data(app: AppHandle) {
                 for b in bugs.clone() {
                     let bgid = b.bug_id;
                     let hash = get_hash(&b);
-                    let cg_kv = category_kv.find_by_key(b.category_id).ok_or("not find kv".to_owned())?;
+                    let cg_kv = category_kv.find_by_key(b.category_id.to_string()).ok_or("not find kv".to_owned())?;
                     new_map.insert(bgid, b.clone());
                     new_hash.insert(bgid, hash);
                     //判断hash值是否一致，不一致则通知,没有也通知
