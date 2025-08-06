@@ -13,6 +13,21 @@ pub struct KV {
     pub value: String,
 }
 
+// 查找数据的特征
+pub trait VecExtKV {
+    fn find_by_key(&self, key: i64) -> Option<&KV>;
+    fn find_by_value<S: AsRef<str>>(&self, value: S) -> Option<&KV>;
+}
+
+impl VecExtKV for Vec<KV> {
+    fn find_by_key(&self, key: i64) -> Option<&KV> {
+        self.iter().find(|kv| kv.key == key)
+    }
+    fn find_by_value<S: AsRef<str>>(&self, value: S) -> Option<&KV> {
+        self.iter().find(|kv| kv.value == value.as_ref())
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Priority {
     Unknown = 0,
@@ -65,71 +80,6 @@ impl From<i64> for Priority {
             return *a;
         };
         Priority::Unknown
-    }
-}
-
-// <option value="1">General</option>
-// <option value="6">UI设计</option>
-// <option value="5">产品设计</option>
-// <option value="8">前端</option>
-// <option value="9">后端</option>
-// <option value="10">大数据</option>
-// <option value="11">安卓客户端</option>
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Category {
-    Unknown = 0,
-    General = 1,
-    UIDesign = 6,
-    ProductDesign = 5,
-    Frontend = 8,
-    Backend = 9,
-    BigData = 10,
-    AndroidClient = 11,
-}
-const CATEGORY_VALUE: [(Category, &str); 8] = [
-    (Category::Unknown , "[任意]"),
-    (Category::General , "General"),
-    (Category::UIDesign , "UI设计"),
-    (Category::ProductDesign , "产品设计"),
-    (Category::Frontend , "前端"),
-    (Category::Backend , "后端"),
-    (Category::BigData , "大数据"),
-    (Category::AndroidClient , "安卓客户端"),
-];
-impl Category {
-    pub fn as_str(&self) -> &'static str {
-        if let Some((_,b)) = CATEGORY_VALUE.iter().find(|d|d.0 == *self) {
-            return *b;
-        };
-        ""
-    }
-    pub fn as_i64(&self) -> i64 {
-        *self as i64
-    }
-    pub fn kv() -> Vec<KV> {
-        CATEGORY_VALUE.iter().map(|d|KV{key:d.0.as_i64(),value:d.1.into()}).collect()
-    }
-}
-impl std::fmt::Display for Category {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
-}
-impl From<&str> for Category {
-    fn from(s: &str) -> Self {
-        if let Some((a,_)) = CATEGORY_VALUE.iter().find(|d|d.1 == s) {
-            return *a;
-        };
-        Category::Unknown
-    }
-}
-impl From<i64> for Category {
-    fn from(n: i64) -> Self {
-        if let Some((a,_)) = CATEGORY_VALUE.iter().find(|d|d.0.as_i64() == n) {
-            return *a;
-        };
-        Category::Unknown 
     }
 }
 
@@ -351,105 +301,6 @@ impl From<i64> for Resolution {
             return *a;
         };
         Resolution::Unknown 
-    }
-}
-
-// <a class="project-link" href="/set_project.php?project_id=0">所有项目</a>
-// <a class="project-link" href="/set_project.php?project_id=22">EasyLink</a>
-// <a class="project-link" href="/set_project.php?project_id=24">EasyLink-用户端</a>
-// <a class="project-link" href="/set_project.php?project_id=23">EasyLink-管理端</a>
-// <a class="project-link" href="/set_project.php?project_id=9">云计算</a>
-// <a class="project-link" href="/set_project.php?project_id=11">云计算-用户端</a>
-// <a class="project-link" href="/set_project.php?project_id=10">云计算-管理端</a>
-// <a class="project-link" href="/set_project.php?project_id=21">云计算-线上问题</a>
-// <a class="project-link" href="/set_project.php?project_id=26">云计算海外版</a>
-// <a class="project-link" href="/set_project.php?project_id=28">云计算海外版-用户端</a>
-// <a class="project-link" href="/set_project.php?project_id=27">云计算海外版-管理端</a>
-// <a class="project-link" href="/set_project.php?project_id=13">云转码</a>
-// <a class="project-link" href="/set_project.php?project_id=16">云转码-用户端</a>
-// <a class="project-link" href="/set_project.php?project_id=17">云转码-管理端</a>
-// <a class="project-link" href="/set_project.php?project_id=12">证书系统</a>
-// <a class="project-link" href="/set_project.php?project_id=25">资源管理系统</a>
-// <a class="project-link" href="/set_project.php?project_id=18">钱包</a>
-// <a class="project-link" href="/set_project.php?project_id=20">钱包-用户端</a>
-// <a class="project-link" href="/set_project.php?project_id=19">钱包-管理端</a>
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Project {
-    Unknown = 0,
-    EasyLink = 22,
-    EasyLinkUser = 24,
-    EasyLinkAdmin = 23,
-    CloudComputing = 9,
-    CloudComputingUser = 11,
-    CloudComputingAdmin = 10,
-    CloudComputingOnlineIssues = 21,
-    CloudComputingOverseas = 26,
-    CloudComputingOverseasUser = 28,
-    CloudComputingOverseasAdmin = 27,
-    CloudTranscoding = 13,
-    CloudTranscodingUser = 16,
-    CloudTranscodingAdmin = 17,
-    CertificateSystem = 12,
-    ResourceManagementSystem = 25,
-    Wallet = 18,
-    WalletUser = 20,
-    WalletAdmin = 19,
-}
-const PROJECT_VALUE: [(Project, &str); 19] = [
-    (Project::Unknown , "所有项目"),
-    (Project::EasyLink , "EasyLink"),
-    (Project::EasyLinkUser , "EasyLink-用户端"),
-    (Project::EasyLinkAdmin , "EasyLink-管理端"),
-    (Project::CloudComputing , "云计算"),
-    (Project::CloudComputingUser , "云计算-用户端"),
-    (Project::CloudComputingAdmin , "云计算-管理端"),
-    (Project::CloudComputingOnlineIssues , "云计算-线上问题"),
-    (Project::CloudComputingOverseas , "云计算海外版"),
-    (Project::CloudComputingOverseasUser , "云计算海外版-用户端"),
-    (Project::CloudComputingOverseasAdmin , "云计算海外版-管理端"),
-    (Project::CloudTranscoding , "云转码"),
-    (Project::CloudTranscodingUser , "云转码-用户端"),
-    (Project::CloudTranscodingAdmin , "云转码-管理端"),
-    (Project::CertificateSystem , "证书系统"),
-    (Project::ResourceManagementSystem , "资源管理系统"),
-    (Project::Wallet , "钱包"),
-    (Project::WalletUser , "钱包-用户端"),
-    (Project::WalletAdmin , "钱包-管理端"),
-];
-impl Project {
-    pub fn as_str(&self) -> &'static str {
-        if let Some((_,b)) = PROJECT_VALUE.iter().find(|d|d.0 == *self) {
-            return *b;
-        };
-        ""
-    }
-    pub fn as_i64(&self) -> i64 {
-        *self as i64
-    }
-    pub fn kv() -> Vec<KV> {
-        PROJECT_VALUE.iter().map(|d|KV{key:d.0.as_i64(),value:d.1.into()}).collect()
-    }
-}
-impl std::fmt::Display for Project {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
-}
-impl From<&str> for Project {
-    fn from(s: &str) -> Self {
-        if let Some((a,_)) = PROJECT_VALUE.iter().find(|d|d.1 == s) {
-            return *a;
-        };
-        Project::Unknown
-    }
-}
-impl From<i64> for Project {
-    fn from(n: i64) -> Self {
-        if let Some((a,_)) = PROJECT_VALUE.iter().find(|d|d.0.as_i64() == n) {
-            return *a;
-        };
-        Project::Unknown 
     }
 }
 

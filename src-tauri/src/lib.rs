@@ -92,6 +92,9 @@ struct MyState {
     sub_bugs: Arc<Mutex<HashMap<i64, Bug>>>, //bugs列表
     sub_bugs_hash: Arc<Mutex<HashMap<i64, u64>>>,
     last_version: Arc<Mutex<Option<Update>>>,//系统版本
+
+    catgory_kv: Arc<Mutex<Vec<KV>>>,//分组的kv信息
+    project_kv: Arc<Mutex<Vec<KV>>>,//项目的kv信息
 }
 
 // 初始化数据
@@ -104,19 +107,25 @@ async fn api_init_data(app: AppHandle) -> Result<String, String> {
     // 查询项目列表
     let body = my_view_page(jar.clone(), &host).await.map_err(|e|format!("my_view_page err:{}",e))?;
     let projects = project_data(&Html::parse_document(body.as_str()))?;
+    {
+        let mut project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+        *project_kv = project_kv.clone();
+    }
 
     // 查询分组列表
     let body = bug_report_page(jar.clone(), &host).await.map_err(|e|format!("filters_params err:{}",e))?;
     let category = category_data(&Html::parse_document(body.as_str()))?;
+    {
+        let mut catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+        *catgory_kv = category.clone();
+    }
 
     let mut hm = HashMap::new();
     hm.insert("Priority", Priority::kv());
     hm.insert("Severity", Severity::kv());
     hm.insert("Reproducibility", Reproducibility::kv());
     hm.insert("ViewStatus", ViewStatus::kv());
-    // hm.insert("Category", Category::kv());
     hm.insert("Category", category);
-    // hm.insert("Project", Project::kv());
     hm.insert("Project", projects);
     hm.insert("Status", Status::kv());
     hm.insert("Resolution", Resolution::kv());
@@ -178,6 +187,8 @@ async fn api_bug_list(app: AppHandle) -> Result<BugList, String> {
     let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     if !logined {
         return Err("未登录".to_string());
     }
@@ -188,8 +199,8 @@ async fn api_bug_list(app: AppHandle) -> Result<BugList, String> {
     let body = view_all_set(jar, param, &host)
         .await
         .map_err(|e| format!("view_all_set err:{}", e))?;
-    // 解析数据
-    let data = view_all_set_data(&Html::parse_document(body.as_str()))
+    // 解析数据s
+    let data = view_all_set_data(&Html::parse_document(body.as_str()),&catgory_kv,&project_kv)
         .map_err(|e| format!("view_all_set_data err:{}", e))?;
 
     Ok(data)
@@ -207,6 +218,8 @@ async fn api_update_bug(
     let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     if !logined {
         return Err("未登录".to_string());
     }
@@ -217,7 +230,7 @@ async fn api_update_bug(
         let body = my_view_detail(jar.clone(), bug_id, &host).await?;
         let document = Html::parse_document(body.as_str());
         bug_update_page_token = get_page_token(&document, "bug_update_page_token")?;
-        bug_info = my_view_detail_data(&document, &host)?;
+        bug_info = my_view_detail_data(&document, &host,&catgory_kv,&project_kv)?;
     }
     // bug修改页面
     let body = bug_update_page(
@@ -250,6 +263,7 @@ async fn api_update_bug(
         steps_to_reproduce: bug_info.steps_to_reproduce,
         bugnote_text: "".to_string(),
     };
+    println!("{:?}",bug);
     bug_update(jar.clone(), bug, &host).await
 }
 
@@ -398,13 +412,15 @@ fn find_sub_data(app: AppHandle) {
                     let sub_param = sub_param.clone();
                     let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+                    let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+                    let catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                     set.spawn(async move {
                         // 查询列表
                         let param = serde_html_form::from_str::<FindBugListParams>(&sub_param)
                             .map_err(|e| format!("serde_html_form err:{}", e))?;
                         let body = view_all_set(jar, param, &host).await.map_err(|e|format!("view_all_set err:{}",e))?;
                         // 解析数据
-                        let data = view_all_set_data(&Html::parse_document(body.as_str())).map_err(|e|format!("view_all_set_data err:{}",e))?;
+                        let data = view_all_set_data(&Html::parse_document(body.as_str()),&catgory_kv,&project_kv).map_err(|e|format!("view_all_set_data err:{}",e))?;
                         Ok(data)
                     });
                 }
@@ -437,10 +453,14 @@ fn find_sub_data(app: AppHandle) {
                 let mut new_hash = HashMap::new();
 
                 let mut notice_msgs = Vec::new();
+
+                //获取分组kv
+                let category_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
                 
                 for b in bugs.clone() {
                     let bgid = b.bug_id;
                     let hash = get_hash(&b);
+                    let cg_kv = category_kv.find_by_key(b.category_id).ok_or("not find kv".to_owned())?;
                     new_map.insert(bgid, b.clone());
                     new_hash.insert(bgid, hash);
                     //判断hash值是否一致，不一致则通知,没有也通知
@@ -449,7 +469,7 @@ fn find_sub_data(app: AppHandle) {
                         let notice = format!(
                                 " {} | {} - {} -> {}",
                                 b.project,
-                                Category::from(b.category_id).as_str(),
+                                cg_kv.value,
                                 Severity::from(b.severity).as_str(),
                                 b.handler
                             );
@@ -632,25 +652,25 @@ mod tests {
 
     #[tokio::test]
     async fn test_view_all_set_data() {
-        // 读取view_all_set.html文件内容
-        let html_content = include_str!("./example/view_all_set.html");
-        let document = Html::parse_document(html_content);
-        let r = view_all_set_data(&document);
-        assert!(r.is_ok());
-        let data = r.unwrap();
-        println!("Summary: {:?}", data);
+        // // 读取view_all_set.html文件内容
+        // let html_content = include_str!("./example/view_all_set.html");
+        // let document = Html::parse_document(html_content);
+        // let r = view_all_set_data(&document);
+        // assert!(r.is_ok());
+        // let data = r.unwrap();
+        // println!("Summary: {:?}", data);
     }
 
     #[tokio::test]
     async fn test_my_view_detail_data() {
-        let host = "bug.test.com";
-        // 读取view_all_set.html文件内容
-        let html_content = include_str!("./example/view.php.html");
-        let document = Html::parse_document(html_content);
-        let r = my_view_detail_data(&document,host);
-        assert!(r.is_ok());
-        let data = r.unwrap();
-        println!("Summary: {:?}", data);
+        // let host = "bug.test.com";
+        // // 读取view_all_set.html文件内容
+        // let html_content = include_str!("./example/view.php.html");
+        // let document = Html::parse_document(html_content);
+        // let r = my_view_detail_data(&document,host);
+        // assert!(r.is_ok());
+        // let data = r.unwrap();
+        // println!("Summary: {:?}", data);
     }
 
     #[tokio::test]

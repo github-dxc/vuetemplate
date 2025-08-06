@@ -440,7 +440,7 @@ pub fn get_page_token(document: &Html, token: &str) -> Result<String, String> {
 }
 
 // 查询view_all_set数据
-pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error::Error>> {
+pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<KV>) -> Result<BugList, Box<dyn std::error::Error>> {
     // 创建选择器
     let selector =
         Selector::parse("#buglist tbody tr").map_err(|e| format!("Selector 解析失败: {:?}", e))?;
@@ -481,9 +481,10 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
 
             // category_id
             let category_selector = Selector::parse(".column-category div").unwrap();
+            
             bug.category_id = element
                 .select(&category_selector)
-                .find_map(|e| Some(Category::from(e.text().last().unwrap_or(&"").trim()).as_i64()))
+                .find_map(|e|category_kv.find_by_value(e.text().last().unwrap_or("").trim()).map(|kv|kv.key))
                 .unwrap_or(0);
 
             // project_id
@@ -493,7 +494,7 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
                 .find_map(|e| {
                     // project
                     bug.project = e.inner_html().trim().to_string();
-                    Some(Project::from(bug.project.as_str()).as_i64())
+                    project_kv.find_by_value(bug.project.as_str()).map(|kv|kv.key)
                 })
                 .unwrap_or(0);
 
@@ -611,7 +612,7 @@ pub fn view_all_set_data(document: &Html) -> Result<BugList, Box<dyn std::error:
 }
 
 // 查询my_view_detail数据
-pub fn my_view_detail_data(document: &Html,host: &str) -> Result<BugInfo, String> {
+pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,project_kv: &Vec<KV>) -> Result<BugInfo, String> {
     let mut bug = BugInfo::default();
     // bug_id
     let id_slector = Selector::parse(".bug-header-data .bug-id").unwrap();
@@ -627,7 +628,7 @@ pub fn my_view_detail_data(document: &Html,host: &str) -> Result<BugInfo, String
         .find_map(|e| {
             // project
             bug.project = e.inner_html().trim().to_string();
-            Some(Project::from(bug.project.as_str()).as_i64())
+            project_kv.find_by_value(bug.project.as_str()).map(|kv|kv.key)
         })
         .unwrap_or(0);
 
@@ -635,7 +636,7 @@ pub fn my_view_detail_data(document: &Html,host: &str) -> Result<BugInfo, String
     let category_selector = Selector::parse(".bug-header-data .bug-category").unwrap();
     bug.category_id = document
         .select(&category_selector)
-        .find_map(|e| Some(Category::from(e.inner_html().trim()).as_i64()))
+        .find_map(|e|category_kv.find_by_value(e.text().last().unwrap_or("").trim()).map(|kv|kv.key))
         .unwrap_or(0);
 
     // view_status
