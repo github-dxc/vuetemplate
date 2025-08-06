@@ -47,6 +47,8 @@ pub fn run() {
             api_download_and_install
         ])
         .setup(|app| {
+            //清空所有状态
+            // clear_global_state(app.handle().clone());
             //初始化全局状态
             let _ = init_global_state(app.handle().clone());
             //定时更新
