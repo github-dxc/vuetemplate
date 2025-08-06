@@ -604,7 +604,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
     let category_selector = Selector::parse(".bug-header-data .bug-category").unwrap();
     bug.category_id = document
         .select(&category_selector)
-        .find_map(|e|category_kv.find_by_value(e.text().last().unwrap_or("").trim()).and_then(|kv|kv.key.parse::<i64>().ok()))
+        .find_map(|e|category_kv.find_by_value(e.text().last().unwrap_or("").replace("[所有项目] ", "")).and_then(|kv|kv.key.parse::<i64>().ok()))
         .unwrap_or(0);
 
     // view_status

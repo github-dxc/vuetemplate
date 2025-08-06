@@ -40,6 +40,7 @@
         <div v-if="showPassword && password == ''">Back</div>
         <div v-if="showPassword && password !== ''">Login</div>
       </button>
+          <button @click="testLogin">test</button>
     </div>
 
     <!-- 设置按钮 -->
@@ -94,6 +95,21 @@ const passwordInputRef = ref(null);
 const showSettings = ref(false);
 const hostConfig = ref("");
 const hostInputRef = ref(null);
+
+async function testLogin() {
+  try {
+    const result = await invoke("api_login", { username: 'administrator', password: 'abcd.1234' });
+    console.log("登录成功", result);
+    router.push("/home");
+  } catch (error) {
+    console.error("Test login failed");
+    ElMessage({
+      showClose: true,
+      message: 'Test login failed. ' + error,
+      type: 'error',
+    });
+  }
+}
 
 async function login() {
   try {

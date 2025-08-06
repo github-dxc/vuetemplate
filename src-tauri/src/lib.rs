@@ -109,7 +109,7 @@ async fn api_init_data(app: AppHandle) -> Result<String, String> {
     let projects = project_data(&Html::parse_document(body.as_str()))?;
     {
         let mut project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?;
-        *project_kv = project_kv.clone();
+        *project_kv = projects.clone();
     }
 
     // 查询分组列表
