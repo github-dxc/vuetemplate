@@ -48,7 +48,7 @@ pub fn run() {
         ])
         .setup(|app| {
             //清空所有状态
-            // clear_global_state(app.handle().clone());
+            // let _ = clear_global_state(app.handle().clone());
             //初始化全局状态
             let _ = init_global_state(app.handle().clone());
             //定时更新
@@ -110,16 +110,15 @@ async fn api_init_data(app: AppHandle) -> Result<String, String> {
     {
         let mut project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?;
         *project_kv = project_kv.clone();
-        println!("projects:{:?}",projects.clone())
     }
 
     // 查询分组列表
-    let body = bug_report_page(jar.clone(), &host).await.map_err(|e|format!("filters_params err:{}",e))?;
+    let project_id = projects.last().ok_or("projects error".to_owned())?.key.clone();
+    let body = bug_report_page(jar.clone(), &host, &project_id).await.map_err(|e|format!("filters_params err:{}",e))?;
     let category = category_data(&Html::parse_document(body.as_str()))?;
     {
         let mut catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
         *catgory_kv = category.clone();
-        println!("catgory:{:?}",category.clone())
     }
 
     let mut hm = HashMap::new();

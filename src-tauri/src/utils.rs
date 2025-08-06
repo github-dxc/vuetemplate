@@ -338,9 +338,13 @@ pub async fn bug_change_status_page(
 pub async fn bug_report_page(
     jar: Arc<Jar>, 
     host: &str,
+    project_id: &str,
 ) -> Result<String, String> {
     let origin = format!("http://{}",host);
     let url = format!("{}/bug_report_page.php", origin);
+
+    // 设置项目id cookie
+    let _ = set_project_cookie(jar.clone(), project_id, host);
 
     // 构建请求头
     let mut headers = HeaderMap::new();
@@ -353,7 +357,7 @@ pub async fn bug_report_page(
     // 创建 reqwest 客户端
     let client = Client::builder()
         .timeout(Duration::from_secs(2))
-        .cookie_provider(jar)
+        .cookie_provider(jar.clone())
         .danger_accept_invalid_certs(true) // --insecure
         .default_headers(headers)
         .build()
@@ -361,6 +365,9 @@ pub async fn bug_report_page(
 
     // 发送 GET 请求
     let resp = client.get(url).send().await.map_err(|e| e.to_string())?;
+
+    // 清空项目id cookie
+    let _ = set_project_cookie(jar.clone(), "0", host);
 
     let text = resp.text().await.map_err(|e| e.to_string())?;
     Ok(text)
@@ -891,6 +898,9 @@ pub fn category_data(document: &Html) -> Result<Vec<KV>, String> {
         .filter_map(|e| {
             let value = e.inner_html().replace("[所有项目]", "").trim().to_string();
             let key = e.value().attr("value").map(|id|id.to_owned())?;
+            if key == "" {
+                return None;
+            }
             Some(KV{key,value})
         })
         .collect();
@@ -937,4 +947,12 @@ pub fn get_hash<T: Hash>(t: &T) -> u64 {
     let mut s = DefaultHasher::new();
     t.hash(&mut s);
     s.finish()
+}
+
+pub fn set_project_cookie(jar: Arc<Jar>,project_id: &str,host: &str) -> Result<(), String> {
+    let cookie = format!("MANTIS_PROJECT_COOKIE={}", project_id);
+    let origin = format!("http://{}",host);
+    let url = &Url::parse(&origin).unwrap();
+    jar.add_cookie_str(&cookie, url);
+    Ok(())
 }

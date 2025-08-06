@@ -43,7 +43,7 @@
             <el-tag 
               :type="getStatusColor(scope.row.status)"
             >
-              {{ bugStatus.get(scope.row.status) }}
+              {{ bugStatus.get(String(scope.row.status)) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -88,7 +88,7 @@
                 effect="plain"
                 class="severity-tag"
               >
-                {{ bugSeverity.get(scope.row.severity) || '-' }}
+                {{ bugSeverity.get(String(scope.row.severity)) || '-' }}
               </el-tag>
             </div>
           </template>
@@ -104,7 +104,7 @@
               @click="handleCommand({ status: workableStatus[scope.row.status][0], bug_id: scope.row.bug_id })"
               @command="handleCommand"
             >
-              {{ bugStatus.get(workableStatus[scope.row.status][0]) }}
+              {{ bugStatus.get(String(workableStatus[scope.row.status][0])) }}
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item 
@@ -114,7 +114,7 @@
                     :disabled="i === 0"
                     class="dropdown-item"
                   >
-                    {{ bugStatus.get(s) }}
+                    {{ bugStatus.get(String(s)) }}
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
