@@ -69,7 +69,7 @@
           <template #default="scope">
             <div v-if="scope.row.attachments > 0" class="attachment-info">
               <el-badge :value="scope.row.attachments" type="primary" class="attachment-badge" :max="9">
-                <el-link class="attachment-icon" icon="PictureFilled" ></el-link>
+                <el-link class="attachment-icon" icon="PictureFilled" @click="openImagePreview" ></el-link>
               </el-badge>
             </div>
             <span v-else class="no-attachment">-</span>
@@ -143,6 +143,7 @@ import { ref, onMounted, computed } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from '@tauri-apps/api/event';
 import { useRouter } from 'vue-router';
+import { createNewWindow } from "../../windows";
 
 //------------------data-------------------//
 
@@ -308,6 +309,11 @@ async function handleCommand(command) {
 function handlePageChange(currentPage) {
   page.value = currentPage;
   api_bug_list({ page: currentPage });
+}
+
+// 打开图片预览
+async function openImagePreview() {
+  await createNewWindow();
 }
 
 //------------------vue/tauri-------------------//

@@ -41,7 +41,6 @@
         <div v-if="showPassword && password !== ''">Login</div>
       </button>
           <button @click="testLogin">test</button>
-          <button @click="testImage">test2</button>
     </div>
 
     <!-- 设置按钮 -->
@@ -110,12 +109,6 @@ async function testLogin() {
       type: 'error',
     });
   }
-}
-
-import { Window } from "@tauri-apps/api/window"
-import { createNewWindow } from "../windows";
-async function testImage() {
-  await createNewWindow();
 }
 
 async function login() {
@@ -435,7 +428,7 @@ input,button {
   font-weight: 400;
 
   color: #0f0f0f;
-  background-color: #f6f6f6;
+  /* background-color: #f6f6f6; */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;

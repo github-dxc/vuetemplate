@@ -2,7 +2,7 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 
 // 创建新窗口
 export const createNewWindow = async function() {
-    const label = 'theUniqueLabel'; // 窗口的唯一标识符
+    const label = 'image'; // 窗口的唯一标识符
 
     // 首先检查窗口是否已经存在
     const existingWindow = await WebviewWindow.getByLabel(label);
@@ -15,25 +15,19 @@ export const createNewWindow = async function() {
         if (!focused) {
             existingWindow.setFocus()
         }
-        // await existingWindow.show();
-        
-        // // 将窗口置于前台并获得焦点
-        // await existingWindow.setFocus();
-        
-        // 如果窗口被最小化，则恢复窗口
-        // if (await existingWindow.isMinimized()) {
-        //     await existingWindow.unminimize();
-        // }
         
         return existingWindow;
     }
     const webview = new WebviewWindow(label, {
-        url: '/login',
+        url: '/image', // 窗口加载的URL
         title: '新窗口',
         width: 1600,
         height: 900,
-        resizable: true,
-        center: true
+        visible: false,
+        resizable: false,
+        center: true,
+        transparent: true,
+        decorations: false,
     });
 
     // 监听窗口创建完成
