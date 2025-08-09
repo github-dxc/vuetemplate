@@ -52,6 +52,7 @@ import {
   ZoomOut,
 } from '@element-plus/icons-vue'
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { listen } from '@tauri-apps/api/event';
 
 document.addEventListener('DOMContentLoaded', () => {
   // 获取当前窗口的实例
@@ -98,7 +99,20 @@ const download = (index: number) => {
 }
 
 onMounted(() => {
+})
 
+// 监听展示的图片列表
+listen('web_images', (event) => {
+  console.log('web_images:', event.payload)
+  try {
+    const obj = event.payload;
+    if (obj) {
+      srcList.value = obj;
+    };
+  } catch (error) {
+    console.error('解析 JSON 失败:', error);
+    return;
+  }
 })
 
 </script>

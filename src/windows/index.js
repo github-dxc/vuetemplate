@@ -1,9 +1,7 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 
 // 创建新窗口
-export const createNewWindow = async function() {
-    const label = 'image'; // 窗口的唯一标识符
-
+export const createNewWindow = async function(label, option) {
     // 首先检查窗口是否已经存在
     const existingWindow = await WebviewWindow.getByLabel(label);
     
@@ -18,17 +16,7 @@ export const createNewWindow = async function() {
         
         return existingWindow;
     }
-    const webview = new WebviewWindow(label, {
-        url: '/image', // 窗口加载的URL
-        title: '新窗口',
-        width: 1600,
-        height: 900,
-        visible: false,
-        resizable: false,
-        center: true,
-        transparent: true,
-        decorations: false,
-    });
+    const webview = new WebviewWindow(label, option);
 
     // 监听窗口创建完成
     webview.once('tauri://created', function () {

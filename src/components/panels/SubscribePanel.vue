@@ -32,7 +32,6 @@
         <el-table-column prop="project" label="项目名称" width="120" header-align="center">
           <template #default="scope">
             <div class="project-name">
-              <el-icon class="project-icon"><Folder /></el-icon>
               {{ scope.row.project }}
             </div>
           </template>
@@ -69,7 +68,7 @@
           <template #default="scope">
             <div v-if="scope.row.attachments > 0" class="attachment-info">
               <el-badge :value="scope.row.attachments" type="primary" class="attachment-badge" :max="9">
-                <el-link class="attachment-icon" icon="PictureFilled" @click="openImagePreview" ></el-link>
+                <el-link class="attachment-icon" icon="PictureFilled" @click="openImagePreview(scope.row.bug_id)" ></el-link>
               </el-badge>
             </div>
             <span v-else class="no-attachment">-</span>
@@ -144,6 +143,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from '@tauri-apps/api/event';
 import { useRouter } from 'vue-router';
 import { createNewWindow } from "../../windows";
+import { apiBugInfo } from "../../api";
 
 //------------------data-------------------//
 
@@ -312,8 +312,25 @@ function handlePageChange(currentPage) {
 }
 
 // 打开图片预览
-async function openImagePreview() {
-  await createNewWindow();
+async function openImagePreview(bug_id) {
+  // 发送图片信息列表给图片预览窗口
+  apiBugInfo(bug_id).then(result => {
+    console.log("成功:", result);
+  }).catch(error => {
+    console.error("错误:", error);
+  });
+  // label需要在capabilities/default.json中声明权限
+  await createNewWindow('image', {
+    url: '/image', // 窗口加载的URL
+    title: 'image',
+    width: 1600,
+    height: 900,
+    visible: false,
+    resizable: false,
+    center: true,
+    transparent: true,
+    decorations: false,
+  });
 }
 
 //------------------vue/tauri-------------------//
@@ -427,10 +444,6 @@ listen('sub_bugs', (event) => {
   align-items: center;
   gap: 6px;
   font-weight: 500;
-}
-
-.project-icon {
-  color: #6366f1;
 }
 
 .handler-info {

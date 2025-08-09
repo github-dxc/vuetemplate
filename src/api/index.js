@@ -21,3 +21,7 @@ export const checkUpdate = async () => {
 export const downloadAndInstall = async () => {
   return await invoke("api_download_and_install");
 };
+
+export const apiBugInfo = async (bug_id) => {
+  return await invoke("api_bug_info",{bug_id});
+};

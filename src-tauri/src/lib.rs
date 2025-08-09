@@ -41,6 +41,7 @@ pub fn run() {
             api_change_host,
             api_login,
             api_logout,
+            api_bug_info,
             api_bug_list,
             api_update_bug,
             api_check_update,
@@ -209,6 +210,28 @@ async fn api_bug_list(app: AppHandle) -> Result<BugList, String> {
         .map_err(|e| format!("view_all_set_data err:{}", e))?;
 
     Ok(data)
+}
+
+// 查询bug详情
+#[tauri::command(rename_all = "snake_case")]
+async fn api_bug_info(
+    app: AppHandle,
+    bug_id: i64
+) -> Result<BugInfo, String> {
+    let state = app.state::<MyState>().clone();
+    let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    if !logined {
+        return Err("未登录".to_string());
+    }
+    // 查询bug详情
+    let body = my_view_detail(jar.clone(), bug_id, &host).await?;
+    let document = Html::parse_document(body.as_str());
+    let bug_info = my_view_detail_data(&document, &host,&catgory_kv,&project_kv)?;
+    Ok(bug_info)
 }
 
 // 修改bug
