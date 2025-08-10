@@ -1,6 +1,6 @@
 import { createPinia, defineStore } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
-import { logout } from '../api/index'
+import { login, logout } from '../api/index'
 
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)//持久化
@@ -65,6 +65,9 @@ export const useUserStore = defineStore('user', {
     
     // 用户头像（带默认值）
     userAvatar: (state) => state.user.avatar || '/default-avatar.png',
+
+    // 用户token
+    userToken: (state) => state.token,
     
     // 是否为管理员
     isAdmin: (state) => state.user.role === 'admin',
@@ -140,28 +143,23 @@ export const useUserStore = defineStore('user', {
     },
     
     // 登录
-    async login(credentials) {
+    async login(username, password) {
       this.setLoading(true)
       try {
         // 这里调用API进行登录
-        // const response = await loginApi(credentials)
-        // 模拟API响应
-        const response = {
+        const cookie = await login(username, password)
+        const user = {
           token: 'mock-jwt-token',
           user: {
-            id: 1,
-            username: credentials.username,
-            email: credentials.email,
-            avatar: '',
-            role: 'user',
+            username,
             createdAt: new Date().toISOString()
           }
         }
         
-        this.setToken(response.token)
-        this.setUser(response.user)
+        this.setToken(cookie)
+        this.setUser(user)
         
-        return { success: true, data: response }
+        return { success: true, data: user }
       } catch (error) {
         return { success: false, error: error.message }
       } finally {

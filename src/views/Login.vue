@@ -40,7 +40,7 @@
         <div v-if="showPassword && password == ''">Back</div>
         <div v-if="showPassword && password !== ''">Login</div>
       </button>
-          <button @click="testLogin">test</button>
+          <button @click="testLogin">testLogin</button>
     </div>
 
     <!-- 设置按钮 -->
@@ -77,11 +77,12 @@
 
 <script setup vapor>
 import { ref, onMounted, nextTick } from "vue";
-import { invoke } from "@tauri-apps/api/core";
 import { useRouter } from 'vue-router';
 import { useUserStore } from "../store";
 import { changeHost } from "../api";
 import { ElMessage } from 'element-plus';
+
+const userStore = useUserStore();
 
 const router = useRouter()
 const username = ref("");
@@ -97,31 +98,32 @@ const hostConfig = ref("");
 const hostInputRef = ref(null);
 
 async function testLogin() {
-  try {
-    const result = await invoke("api_login", { username: 'administrator', password: 'abcd.1234' });
+  const result = await userStore.login('administrator', 'abcd.1234');
+  if (result.success) {
     console.log("登录成功", result);
     router.push("/home");
-  } catch (error) {
-    console.error("Test login failed");
+  }else{
+    // 登录失败
+    console.error("登录失败");
     ElMessage({
       showClose: true,
-      message: 'Test login failed. ' + error,
+      message: 'Login failed. ' + result.error,
       type: 'error',
     });
   }
 }
 
 async function login() {
-  try {
-    const result = await invoke("api_login", { username: username.value, password: password.value });
+  const result = await userStore.login(username.value, password.value );
+  if (result.success) {
     console.log("登录成功", result);
     router.push("/home");
-  } catch (error) {
+  }else{
     // 登录失败
     console.error("登录失败");
     ElMessage({
       showClose: true,
-      message: 'Login failed. ' + error,
+      message: 'Login failed. ' + result.error,
       type: 'error',
     });
   }
@@ -172,7 +174,7 @@ function closeSettingsModal(event) {
 
 async function saveHostConfig() {
   try {
-    await changeHost({host: hostConfig.value});
+    await changeHost(hostConfig.value);
   } catch (error) {
     ElMessage({
       showClose: true,
@@ -190,13 +192,12 @@ async function saveHostConfig() {
 }
 
 onMounted(async () => {
-  const userStore = useUserStore();
   if (userStore.isLoggedIn) {
     router.push("Login");
   }
 
   try {
-    hostConfig.value = await changeHost({host: ""});
+    hostConfig.value = await changeHost("");
   } catch (error) {
     ElMessage({
       showClose: true,

@@ -139,11 +139,11 @@
 
 <script setup vapor>
 import { ref, onMounted, computed } from "vue";
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from '@tauri-apps/api/event';
+import { ElMessage } from 'element-plus';
+import { listen, emit } from '@tauri-apps/api/event';
 import { useRouter } from 'vue-router';
 import { createNewWindow } from "../../windows";
-import { apiBugInfo } from "../../api";
+import { apiBugInfo, initData, initBugs, updateBug } from "../../api";
 
 //------------------data-------------------//
 
@@ -255,7 +255,7 @@ const tableRowClassName = ({
 
 async function api_init_data() {
   try {
-    let data = await invoke("api_init_data", { name: "enums" });
+    let data = await initData();
     console.log("api_init_data:", data);
     let enumsData = JSON.parse(data)
     if (enumsData) {
@@ -269,7 +269,7 @@ async function api_init_data() {
 async function api_bug_list(params) {
   try {
     // 获取bug列表
-    let data = await invoke("api_init_bugs", params);
+    let data = await initBugs(params);
     console.log("api_init_bugs:", data);
     if (data) {
       bugList.value = data || [];
@@ -298,7 +298,7 @@ async function handleCommand(command) {
     } else if (status === 85) {
       resolution = 30;
     }
-    const result = await invoke("api_update_bug", { bug_id: bug_id, status: status, resolution: resolution });
+    const result = await updateBug({ bug_id: bug_id, status: status, resolution: resolution });
     console.log("更新成功", result);
     api_bug_list({});
   } catch (error) {
@@ -313,12 +313,16 @@ function handlePageChange(currentPage) {
 
 // 打开图片预览
 async function openImagePreview(bug_id) {
-  // 发送图片信息列表给图片预览窗口
-  apiBugInfo(bug_id).then(result => {
-    console.log("成功:", result);
-  }).catch(error => {
-    console.error("错误:", error);
-  });
+  const DOMContentLoadedCallback = () => {
+    // 发送图片信息列表给图片预览窗口
+    apiBugInfo(bug_id).then(result => {
+      console.log("成功:", result);
+      emit('web_images', { attachments: result.attachments, bugnote_notes: result.bugnote_notes });
+      
+    }).catch(error => {0
+      console.error("错误:", error);
+    });
+  };
   // label需要在capabilities/default.json中声明权限
   await createNewWindow('image', {
     url: '/image', // 窗口加载的URL
@@ -330,7 +334,7 @@ async function openImagePreview(bug_id) {
     center: true,
     transparent: true,
     decorations: false,
-  });
+  },DOMContentLoadedCallback);
 }
 
 //------------------vue/tauri-------------------//

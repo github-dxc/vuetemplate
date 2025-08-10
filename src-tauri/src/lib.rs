@@ -169,14 +169,13 @@ async fn api_login(app: AppHandle, username: &str, password: &str) -> Result<Str
     let state = app.state::<MyState>().clone();
     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let result = login(jar.clone(), username, password, &host).await.map_err(|e|format!("login err:{}",e))?;
-    info!("result:{}",result);
 
     // 保存cookie到全局状态
     let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
     *logined = true;
     let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
     *jar_ = jar;
-    return Ok("login success".to_string());
+    return Ok(result);
 }
 
 // 退出登录

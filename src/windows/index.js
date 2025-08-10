@@ -1,7 +1,7 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 
 // 创建新窗口
-export const createNewWindow = async function(label, option) {
+export const createNewWindow = async function(label, option, DOMContentLoadedCallback, successCallback, errorCallback) {
     // 首先检查窗口是否已经存在
     const existingWindow = await WebviewWindow.getByLabel(label);
     
@@ -21,10 +21,23 @@ export const createNewWindow = async function(label, option) {
     // 监听窗口创建完成
     webview.once('tauri://created', function () {
         console.log('窗口创建成功');
+        if (successCallback) {
+            successCallback(webview);
+        }
     });
 
     // 监听窗口创建错误
     webview.once('tauri://error', function (e) {
         console.error('窗口创建失败:', e);
+        if (errorCallback) {
+            errorCallback(e);
+        }
+    });
+
+    // 监听窗口DOM加载完成事件
+    webview.once('DOMContentLoaded', function (e) {
+        if (DOMContentLoadedCallback) {
+            DOMContentLoadedCallback(e);
+        }
     });
 }

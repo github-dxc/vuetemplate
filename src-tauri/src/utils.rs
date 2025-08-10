@@ -78,12 +78,13 @@ pub async fn login(
         .map_err(|e| e.to_string())?;
 
     let text = resp.text().await?;
+    info!("login resp: {}",text);
     let cookie = jar1
         .cookies(&Url::parse(&origin).unwrap())
         .map(|e| format!("{}", e.to_str().unwrap()))
         .ok_or("".to_string())?;
     info!("login cookie: {}",cookie);
-    Ok(text)
+    Ok(cookie)
 }
 
 // my_view_page 页面
@@ -799,7 +800,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
         })
         .collect();
 
-    // bugnote_notes
+    // bugnote_notess
     let bugnote_notes_selector = Selector::parse(".bugnote.visible-on-hover-toggle").unwrap();
     bug.bugnote_notes = document
         .select(&bugnote_notes_selector)
@@ -824,7 +825,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                 .unwrap_or(0);
             let text = e
                 .select(&Selector::parse(".bugnote-note.bugnote-public").unwrap())
-                .find_map(|e| e.text().find(|_| true))
+                .find_map(|e| e.text().find_map(|s|Some(s.trim_ascii())))
                 .unwrap_or("");
             // attachments
             let attachments_selector = Selector::parse(".collapse-open.noprint").unwrap();
@@ -840,7 +841,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                             url = format!(
                                 "http://{}/{}",
                                 host,
-                                e.value().attr("href").unwrap_or("")
+                                e.value().attr("href").unwrap_or("").replace("&amp;", "&")
                             );
                             name = e.inner_html().trim().to_string();
                             e.next_sibling().map(|sibling| {

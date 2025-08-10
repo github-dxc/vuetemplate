@@ -1,8 +1,9 @@
 <template>
   <div class="transparent-background">
-    <el-image-viewer v-if="showPreview" :url-list="srcList" show-progress :initial-index="4"
+    <el-image-viewer v-if="showPreview" :url-list="srcList" show-progress :initial-index="4" :close-on-press-escape="true"
       @close="closeHandler">
       <template #toolbar="{ actions, prev, next, reset, activeIndex, setActiveItem }">
+        {{ payloadValue }}
         <el-icon @click="prev">
           <Back />
         </el-icon>
@@ -53,22 +54,24 @@ import {
 } from '@element-plus/icons-vue'
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { listen } from '@tauri-apps/api/event';
+import { imageBase64 } from '../api';
 
 document.addEventListener('DOMContentLoaded', () => {
   // 获取当前窗口的实例
   const appWindow = WebviewWindow.getCurrent();
   // 在 DOM 加载完成后显示窗口
   appWindow.show();
+  appWindow.emit('DOMContentLoaded', { message: 'DOM fully loaded and parsed' });
 });
 
 const srcList = ref([
   'https://fuss10.elemecdn.com/a/3f/3302e58f9a181d2509f3dc0fa68b0jpeg.jpeg',
-  'https://fuss10.elemecdn.com/1/34/19aa98b1fcb2781c4fba33d850549jpeg.jpeg',
-  'https://fuss10.elemecdn.com/0/6f/e35ff375812e6b0020b6b4e8f9583jpeg.jpeg',
-  'https://fuss10.elemecdn.com/9/bb/e27858e973f5d7d3904835f46abbdjpeg.jpeg',
-  'https://fuss10.elemecdn.com/d/e6/c4d93a3805b3ce3f323f7974e6f78jpeg.jpeg',
-  'https://fuss10.elemecdn.com/3/28/bbf893f792f03a54408b3b7a7ebf0jpeg.jpeg',
-  'https://fuss10.elemecdn.com/2/11/6535bcfb26e4c79b48ddde44f4b6fjpeg.jpeg',
+  // 'https://fuss10.elemecdn.com/1/34/19aa98b1fcb2781c4fba33d850549jpeg.jpeg',
+  // 'https://fuss10.elemecdn.com/0/6f/e35ff375812e6b0020b6b4e8f9583jpeg.jpeg',
+  // 'https://fuss10.elemecdn.com/9/bb/e27858e973f5d7d3904835f46abbdjpeg.jpeg',
+  // 'https://fuss10.elemecdn.com/d/e6/c4d93a3805b3ce3f323f7974e6f78jpeg.jpeg',
+  // 'https://fuss10.elemecdn.com/3/28/bbf893f792f03a54408b3b7a7ebf0jpeg.jpeg',
+  // 'https://fuss10.elemecdn.com/2/11/6535bcfb26e4c79b48ddde44f4b6fjpeg.jpeg',
 ])
 
 const showPreview = ref(true)
@@ -101,14 +104,24 @@ const download = (index: number) => {
 onMounted(() => {
 })
 
+const payloadValue = ref([]);
 // 监听展示的图片列表
 listen('web_images', (event) => {
   console.log('web_images:', event.payload)
+  payloadValue.value = event.payload;
   try {
-    const obj = event.payload;
-    if (obj) {
-      srcList.value = obj;
-    };
+    payloadValue.value.attachments || [].forEach((item) => {
+      imageBase64(item.url).then((base64) => {
+        srcList.value.push(base64);
+      });
+    });
+    payloadValue.value.bugnote_notes || [].forEach((item) => {
+      item.attachments || [].forEach((item) => {
+        imageBase64(item.url).then((base64) => {
+          srcList.value.push(base64);
+        });
+      });
+    });
   } catch (error) {
     console.error('解析 JSON 失败:', error);
     return;
