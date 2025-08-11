@@ -1,4 +1,3 @@
-import request from './request'
 import { invoke } from "@tauri-apps/api/core";
 
 export const login = async (username, password) => {
@@ -38,10 +37,5 @@ export const updateBug = async (params) => {
 };
 
 export const imageBase64 = async (uri) => {
-  const blob = await request.get(uri, { responseType: 'blob' })
-  return new Promise((resolve) => {
-    const reader = new FileReader()
-    reader.onloadend = () => resolve(reader.result) // reader.result 就是 base64
-    reader.readAsDataURL(blob)
-  })
+  return await invoke("api_image_bytes",{uri});
 };

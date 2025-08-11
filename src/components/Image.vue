@@ -55,6 +55,7 @@ import {
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { listen } from '@tauri-apps/api/event';
 import { imageBase64 } from '../api';
+import { byteArrayToBase64Image } from '../util';
 
 document.addEventListener('DOMContentLoaded', () => {
   // 获取当前窗口的实例
@@ -110,20 +111,20 @@ listen('web_images', (event) => {
   console.log('web_images:', event.payload)
   payloadValue.value = event.payload;
   try {
-    payloadValue.value.attachments || [].forEach((item) => {
-      imageBase64(item.url).then((base64) => {
-        srcList.value.push(base64);
+    payloadValue.value.attachments.forEach((item) => {
+      imageBase64(item.url).then((bytes) => {
+        srcList.value.push(byteArrayToBase64Image(bytes, item.name));
       });
     });
-    payloadValue.value.bugnote_notes || [].forEach((item) => {
-      item.attachments || [].forEach((item) => {
-        imageBase64(item.url).then((base64) => {
-          srcList.value.push(base64);
+    payloadValue.value.bugnote_notes.forEach((item) => {
+      item.attachments.forEach((item) => {
+        imageBase64(item.url).then((bytes) => {
+          srcList.value.push(byteArrayToBase64Image(bytes, item.name));
         });
       });
     });
   } catch (error) {
-    console.error('解析 JSON 失败:', error);
+    console.error('下载图片失败:', error);
     return;
   }
 })

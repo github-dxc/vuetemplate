@@ -374,6 +374,38 @@ pub async fn bug_report_page(
     Ok(text)
 }
 
+// image信息
+pub async fn image_bytes(
+    jar: Arc<Jar>, 
+    host: &str,
+    uri: &str,
+) -> Result<Vec<u8>, String> {
+    let origin = format!("http://{}",host);
+    let url = format!("{}/{}", origin, uri);
+
+    // 构建请求头
+    let mut headers = HeaderMap::new();
+    headers.insert(ACCEPT, HeaderValue::from_static("image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"));
+    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
+    headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
+
+    // 创建 reqwest 客户端
+    let client = Client::builder()
+        .timeout(Duration::from_secs(2))
+        .cookie_provider(jar.clone())
+        .danger_accept_invalid_certs(true) // --insecure
+        .default_headers(headers)
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    // 发送 GET 请求
+    let resp = client.get(url).send().await.map_err(|e| e.to_string())?;
+
+    let bytes = resp.bytes().await.map_err(|e| e.to_string())?;
+    Ok(bytes.to_vec())
+}
+
 // 查询条件列表（单独获取某一项）
 pub async fn filters_params(
     jar: Arc<Jar>, 
@@ -774,10 +806,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
             e.select(&Selector::parse("a:nth-of-type(2)").unwrap())
                 .for_each(|e| {
                     //<a href="file_download.php?file_id=2365&amp;type=bug">image.png</a>&#32;(179,667&#32;字节)&#32;&nbsp;&nbsp;
-                    url = format!(
-                        "http://bug.test.com/{}",
-                        e.value().attr("href").unwrap_or("")
-                    );
+                    url = format!("{}",e.value().attr("href").unwrap_or(""));
                     name = e.inner_html().trim().to_string();
                     e.next_sibling().map(|sibling| {
                         if sibling.value().is_text() {
@@ -838,11 +867,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                     e.select(&Selector::parse("a:nth-of-type(2)").unwrap())
                         .for_each(|e| {
                             //<a href="file_download.php?file_id=2365&amp;type=bug">image.png</a>&#32;(179,667&#32;字节)&#32;&nbsp;&nbsp;
-                            url = format!(
-                                "http://{}/{}",
-                                host,
-                                e.value().attr("href").unwrap_or("").replace("&amp;", "&")
-                            );
+                            url = format!("{}",e.value().attr("href").unwrap_or("").replace("&amp;", "&"));
                             name = e.inner_html().trim().to_string();
                             e.next_sibling().map(|sibling| {
                                 if sibling.value().is_text() {

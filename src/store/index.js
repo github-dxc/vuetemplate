@@ -93,6 +93,7 @@ export const useUserStore = defineStore('user', {
     
     // 设置token
     setToken(token) {
+      console.log('Setting token:', token)
       this.token = token
     },
     
@@ -147,16 +148,13 @@ export const useUserStore = defineStore('user', {
       this.setLoading(true)
       try {
         // 这里调用API进行登录
-        const cookie = await login(username, password)
+        const token = await login(username, password)
         const user = {
-          token: 'mock-jwt-token',
-          user: {
-            username,
-            createdAt: new Date().toISOString()
-          }
+          username,
+          createdAt: new Date().toISOString()
         }
         
-        this.setToken(cookie)
+        this.setToken(token)
         this.setUser(user)
         
         return { success: true, data: user }

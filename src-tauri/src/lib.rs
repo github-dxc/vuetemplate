@@ -43,6 +43,7 @@ pub fn run() {
             api_logout,
             api_bug_info,
             api_bug_list,
+            api_image_bytes,
             api_update_bug,
             api_check_update,
             api_download_and_install
@@ -292,6 +293,16 @@ async fn api_update_bug(
     };
     println!("{:?}",bug);
     bug_update(jar.clone(), bug, &host).await
+}
+
+// 下载图片
+#[tauri::command(rename_all = "snake_case")]
+async fn api_image_bytes(app: AppHandle, uri: String) -> Result<Vec<u8>, String> {
+    let state = app.state::<MyState>().clone();
+    let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let bts = image_bytes(jar, host.as_str(), uri.as_str()).await?;
+    Ok(bts)
 }
 
 // 检查更新
