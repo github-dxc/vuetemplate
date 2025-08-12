@@ -1,9 +1,13 @@
 <template>
   <div class="transparent-background">
-    <el-image-viewer v-if="showPreview" :url-list="srcList" show-progress :initial-index="4" :close-on-press-escape="true"
+    <el-image-viewer v-if="showPreview" :url-list="srcList" show-progress :close-on-press-escape="true"
       @close="closeHandler">
+      <template #progress="{ activeIndex, total }">
+        <span>{{ activeIndex + 1 + ' - ' + total }}</span>
+        <div class="image-nodes" v-if="imageNotes[activeIndex]">描述：{{ imageNotes[activeIndex] }}</div>
+      </template>
       <template #toolbar="{ actions, prev, next, reset, activeIndex, setActiveItem }">
-        {{ payloadValue }}
+        <div class="image-names">{{ imageNames[activeIndex] }}</div>
         <el-icon @click="prev">
           <Back />
         </el-icon>
@@ -66,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const srcList = ref([
-  'https://fuss10.elemecdn.com/a/3f/3302e58f9a181d2509f3dc0fa68b0jpeg.jpeg',
+  // 'https://fuss10.elemecdn.com/a/3f/3302e58f9a181d2509f3dc0fa68b0jpeg.jpeg',
   // 'https://fuss10.elemecdn.com/1/34/19aa98b1fcb2781c4fba33d850549jpeg.jpeg',
   // 'https://fuss10.elemecdn.com/0/6f/e35ff375812e6b0020b6b4e8f9583jpeg.jpeg',
   // 'https://fuss10.elemecdn.com/9/bb/e27858e973f5d7d3904835f46abbdjpeg.jpeg',
@@ -74,6 +78,8 @@ const srcList = ref([
   // 'https://fuss10.elemecdn.com/3/28/bbf893f792f03a54408b3b7a7ebf0jpeg.jpeg',
   // 'https://fuss10.elemecdn.com/2/11/6535bcfb26e4c79b48ddde44f4b6fjpeg.jpeg',
 ])
+const imageNotes = ref([]);
+const imageNames = ref([]);
 
 const showPreview = ref(true)
 
@@ -85,41 +91,63 @@ const closeHandler = () => {
 
 const download = (index: number) => {
   const url = srcList.value[index]
-  const suffix = url.slice(url.lastIndexOf('.'))
-  const filename = Date.now() + suffix
+  const filename = imageNames.value[index]
 
-  fetch(url)
-    .then((response) => response.blob())
-    .then((blob) => {
-      const blobUrl = URL.createObjectURL(new Blob([blob]))
-      const link = document.createElement('a')
-      link.href = blobUrl
-      link.download = filename
-      document.body.appendChild(link)
-      link.click()
-      URL.revokeObjectURL(blobUrl)
-      link.remove()
-    })
+  // 检查是否为 base64 图片
+  if (url.startsWith('data:')) {
+    // 处理 base64 图片
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  } else {
+    // 处理普通 URL
+    fetch(url)
+      .then((response) => response.blob())
+      .then((blob) => {
+        const blobUrl = URL.createObjectURL(new Blob([blob]))
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = filename
+        document.body.appendChild(link)
+        link.click()
+        URL.revokeObjectURL(blobUrl)
+        link.remove()
+      })
+      .catch((error) => {
+        console.error('下载失败:', error)
+      })
+  }
 }
 
 onMounted(() => {
 })
 
-const payloadValue = ref([]);
 // 监听展示的图片列表
 listen('web_images', (event) => {
   console.log('web_images:', event.payload)
-  payloadValue.value = event.payload;
+  const payloadValue = event.payload;
+  imageNotes.value = [];
   try {
-    payloadValue.value.attachments.forEach((item) => {
+    payloadValue.attachments.forEach((item) => {
       imageBase64(item.url).then((bytes) => {
-        srcList.value.push(byteArrayToBase64Image(bytes, item.name));
+        if (bytes) {
+          srcList.value.push(byteArrayToBase64Image(bytes, item.name));
+          imageNotes.value.push("");
+          imageNames.value.push(item.name);
+        }
       });
     });
-    payloadValue.value.bugnote_notes.forEach((item) => {
-      item.attachments.forEach((item) => {
+    payloadValue.bugnote_notes.forEach((i) => {
+      i.attachments.forEach((item) => {
         imageBase64(item.url).then((bytes) => {
-          srcList.value.push(byteArrayToBase64Image(bytes, item.name));
+          if (bytes) {
+            srcList.value.push(byteArrayToBase64Image(bytes, item.name));
+            imageNotes.value.push(i.text);
+            imageNames.value.push(item.name);
+          }
         });
       });
     });
@@ -139,5 +167,13 @@ body {
 .transparent-background {
   /* 设置背景为透明 */
   background-color: transparent;
+}
+
+.image-nodes {
+  margin-left: 5px;
+}
+
+.image-names {
+  font-size: medium;
 }
 </style>
