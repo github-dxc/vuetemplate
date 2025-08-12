@@ -4,31 +4,29 @@
       @close="closeHandler">
       <template #progress="{ activeIndex, total }">
         <span>{{ activeIndex + 1 + ' - ' + total }}</span>
-        <div class="image-nodes" v-if="imageNotes[activeIndex]">描述：{{ imageNotes[activeIndex] }}</div>
+        <div class="image-nodes" v-if="imageNotes[activeIndex]">【描述】：{{ imageNotes[activeIndex] }}</div>
       </template>
       <template #toolbar="{ actions, prev, next, reset, activeIndex, setActiveItem }">
         <div class="image-names">{{ imageNames[activeIndex] }}</div>
+        <el-icon @click="changeWindowSize">
+          <FullScreen />
+        </el-icon>
         <el-icon @click="prev">
           <Back />
         </el-icon>
         <el-icon @click="next">
           <Right />
         </el-icon>
-        <el-icon @click="setActiveItem(srcList.length - 1)">
-          <DArrowRight />
-        </el-icon>
-        <el-icon @click="actions('zoomOut')">
+        <el-icon @click="actions('zoomOut')" v-if="!isMinimized">
           <ZoomOut />
         </el-icon>
-        <el-icon @click="actions('zoomIn', { enableTransition: false, zoomRate: 2 })">
+        <el-icon @click="actions('zoomIn', { enableTransition: false, zoomRate: 2 })" v-if="!isMinimized">
           <ZoomIn />
         </el-icon>
-        <el-icon @click="
-          actions('clockwise', { rotateDeg: 180, enableTransition: false })
-          ">
+        <el-icon @click="actions('clockwise', { rotateDeg: 180, enableTransition: false })" v-if="!isMinimized">
           <RefreshRight />
         </el-icon>
-        <el-icon @click="actions('anticlockwise')">
+        <el-icon @click="actions('anticlockwise')" v-if="!isMinimized">
           <RefreshLeft />
         </el-icon>
         <el-icon @click="reset">
@@ -47,7 +45,6 @@ import { ref, onMounted } from 'vue'
 import { ElIcon } from 'element-plus'
 import {
   Back,
-  DArrowRight,
   Download,
   Refresh,
   RefreshLeft,
@@ -55,11 +52,13 @@ import {
   Right,
   ZoomIn,
   ZoomOut,
+  FullScreen,
 } from '@element-plus/icons-vue'
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { listen } from '@tauri-apps/api/event';
 import { imageBase64 } from '../api';
 import { byteArrayToBase64Image } from '../util';
+import { changeSize } from '../windows';
 
 document.addEventListener('DOMContentLoaded', () => {
   // 获取当前窗口的实例
@@ -80,8 +79,8 @@ const srcList = ref([
 ])
 const imageNotes = ref([]);
 const imageNames = ref([]);
-
 const showPreview = ref(true)
+const isMinimized = ref(false)
 
 const closeHandler = () => {
   showPreview.value = false
@@ -122,8 +121,15 @@ const download = (index: number) => {
   }
 }
 
-onMounted(() => {
-})
+const changeWindowSize = () => {
+  isMinimized.value = !isMinimized.value;
+  // appWindow.setSize({ width: 400, height: 300 });
+  if (isMinimized.value) {
+    changeSize('image', 400, 300, true);
+  }else {
+    changeSize('image', 1600, 900, false);
+  }
+}
 
 // 监听展示的图片列表
 listen('web_images', (event) => {
@@ -157,6 +163,9 @@ listen('web_images', (event) => {
   }
 })
 
+onMounted(() => {
+})
+
 </script>
 
 <style scoped>
@@ -175,5 +184,17 @@ body {
 
 .image-names {
   font-size: medium;
+}
+
+/* 添加半透明凸显文字的弧边背景，类似小米图标 */
+::v-deep(.el-image-viewer__progress) {
+  background: rgba(66, 66, 66, 0.8);
+  border-radius: 20px;
+  padding: 5px;
+  backdrop-filter: blur(5px);
+}
+
+::v-deep(.el-image-viewer__close) {
+  display: none;
 }
 </style>

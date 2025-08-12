@@ -330,10 +330,10 @@ async function openImagePreview(bug_id) {
     width: 1600,
     height: 900,
     visible: false,
-    resizable: false,
+    resizable: true,
     center: true,
     transparent: true,
-    decorations: false,
+    decorations: true,
   },DOMContentLoadedCallback);
 }
 

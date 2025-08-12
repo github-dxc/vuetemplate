@@ -98,7 +98,8 @@ const hostConfig = ref("");
 const hostInputRef = ref(null);
 
 async function testLogin() {
-  const result = await userStore.login('dengxiangcheng', 'dxc3434DXC');
+  // const result = await userStore.login('dengxiangcheng', 'dxc3434DXC');
+  const result = await userStore.login('administrator', 'abcd.1234');
   if (result.success) {
     console.log("登录成功", result);
     router.push("/home");

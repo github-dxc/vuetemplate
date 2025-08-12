@@ -1,4 +1,5 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { LogicalSize } from '@tauri-apps/api/window';
 
 // 创建新窗口
 export const createNewWindow = async function(label, option, DOMContentLoadedCallback, successCallback, errorCallback) {
@@ -40,4 +41,15 @@ export const createNewWindow = async function(label, option, DOMContentLoadedCal
             DOMContentLoadedCallback(e);
         }
     });
+}
+
+export const changeSize = async function(label,width,hight,onTop = false) {
+    const webview = await WebviewWindow.getByLabel(label);
+    if (webview) {
+        //把窗口设置为保持在页面上
+        await webview.setSize(new LogicalSize(width, hight));
+        await webview.setAlwaysOnTop(onTop);
+    } else {
+        console.error(`窗口 ${label} 不存在`);
+    }
 }
