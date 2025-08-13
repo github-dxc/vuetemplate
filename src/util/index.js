@@ -1,3 +1,5 @@
+import { ElMessage, ElMessageBox } from 'element-plus'
+
 export const byteArrayToBase64Image = function(byteArray, fileName) {
   // A simple mapping of file extensions to MIME types.
   // You can expand this list as needed.

@@ -481,6 +481,7 @@ fn find_sub_data(app: AppHandle) {
                 }
                 let mut seen = HashSet::new();
                 bugs = bugs.into_iter().filter(|b| seen.insert(b.bug_id)).collect();
+                info!("find bugs: {:?}", bugs);
 
                 // 上次的bugs、hash
                 let mut old_map = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
@@ -520,12 +521,17 @@ fn find_sub_data(app: AppHandle) {
                     };
                 }
                 // 向前端所有窗口广播消息
-                if notice_msgs.len() > 0 {
+                if notice_msgs.len() > 0 || old_map.len() != new_map.len() {
                     *old_map = new_map;
                     *old_hash = new_hash;
                     bugs.sort_by_key(|b| std::cmp::Reverse(b.last_updated));
+                    let json = serde_json::to_string_pretty(&bugs).map_err(|e|format!("to json err:{}",e))?;
                     let _ = app.emit("sub_bugs", bugs);
                     let _ = app.emit("sub_msgs", notice_msgs);
+                    // 保存订阅数据到本地
+                    let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
+                    store.set("sub_bugs", json);
+                    store.save().map_err(|e|format!("store save err:{}",e))?;
                 }
                 Ok(())
             }.await;
@@ -540,7 +546,7 @@ fn find_sub_data(app: AppHandle) {
 fn update_app(app: tauri::AppHandle) {
     tauri::async_runtime::spawn(async move {
         //5分钟查询一次是否可更新
-        let mut ticker = interval(Duration::from_secs(60));
+        let mut ticker = interval(Duration::from_secs(3600));
         loop {
             ticker.tick().await;
             let _ = check_update(app.clone()).await;
@@ -637,7 +643,7 @@ fn send_notify(app: AppHandle, title: &str, content: &str) -> Result<(), String>
         .builder()
         .title(title)
         .body(content)
-        .icon("icons/icon.ico")
+        .icon("asset://StoreLogo.png")
         .show()
         .map_err(|e| format!("发送通知失败: {}", e))?;
     Ok(notification)

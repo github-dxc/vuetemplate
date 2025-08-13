@@ -23,6 +23,7 @@
 import { ref } from 'vue';
 import { useUserStore } from '../../store'
 import { useRouter } from 'vue-router';
+import { ElMessageBox } from 'element-plus';
 
 const router = useRouter()
 
@@ -31,13 +32,22 @@ const userStore = useUserStore()
 const userAvatar = ref('https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png');
 
 async function logout() {
-  try {
-    await userStore.logout();
-    router.push("Login");
-  } catch (error) {
-    console.error('登录失败:', error)
-  }
+  ElMessageBox.alert('确认退出登录吗？', '退出登录', {
+    autofocus: true,
+    confirmButtonText: '确认',
+    callback: async (action) => {
+      if (action.toString() === 'confirm') {
+        try {
+          await userStore.logout();
+          router.push("Login");
+        } catch (error) {
+          console.error('登出失败:', error)
+        }
+      }
+    },
+  })
 }
+
 </script>
 
 <style scoped>

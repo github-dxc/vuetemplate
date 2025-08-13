@@ -139,7 +139,6 @@
 
 <script setup vapor>
 import { ref, onMounted, computed } from "vue";
-import { ElMessage } from 'element-plus';
 import { listen, emit } from '@tauri-apps/api/event';
 import { useRouter } from 'vue-router';
 import { createNewWindow } from "../../windows";
@@ -429,7 +428,6 @@ listen('sub_bugs', (event) => {
 
 .custom-table :deep(.el-table__row:hover) {
   background: #f8fafc !important;
-  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 

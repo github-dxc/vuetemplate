@@ -1,5 +1,11 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { LogicalSize } from '@tauri-apps/api/window';
+import { 
+    isPermissionGranted, 
+    requestPermission, 
+    sendNotification 
+} from '@tauri-apps/plugin-notification';
+
 
 // 创建新窗口
 export const createNewWindow = async function(label, option, DOMContentLoadedCallback, successCallback, errorCallback) {
@@ -43,6 +49,7 @@ export const createNewWindow = async function(label, option, DOMContentLoadedCal
     });
 }
 
+// 修改窗口大小
 export const changeSize = async function({label,width,hight,center = false,onTop = false}) {
     const webview = await WebviewWindow.getByLabel(label);
     if (webview) {

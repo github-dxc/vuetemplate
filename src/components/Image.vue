@@ -4,7 +4,7 @@
       @close="closeHandler">
       <template #progress="{ activeIndex, total }">
         <span>{{ activeIndex + 1 + ' - ' + total }}</span>
-        <div class="image-nodes" v-if="imageNotes[activeIndex]">【描述】：{{ imageNotes[activeIndex] }}</div>
+        <div class="image-nodes" v-if="imageNotes[activeIndex]">【注释】：{{ imageNotes[activeIndex] }}</div>
       </template>
       <template #toolbar="{ actions, prev, next, reset, activeIndex, setActiveItem }">
         <div class="image-names">{{ imageNames[activeIndex] }}</div>
