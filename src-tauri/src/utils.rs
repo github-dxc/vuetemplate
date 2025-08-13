@@ -796,7 +796,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
         .to_string();
 
     // attachments
-    let attachments_selector = Selector::parse(".bug-attach-tags .collapse-open.noprint").unwrap();
+    let attachments_selector = Selector::parse(".bug-attach-tags .well.well-xs").unwrap();
     bug.attachments = document
         .select(&attachments_selector)
         .map(|e| {

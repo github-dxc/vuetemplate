@@ -14,7 +14,7 @@ export const createNewWindow = async function(label, option, DOMContentLoadedCal
         if (!focused) {
             existingWindow.setFocus()
         }
-        
+        DOMContentLoadedCallback()
         return existingWindow;
     }
     const webview = new WebviewWindow(label, option);
@@ -38,17 +38,20 @@ export const createNewWindow = async function(label, option, DOMContentLoadedCal
     // 监听窗口DOM加载完成事件
     webview.once('DOMContentLoaded', function (e) {
         if (DOMContentLoadedCallback) {
-            DOMContentLoadedCallback(e);
+            DOMContentLoadedCallback();
         }
     });
 }
 
-export const changeSize = async function(label,width,hight,onTop = false) {
+export const changeSize = async function({label,width,hight,center = false,onTop = false}) {
     const webview = await WebviewWindow.getByLabel(label);
     if (webview) {
         //把窗口设置为保持在页面上
         await webview.setSize(new LogicalSize(width, hight));
         await webview.setAlwaysOnTop(onTop);
+        if (center) {
+            await webview.center();
+        }
     } else {
         console.error(`窗口 ${label} 不存在`);
     }

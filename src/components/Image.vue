@@ -125,9 +125,9 @@ const changeWindowSize = () => {
   isMinimized.value = !isMinimized.value;
   // appWindow.setSize({ width: 400, height: 300 });
   if (isMinimized.value) {
-    changeSize('image', 400, 300, true);
+    changeSize({label:'image', width:400, hight:300, onTop:true});
   }else {
-    changeSize('image', 1600, 900, false);
+    changeSize({label:'image', width:1600, hight:900, center:true});
   }
 }
 
@@ -135,6 +135,8 @@ const changeWindowSize = () => {
 listen('web_images', (event) => {
   console.log('web_images:', event.payload)
   const payloadValue = event.payload;
+  srcList.value = [];
+  imageNames.value = [];
   imageNotes.value = [];
   try {
     payloadValue.attachments.forEach((item) => {
