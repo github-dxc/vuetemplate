@@ -17,7 +17,6 @@ use tauri::{AppHandle, Emitter, Manager, Window, WindowEvent};
 use tauri_plugin_notification::{NotificationExt, PermissionState};
 use tauri_plugin_updater::{Update, UpdaterExt};
 use tokio::time::{interval, Duration};
-use tokio::task::{JoinSet};
 use tokio::signal;
 use serde_json::{Value};
 use std::collections::HashSet;
@@ -53,6 +52,8 @@ pub fn run() {
             // let _ = clear_global_state(app.handle().clone());
             //初始化全局状态
             let _ = init_global_state(app.handle().clone());
+            //初始化分组和项目
+            let _ = init_project_catgory(app.handle().clone());
             //定时更新
             update_app(app.handle().clone());
             //定时查询订阅数据
@@ -65,7 +66,7 @@ pub fn run() {
             match event {
                 //关闭事件
                 WindowEvent::CloseRequested { api, .. } => {
-                    if window.title().unwrap().as_str() != "main" {
+                    if window.title().unwrap().as_str() == "image" {
                         println!("非main窗口关闭");
                         return
                     }
@@ -107,25 +108,12 @@ struct MyState {
 #[tauri::command(rename_all = "snake_case")]
 async fn api_init_data(app: AppHandle) -> Result<String, String> {
     let state = app.state::<MyState>().clone();
-    let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
 
     // 查询项目列表
-    let body = my_view_page(jar.clone(), &host).await.map_err(|e|format!("my_view_page err:{}",e))?;
-    let projects = project_data(&Html::parse_document(body.as_str()))?;
-    {
-        let mut project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?;
-        *project_kv = projects.clone();
-    }
+    let projects = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
 
     // 查询分组列表
-    let project_id = projects.last().ok_or("projects error".to_owned())?.key.clone();
-    let body = bug_report_page(jar.clone(), &host, &project_id).await.map_err(|e|format!("filters_params err:{}",e))?;
-    let category = category_data(&Html::parse_document(body.as_str()))?;
-    {
-        let mut catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
-        *catgory_kv = category.clone();
-    }
+    let category = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
 
     let mut hm = HashMap::new();
     hm.insert("Priority", Priority::kv());
@@ -176,6 +164,9 @@ async fn api_login(app: AppHandle, username: &str, password: &str) -> Result<Str
     *logined = true;
     let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
     *jar_ = jar;
+
+    // 初始化分组和项目
+    let _ = init_project_catgory(app.clone());
     return Ok(result);
 }
 
@@ -183,7 +174,8 @@ async fn api_login(app: AppHandle, username: &str, password: &str) -> Result<Str
 #[tauri::command(rename_all = "snake_case")]
 async fn api_logout(app: AppHandle) -> Result<(), String> {
     clear_global_state(app.clone())?;
-    init_global_state(app)
+    init_global_state(app.clone())?;
+    init_project_catgory(app)
 }
 
 // bug列表
@@ -324,6 +316,7 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
 
     let logined_value = store.get("logined").unwrap_or(Value::from(false));
     let cookie_value = store.get("cookies").unwrap_or(Value::from(""));
+    println!("init:{};{}",logined_value,cookie_value);
     let default_host: &'static str = "localhost:8989";
     // let default_host: &'static str = "bug.test.com";
     let host_value = store.get("host").unwrap_or(Value::from(default_host));
@@ -360,6 +353,51 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
 
     let mut sub_bugs_hash = state.sub_bugs_hash.lock().map_err(|e|format!("lock err:{}",e))?;
     *sub_bugs_hash = serde_json::from_str(sub_bugs_hash_value.as_str().unwrap_or("")).map_err(|e|format!("lock err:{}",e))?;
+    Ok(())
+}
+
+// 初始化分组和项目
+fn init_project_catgory(app: AppHandle) -> Result<(),String> {
+    // 开启线程执行异步函数
+    tauri::async_runtime::spawn(async move {
+        let state = app.state::<MyState>().clone();
+        
+        let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+
+        let mut projects = vec![];
+        let mut category = vec![];
+        // 如果当前是已登录，则获取分组和项目
+        if logined {
+            {
+                let jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+                let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+                let body = my_view_page(jar_, &host).await.map_err(|e|format!("my_view_page err:{}",e))?;
+                projects = project_data(&Html::parse_document(body.as_str()))?;
+                let mut project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+                *project_kv = projects.clone();
+            }
+
+            // 查询分组列表
+            {
+                let jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+                let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+                let project_id = projects.last().ok_or("projects error".to_owned())?.key.clone();
+                let body = bug_report_page(jar_, &host, &project_id).await.map_err(|e|format!("filters_params err:{}",e))?;
+                category = category_data(&Html::parse_document(body.as_str()))?;
+                let mut catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+                *catgory_kv = category.clone();
+            }
+            if category.len() == 0|| projects.len() == 0 {
+                return Err("".to_string());
+            }
+        } else {
+            let mut project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+            *project_kv = projects;
+            let mut catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+            *catgory_kv = category;
+        };
+        Ok(())
+    });
     Ok(())
 }
 
@@ -444,7 +482,7 @@ fn find_sub_data(app: AppHandle) {
                 };
 
                 // 循环查询所有订阅的数据并且去重
-                let mut set: JoinSet<Result<BugList, String>> = JoinSet::new();
+                let mut bugs = Vec::new();
                 let params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                 for sub_param in params {
                     let sub_param = sub_param.clone();
@@ -452,32 +490,13 @@ fn find_sub_data(app: AppHandle) {
                     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                     let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                     let catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-                    set.spawn(async move {
-                        // 查询列表
-                        let param = serde_html_form::from_str::<FindBugListParams>(&sub_param)
-                            .map_err(|e| format!("serde_html_form err:{}", e))?;
-                        let body = view_all_set(jar, param, &host).await.map_err(|e|format!("view_all_set err:{}",e))?;
-                        // 解析数据
-                        let data = view_all_set_data(&Html::parse_document(body.as_str()),&catgory_kv,&project_kv).map_err(|e|format!("view_all_set_data err:{}",e))?;
-                        Ok(data)
-                    });
-                }
-                let mut bugs = Vec::new();
-                while let Some(result) = set.join_next().await {
-                    match result {
-                        Ok(value) => {
-                            match value {
-                                Ok(mut bl) => {
-                                    bugs.append(&mut bl.bugs);
-                                },
-                                Err(e) => {
-                                    warn!("find data err: {}", e);
-                                    return Err(e);
-                                }
-                            }
-                        },
-                        Err(e) => info!("Task failed: {}", e),
-                    }
+                    // 查询列表
+                    let param = serde_html_form::from_str::<FindBugListParams>(&sub_param)
+                        .map_err(|e| format!("serde_html_form err:{}", e))?;
+                    let body = view_all_set(jar, param, &host).await.map_err(|e|format!("view_all_set err:{}",e))?;
+                    // 解析数据
+                    let mut data = view_all_set_data(&Html::parse_document(body.as_str()),&catgory_kv,&project_kv).map_err(|e|format!("view_all_set_data err:{}",e))?;
+                    bugs.append(&mut data.bugs);
                 }
                 let mut seen = HashSet::new();
                 bugs = bugs.into_iter().filter(|b| seen.insert(b.bug_id)).collect();

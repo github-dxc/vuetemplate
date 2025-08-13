@@ -81,6 +81,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from "../store";
 import { changeHost } from "../api";
 import { ElMessage } from 'element-plus';
+import { el } from "element-plus/es/locales.mjs";
 
 const userStore = useUserStore();
 
@@ -98,8 +99,8 @@ const hostConfig = ref("");
 const hostInputRef = ref(null);
 
 async function testLogin() {
-  const result = await userStore.login('dengxiangcheng', 'dxc3434DXC');
-  // const result = await userStore.login('administrator', 'abcd.1234');
+  // const result = await userStore.login('dengxiangcheng', 'dxc3434DXC');
+  const result = await userStore.login('administrator', 'abcd.1234');
   if (result.success) {
     console.log("登录成功", result);
     router.push("/home");
@@ -193,19 +194,21 @@ async function saveHostConfig() {
 }
 
 onMounted(async () => {
+  console.log("isLoggedIn:", userStore.isLoggedIn);
   if (userStore.isLoggedIn) {
-    router.push("Login");
+    router.push("Home");
+  }else {
+    try {
+      hostConfig.value = await changeHost("");
+    } catch (error) {
+      ElMessage({
+        showClose: true,
+        message: 'HOST configuration get failed!' + error,
+        type: 'error',
+      });
+    }
   }
 
-  try {
-    hostConfig.value = await changeHost("");
-  } catch (error) {
-    ElMessage({
-      showClose: true,
-      message: 'HOST configuration get failed!' + error,
-      type: 'error',
-    });
-  }
 })
 </script>
 

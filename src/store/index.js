@@ -58,7 +58,7 @@ export const useUserStore = defineStore('user', {
 
   getters: {
     // 是否已登录
-    isLoggedIn: (state) => !!state.token && !!state.user.id,
+    isLoggedIn: (state) => !!state.token,
     
     // 用户全名或用户名
     displayName: (state) => state.user.username || state.user.email,
