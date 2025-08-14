@@ -339,9 +339,17 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
     let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
     let jar = Jar::default();
     let url = ("http://".to_string()+hv).parse::<Url>().map_err(|e|format!("url parse err:{}",e))?;
-    jar.add_cookie_str(cookie_value.as_str().unwrap_or(""), &url);
-    *jar_ = Arc::new(jar);
+    cookie_value.as_str().and_then(|s|{
+        s.split(';').for_each(|c| {
+            if !c.is_empty() {
+                jar.add_cookie_str(c.trim(), &url);
+            }
+        });
+        Some(())
+    });
     
+    *jar_ = Arc::new(jar);
+
     let mut host = state.host.lock().map_err(|e|format!("lock err:{}",e))?;
     *host = hv.to_string();
 
