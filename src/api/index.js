@@ -20,7 +20,7 @@ export const initBugs = async () => {
   return await invoke("api_init_bugs");
 };
 
-export const changeGetHost = async (host) => {
+export const changeHost = async (host) => {
   return await invoke("api_change_host",{host});
 };
 

@@ -1,6 +1,6 @@
 import { createPinia, defineStore } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
-import { login, logout, loginInfo } from '../api/index'
+import { login, logout, loginInfo, changeHost } from '../api/index'
 
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)//持久化
@@ -35,6 +35,7 @@ export const useUserStore = defineStore('user', {
     setting: {
       theme: 'light', // light | dark
       language: 'zh-CN', // zh-CN | en-US
+      host: 'localhost:8989',
       sidebar: {
         collapsed: false,
         fixed: true
@@ -62,6 +63,9 @@ export const useUserStore = defineStore('user', {
 
     // 用户token
     userToken: (state) => state.token,
+
+    // host设置
+    serverHost: (state) => state.setting.host,
     
     // 当前主题
     currentTheme: (state) => state.setting.theme,
@@ -97,7 +101,7 @@ export const useUserStore = defineStore('user', {
     setVersion(version) {
       this.version = version || {}
     },
-    
+
     // 批量更新设置，只更新非null和非undefined的值（包括对象和数组内部）
     updateSetting(setting) {
       const isValid = (val) => val !== null && val !== undefined;
@@ -181,9 +185,25 @@ export const useUserStore = defineStore('user', {
           createdAt: new Date().toISOString()
         }
         this.setUser(userInfo)
+        return { success: true, data: userInfo }
       } catch (error) {
         // token可能已过期，清除登录状态
         this.resetUser()
+        return { success: false, error: error.message }
+      } finally {
+        this.setLoading(false)
+      }
+    },
+
+    // 更新获取host
+    async changeGetHost(host) {
+      this.setLoading(true)
+      try {
+        const newHost = await changeHost(host)
+        this.updateSetting({newHost})
+        return { success: true, data: newHost }
+      } catch (error) {
+        return { success: false, error: error.message }
       } finally {
         this.setLoading(false)
       }

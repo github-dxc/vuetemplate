@@ -79,7 +79,6 @@
 import { ref, onMounted, nextTick } from "vue";
 import { useRouter } from 'vue-router';
 import { useUserStore } from "../store";
-import { changeGetHost } from "../api";
 import { ElMessage } from 'element-plus';
 
 const userStore = useUserStore();
@@ -98,8 +97,8 @@ const hostConfig = ref("");
 const hostInputRef = ref(null);
 
 async function testLogin() {
-  const result = await userStore.login('dengxiangcheng', 'dxc3434DXC');
-  // const result = await userStore.login('administrator', 'abcd.1234');
+  // const result = await userStore.login('dengxiangcheng', 'dxc3434DXC');
+  const result = await userStore.login('administrator', 'abcd.1234');
   if (result.success) {
     console.log("登录成功", result);
     router.push("/home");
@@ -175,7 +174,7 @@ function closeSettingsModal(event) {
 
 async function saveHostConfig() {
   try {
-    await changeGetHost(hostConfig.value);
+    await userStore.changeGetHost(hostConfig.value);
   } catch (error) {
     ElMessage({
       showClose: true,
@@ -194,21 +193,28 @@ async function saveHostConfig() {
 
 onMounted(async () => {
   // 同步用户信息
-  await userStore.getUserInfo();
+  const r = await userStore.getUserInfo();
+  if (!r.success) {
+    ElMessage({
+      showClose: true,
+      message: 'getUserInfo failed!' + r.error,
+      type: 'error',
+    });
+    return
+  }
+  const h = await userStore.changeGetHost("");
+  if (!h.success) {
+    ElMessage({
+      showClose: true,
+      message: 'HOST configuration get failed!' + error,
+      type: 'error',
+    });
+    return
+  }
+  hostConfig.value = h.data
   if (userStore.userInfo.logined) {
     router.push("Home");
-  }else {
-    try {
-      hostConfig.value = await changeGetHost("");
-    } catch (error) {
-      ElMessage({
-        showClose: true,
-        message: 'HOST configuration get failed!' + error,
-        type: 'error',
-      });
-    }
   }
-
 })
 </script>
 

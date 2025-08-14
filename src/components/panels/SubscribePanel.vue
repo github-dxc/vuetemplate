@@ -20,7 +20,7 @@
           <template #default="scope">
             <el-link 
               type="primary" 
-              :href="'http://bug.test.com/view.php?id=' + scope.row?.bug_id" 
+              :href="`http://${host}/view.php?id=${scope.row.bug_id}`" 
               target="_blank"
               class="bug-id-link"
             >
@@ -55,7 +55,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="摘要" min-width="auto" show-overflow-tooltip header-align="center">
+        <el-table-column label="摘要" width="250" show-overflow-tooltip header-align="center">
           <template #default="scope">
             <div class="summary-content">
               <el-link class="summary-icon" @click="copyMessage(scope.row.summary)" icon="Document"></el-link>
@@ -72,6 +72,17 @@
               </el-badge>
             </div>
             <span v-else class="no-attachment">-</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="明细" width="80" align="center" header-align="center">
+          <template #default="scope">
+            <div class="attachment-info">
+              <el-badge v-if="scope.row.issue_notes_count" :value="scope.row.issue_notes_count" type="primary" class="attachment-badge" :max="9">
+                <el-link class="attachment-icon" icon="Memo" @click="openImagePreview(scope.row.bug_id)" ></el-link>
+              </el-badge>
+              <el-link v-else class="attachment-icon" icon="Memo" @click="openImagePreview(scope.row.bug_id)" ></el-link>
+            </div>
           </template>
         </el-table-column>
 
@@ -144,9 +155,11 @@ import { useRouter } from 'vue-router';
 import { createNewWindow } from "../../windows";
 import { apiBugInfo, initData, initBugs, updateBug } from "../../api";
 import { ElMessage } from "element-plus";
+import { useUserStore } from "../../store";
 
 //------------------data-------------------//
 
+const userStore = useUserStore();
 const router = useRouter()
 const bugList = ref([]);
 const total = ref(0);
@@ -162,6 +175,9 @@ const enums = ref({
   Status: [],
   Category: []
 });
+const host = computed(() => {
+  return userStore.serverHost;
+})
 
 // 获取Status的值
 const bugStatus = computed(() => {
@@ -273,6 +289,7 @@ async function api_bug_list() {
     console.log("api_init_bugs:", data);
     if (data) {
       bugList.value = data || [];
+      total.value = bugList.value.length;
     }
   } catch (error) {
     console.log(error);
@@ -364,6 +381,7 @@ listen('sub_bugs', (event) => {
     const obj = event.payload;
     if (obj) {
       bugList.value = obj;
+      total.value = bugList.value.length;
     };
   } catch (error) {
     console.error('解析 JSON 失败:', error);
