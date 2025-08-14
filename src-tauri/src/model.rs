@@ -78,6 +78,7 @@ pub struct BugInfo {
     pub tags: String,                   //标签
     pub bugnote_notes: Vec<BugNote>,    //注释列表
     pub attachments: Vec<FileInfo>,     //附件
+    pub change_history: Vec<ChangeHistory>, //变更历史
 }
 
 #[derive(Debug, Default, Serialize)]
@@ -93,6 +94,16 @@ pub struct BugNote {
     pub time: i64,
     pub text: String,
     pub attachments: Vec<FileInfo>,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct ChangeHistory {
+    pub bug_id: i64,        //bug_id
+    pub updated_at: i64,    //变更时间
+    pub handler_id: i64,    //处理人
+    pub handler: String,    //处理人名称
+    pub field: String,  //字段
+    pub change: String, //变更内容
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

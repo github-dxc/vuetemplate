@@ -898,6 +898,45 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
         })
         .collect();
 
+    // history
+    let history_selector = Selector::parse("div#history tbody tr").unwrap();
+    bug.change_history = document
+        .select(&history_selector)
+        .map(|e| {
+            let hister_field = Selector::parse("td.small-caption").unwrap();
+            let mut s = e.select(&hister_field);
+            let updated_at = s.next()
+                .map(|e| {
+                    let date_str = e.inner_html().trim().to_string();
+                    // 解析为 NaiveDate
+                    let date = NaiveDate::parse_from_str(&date_str, "%Y-%m-%d %H:%M").ok()?;
+                    // 设为上海时区的0点
+                    let datetime = Shanghai
+                        .from_local_datetime(&date.and_hms_opt(0, 0, 0)?)
+                        .unwrap();
+                    // 转为时间戳（秒）
+                    Some(datetime.timestamp())
+                })
+                .unwrap_or_default()
+                .unwrap_or_default();
+            let (handler_id, handler) = s.next()
+                .map(|e|{
+                    let handler = e.select(&Selector::parse("a").unwrap())
+                        .find_map(|e| {
+                            e.value().attr("href").and_then(|href| {
+                                href.split('=').last().and_then(|id| id.parse::<i64>().ok())
+                            })
+                            .map(|id| (id, e.inner_html()))
+                        })
+                        .unwrap_or((0, "".to_owned()));
+                    handler
+                })
+                .unwrap_or_default();
+            let field = s.next().map(|e| e.inner_html().trim().to_string()).unwrap_or_default();
+            let change = s.next().map(|e| e.inner_html().trim().to_string()).unwrap_or_default();
+            ChangeHistory { bug_id: bug.bug_id, updated_at, handler_id, handler, field, change }
+        })
+        .collect();
     Ok(bug)
 }
 

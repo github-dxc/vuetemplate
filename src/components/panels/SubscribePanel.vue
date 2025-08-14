@@ -58,7 +58,7 @@
         <el-table-column label="摘要" min-width="auto" show-overflow-tooltip header-align="center">
           <template #default="scope">
             <div class="summary-content">
-              <el-icon class="summary-icon"><Document /></el-icon>
+              <el-link class="summary-icon" @click="copyMessage(scope.row.summary)" icon="Document"></el-link>
               <span class="summary-text">{{ scope.row.summary }}</span>
             </div>
           </template>
@@ -143,6 +143,7 @@ import { listen, emit } from '@tauri-apps/api/event';
 import { useRouter } from 'vue-router';
 import { createNewWindow } from "../../windows";
 import { apiBugInfo, initData, initBugs, updateBug } from "../../api";
+import { ElMessage } from "element-plus";
 
 //------------------data-------------------//
 
@@ -306,6 +307,18 @@ async function handleCommand(command) {
 
 function handlePageChange(currentPage) {
   page.value = currentPage;
+}
+
+// 复制数据到剪切板
+function copyMessage(message) {
+  navigator.clipboard.writeText(message).then(() => {
+    ElMessage({
+      message: '复制成功',
+      type: 'success',
+    })
+  }).catch(err => {
+    console.error("复制失败:", err);
+  });
 }
 
 // 打开图片预览
