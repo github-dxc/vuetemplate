@@ -16,8 +16,8 @@ export const initData = async () => {
   return await invoke("api_init_data");
 };
 
-export const initBugs = async (params) => {
-  return await invoke("api_init_bugs",params);
+export const initBugs = async () => {
+  return await invoke("api_init_bugs");
 };
 
 export const changeGetHost = async (host) => {

@@ -297,7 +297,11 @@ async fn api_update_bug(
         bugnote_text: "".to_string(),
     };
     println!("{:?}",bug);
-    bug_update(jar.clone(), bug, &host).await
+    bug_update(jar.clone(), bug, &host).await?;
+
+    // 更新订阅数据
+    update_sub_data(app).await?;
+    Ok("更新成功".to_string())
 }
 
 // 下载图片
@@ -498,97 +502,99 @@ fn clear_global_state(app: AppHandle) -> Result<(),String> {
 fn find_sub_data(app: AppHandle) {
     // 启动一个异步定时任务
     tauri::async_runtime::spawn(async move {
-        let state = app.state::<MyState>().clone();
         let mut ticker = interval(Duration::from_secs(5));
         loop {
-            let result: Result<(), String> = async {
-                ticker.tick().await;
-
-                // 判断是否登录，如果未登录，则跳过
-                let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-                if !logined {
-                    info!("未登录，跳过定时任务");
-                    return Ok(());
-                };
-
-                // 循环查询所有订阅的数据并且去重
-                let mut bugs = Vec::new();
-                let params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-                for sub_param in params {
-                    let sub_param = sub_param.clone();
-                    let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-                    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-                    let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-                    let catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-                    // 查询列表
-                    let param = serde_html_form::from_str::<FindBugListParams>(&sub_param)
-                        .map_err(|e| format!("serde_html_form err:{}", e))?;
-                    let body = view_all_set(jar, param, &host).await.map_err(|e|format!("view_all_set err:{}",e))?;
-                    // 解析数据
-                    let mut data = view_all_set_data(&Html::parse_document(body.as_str()),&catgory_kv,&project_kv).map_err(|e|format!("view_all_set_data err:{}",e))?;
-                    bugs.append(&mut data.bugs);
-                }
-                let mut seen = HashSet::new();
-                bugs = bugs.into_iter().filter(|b| seen.insert(b.bug_id)).collect();
-                // info!("find bugs: {:?}", bugs);
-
-                // 上次的bugs、hash
-                let mut old_map = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
-                let mut old_hash = state.sub_bugs_hash.lock().map_err(|e|format!("lock err:{}",e))?;
-                
-                // 构建新bugs、hash
-                let mut new_map = HashMap::new();
-                let mut new_hash = HashMap::new();
-
-                let mut notice_msgs = Vec::new();
-
-                //获取分组kv
-                let category_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
-                
-                for b in bugs.clone() {
-                    let bgid = b.bug_id;
-                    let hash = get_hash(&b);
-                    let cg_kv = category_kv.find_by_key(b.category_id.to_string()).ok_or("not find kv".to_owned())?;
-                    new_map.insert(bgid, b.clone());
-                    new_hash.insert(bgid, hash);
-                    //判断hash值是否一致，不一致则通知,没有也通知
-                    if let None = old_hash.iter().find(|(&k,&v)| k == bgid && v == hash){
-                        //通知
-                        let notice = format!(
-                                " {} | {} - {} -> {}",
-                                b.project,
-                                cg_kv.value,
-                                Severity::from(b.severity).as_str(),
-                                b.handler
-                            );
-                        notice_msgs.push(notice.clone());
-                        let _ = send_notify(
-                            app.clone(),
-                            notice.as_str(),
-                            b.summary.as_str(),
-                        );
-                    };
-                }
-                // 向前端所有窗口广播消息
-                if notice_msgs.len() > 0 || old_map.len() != new_map.len() {
-                    *old_map = new_map;
-                    *old_hash = new_hash;
-                    bugs.sort_by_key(|b| std::cmp::Reverse(b.last_updated));
-                    let json = serde_json::to_string_pretty(&bugs).map_err(|e|format!("to json err:{}",e))?;
-                    let _ = app.emit("sub_bugs", bugs);
-                    let _ = app.emit("sub_msgs", notice_msgs);
-                    // 保存订阅数据到本地
-                    let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
-                    store.set("sub_bugs", json);
-                    store.save().map_err(|e|format!("store save err:{}",e))?;
-                }
-                Ok(())
-            }.await;
+            ticker.tick().await;
+            let result = update_sub_data(app.clone()).await;
             if let Err(e) = result {
                 info!("error:{}",e);
             }
         }
     });
+}
+
+// 更新一次用户订阅列表
+async fn update_sub_data(app: AppHandle) -> Result<(), String> {
+    let state = app.state::<MyState>().clone();
+    // 判断是否登录，如果未登录，则跳过
+    let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    if !logined {
+        info!("未登录，跳过定时任务");
+        return Ok(());
+    };
+
+    // 循环查询所有订阅的数据并且去重
+    let mut bugs = Vec::new();
+    let params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    for sub_param in params {
+        let sub_param = sub_param.clone();
+        let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+        let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+        let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+        let catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+        // 查询列表
+        let param = serde_html_form::from_str::<FindBugListParams>(&sub_param)
+            .map_err(|e| format!("serde_html_form err:{}", e))?;
+        let body = view_all_set(jar, param, &host).await.map_err(|e|format!("view_all_set err:{}",e))?;
+        // 解析数据
+        let mut data = view_all_set_data(&Html::parse_document(body.as_str()),&catgory_kv,&project_kv).map_err(|e|format!("view_all_set_data err:{}",e))?;
+        bugs.append(&mut data.bugs);
+    }
+    let mut seen = HashSet::new();
+    bugs = bugs.into_iter().filter(|b| seen.insert(b.bug_id)).collect();
+    // info!("find bugs: {:?}", bugs);
+
+    // 上次的bugs、hash
+    let mut old_map = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
+    let mut old_hash = state.sub_bugs_hash.lock().map_err(|e|format!("lock err:{}",e))?;
+    
+    // 构建新bugs、hash
+    let mut new_map = HashMap::new();
+    let mut new_hash = HashMap::new();
+
+    let mut notice_msgs = Vec::new();
+
+    //获取分组kv
+    let category_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+    
+    for b in bugs.clone() {
+        let bgid = b.bug_id;
+        let hash = get_hash(&b);
+        let cg_kv = category_kv.find_by_key(b.category_id.to_string()).ok_or("not find kv".to_owned())?;
+        new_map.insert(bgid, b.clone());
+        new_hash.insert(bgid, hash);
+        //判断hash值是否一致，不一致则通知,没有也通知
+        if let None = old_hash.iter().find(|(&k,&v)| k == bgid && v == hash){
+            //通知
+            let notice = format!(
+                    " {} | {} - {} -> {}",
+                    b.project,
+                    cg_kv.value,
+                    Severity::from(b.severity).as_str(),
+                    b.handler
+                );
+            notice_msgs.push(notice.clone());
+            let _ = send_notify(
+                app.clone(),
+                notice.as_str(),
+                b.summary.as_str(),
+            );
+        };
+    }
+    // 向前端所有窗口广播消息
+    if notice_msgs.len() > 0 || old_map.len() != new_map.len() {
+        *old_map = new_map;
+        *old_hash = new_hash;
+        bugs.sort_by_key(|b| std::cmp::Reverse(b.last_updated));
+        let json = serde_json::to_string_pretty(&bugs).map_err(|e|format!("to json err:{}",e))?;
+        let _ = app.emit("sub_bugs", bugs);
+        let _ = app.emit("sub_msgs", notice_msgs);
+        // 保存订阅数据到本地
+        let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
+        store.set("sub_bugs", json);
+        store.save().map_err(|e|format!("store save err:{}",e))?;
+    }
+    Ok(())
 }
 
 // 定时查询更新
@@ -692,7 +698,7 @@ fn send_notify(app: AppHandle, title: &str, content: &str) -> Result<(), String>
         .builder()
         .title(title)
         .body(content)
-        .icon("asset://StoreLogo.png")
+        .icon("StoreLogo.png")
         .show()
         .map_err(|e| format!("发送通知失败: {}", e))?;
     Ok(notification)

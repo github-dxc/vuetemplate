@@ -265,10 +265,10 @@ async function api_init_data() {
   }
 }
 
-async function api_bug_list(params) {
+async function api_bug_list() {
   try {
     // 获取bug列表
-    let data = await initBugs(params);
+    let data = await initBugs();
     console.log("api_init_bugs:", data);
     if (data) {
       bugList.value = data || [];
@@ -299,7 +299,6 @@ async function handleCommand(command) {
     }
     const result = await updateBug({ bug_id: bug_id, status: status, resolution: resolution });
     console.log("更新成功", result);
-    api_bug_list({});
   } catch (error) {
     console.error("更新失败", error);
   }
@@ -307,7 +306,6 @@ async function handleCommand(command) {
 
 function handlePageChange(currentPage) {
   page.value = currentPage;
-  api_bug_list({ page: currentPage });
 }
 
 // 打开图片预览
@@ -343,7 +341,7 @@ onMounted(async () => {
   // 初始化枚举数据
   api_init_data()
   // 查询bug列表
-  api_bug_list({})
+  api_bug_list()
 });
 
 // 监听rust发送的消息
