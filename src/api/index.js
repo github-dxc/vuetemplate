@@ -1,5 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
 
+export const loginInfo = async () => {
+  return await invoke("api_login_info");
+};
+
 export const login = async (username, password) => {
   return await invoke("api_login",{ username, password });
 };
@@ -16,7 +20,7 @@ export const initBugs = async (params) => {
   return await invoke("api_init_bugs",params);
 };
 
-export const changeHost = async (host) => {
+export const changeGetHost = async (host) => {
   return await invoke("api_change_host",{host});
 };
 

@@ -13,7 +13,7 @@ use tauri_plugin_store::StoreExt;
 use url::Url;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, Emitter, Manager, Window, WindowEvent};
+use tauri::{AppHandle, Emitter, Manager, WindowEvent};
 use tauri_plugin_notification::{NotificationExt, PermissionState};
 use tauri_plugin_updater::{Update, UpdaterExt};
 use tokio::time::{interval, Duration};
@@ -38,6 +38,7 @@ pub fn run() {
             api_init_data,
             api_init_bugs,
             api_change_host,
+            api_login_info,
             api_login,
             api_logout,
             api_bug_info,
@@ -93,6 +94,7 @@ pub fn run() {
 #[derive(Default)]
 struct MyState {
     logined: Arc<Mutex<bool>>, // 是否登录
+    username: Arc<Mutex<String>>, // 用户名
     jar: Mutex<Arc<Jar>>,
     host: Arc<Mutex<String>>,
     sub_params: Arc<Mutex<Vec<String>>>,//订阅列表
@@ -150,7 +152,16 @@ async fn api_init_bugs(app: AppHandle) -> Result<Vec<Bug>, String> {
     bugs.sort_by_key(|b|std::cmp::Reverse(b.last_updated));
     Ok(bugs)
 }
-    
+
+// 获取登录信息
+#[tauri::command(rename_all = "snake_case")]
+async fn api_login_info(app: AppHandle) -> Result<LoginInfo, String> {
+    let state = app.state::<MyState>().clone();
+    let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let username = state.username.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    Ok(LoginInfo{ logined, username})
+}
+
 // 登录
 #[tauri::command(rename_all = "snake_case")]
 async fn api_login(app: AppHandle, username: &str, password: &str) -> Result<String, String> {
@@ -162,6 +173,8 @@ async fn api_login(app: AppHandle, username: &str, password: &str) -> Result<Str
     // 保存cookie到全局状态
     let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
     *logined = true;
+    let mut username_ = state.username.lock().map_err(|e|format!("lock err:{}",e))?;
+    *username_ = username.to_string();
     let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
     *jar_ = jar;
 
@@ -315,8 +328,9 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
     let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
 
     let logined_value = store.get("logined").unwrap_or(Value::from(false));
+    let username_value = store.get("username").unwrap_or(Value::from(""));
     let cookie_value = store.get("cookies").unwrap_or(Value::from(""));
-    println!("init:{};{}",logined_value,cookie_value);
+    println!("init:{};{};{}",logined_value,username_value,cookie_value);
     let default_host: &'static str = "localhost:8989";
     // let default_host: &'static str = "bug.test.com";
     let host_value = store.get("host").unwrap_or(Value::from(default_host));
@@ -335,6 +349,8 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
 
     let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
     *logined = logined_value.as_bool().unwrap_or(false);
+    let mut username_ = state.username.lock().map_err(|e|format!("lock err:{}",e))?;
+    *username_ = username_value.as_str().unwrap_or("").to_string();
 
     let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
     let jar = Jar::default();
@@ -417,6 +433,8 @@ fn save_global_state(app: AppHandle) -> Result<(),String> {
     let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
     store.set("logined", logined.clone());
 
+    let username = state.username.lock().map_err(|e|format!("lock err:{}",e))?;
+    store.set("username", username.clone());
     
     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?;
     store.set("host", host.clone());
@@ -449,6 +467,10 @@ fn clear_global_state(app: AppHandle) -> Result<(),String> {
     let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
     *logined = false;
     store.delete("logined");
+
+    let mut username = state.username.lock().map_err(|e|format!("lock err:{}",e))?;
+    *username = "".to_string();
+    store.delete("username");
     
     // let mut host = state.host.lock().map_err(|e|format!("lock err:{}",e))?;
     // *host = "".to_string();
@@ -508,7 +530,7 @@ fn find_sub_data(app: AppHandle) {
                 }
                 let mut seen = HashSet::new();
                 bugs = bugs.into_iter().filter(|b| seen.insert(b.bug_id)).collect();
-                info!("find bugs: {:?}", bugs);
+                // info!("find bugs: {:?}", bugs);
 
                 // 上次的bugs、hash
                 let mut old_map = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;

@@ -159,3 +159,8 @@ pub struct FiltersParams {
     pub data_filter_id: String
 }
 
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct LoginInfo {
+    pub logined: bool,
+    pub username: String,
+}

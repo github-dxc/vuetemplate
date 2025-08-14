@@ -79,7 +79,7 @@
 import { ref, onMounted, nextTick } from "vue";
 import { useRouter } from 'vue-router';
 import { useUserStore } from "../store";
-import { changeHost } from "../api";
+import { changeGetHost } from "../api";
 import { ElMessage } from 'element-plus';
 
 const userStore = useUserStore();
@@ -175,7 +175,7 @@ function closeSettingsModal(event) {
 
 async function saveHostConfig() {
   try {
-    await changeHost(hostConfig.value);
+    await changeGetHost(hostConfig.value);
   } catch (error) {
     ElMessage({
       showClose: true,
@@ -193,12 +193,13 @@ async function saveHostConfig() {
 }
 
 onMounted(async () => {
-  console.log("isLoggedIn:", userStore.isLoggedIn);
-  if (userStore.isLoggedIn) {
+  // 同步用户信息
+  await userStore.getUserInfo();
+  if (userStore.userInfo.logined) {
     router.push("Home");
   }else {
     try {
-      hostConfig.value = await changeHost("");
+      hostConfig.value = await changeGetHost("");
     } catch (error) {
       ElMessage({
         showClose: true,

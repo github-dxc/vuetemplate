@@ -1,6 +1,6 @@
 import { createPinia, defineStore } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
-import { login, logout } from '../api/index'
+import { login, logout, loginInfo } from '../api/index'
 
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)//持久化
@@ -11,8 +11,8 @@ export const useUserStore = defineStore('user', {
     // 用户信息
     user: {
       id: null,
+      logined: false,
       username: '',
-      email: '',
       avatar: '',
       role: '',
       createdAt: null
@@ -57,20 +57,11 @@ export const useUserStore = defineStore('user', {
   }),
 
   getters: {
-    // 是否已登录
-    isLoggedIn: (state) => !!state.token,
-    
-    // 用户全名或用户名
-    displayName: (state) => state.user.username || state.user.email,
-    
-    // 用户头像（带默认值）
-    userAvatar: (state) => state.user.avatar || '/default-avatar.png',
+    // 用户信息
+    userInfo: (state) => state.user,
 
     // 用户token
     userToken: (state) => state.token,
-    
-    // 是否为管理员
-    isAdmin: (state) => state.user.role === 'admin',
     
     // 当前主题
     currentTheme: (state) => state.setting.theme,
@@ -149,16 +140,16 @@ export const useUserStore = defineStore('user', {
       try {
         // 这里调用API进行登录
         const token = await login(username, password)
-        const user = {
-          username,
+        this.setToken(token)
+        const user = await loginInfo()
+        const userInfo = {
+          ...user,
           createdAt: new Date().toISOString()
         }
-        
-        this.setToken(token)
-        this.setUser(user)
-        
-        return { success: true, data: user }
+        this.setUser(userInfo)
+        return { success: true, data: userInfo }
       } catch (error) {
+        this.resetUser()
         return { success: false, error: error.message }
       } finally {
         this.setLoading(false)
@@ -171,17 +162,7 @@ export const useUserStore = defineStore('user', {
       try {
         // 调用登出API
         await logout();
-        
-        this.setToken('')
-        this.setUser({
-          id: null,
-          username: '',
-          email: '',
-          avatar: '',
-          role: '',
-          createdAt: null
-        })
-        
+        this.resetUser();
         return { success: true }
       } catch (error) {
         return { success: false, error: error.message }
@@ -190,59 +171,30 @@ export const useUserStore = defineStore('user', {
       }
     },
     
-    // 获取用户信息
-    async fetchUserInfo() {
-      if (!this.token) return { success: false, error: 'No token' }
-      
+    // 同步用户信息
+    async getUserInfo() {
       this.setLoading(true)
       try {
-        // 调用获取用户信息API
-        // const response = await getUserInfoApi()
-        // 模拟API响应
-        const response = {
-          id: 1,
-          username: 'testuser',
-          email: 'test@example.com',
-          avatar: '/avatar.jpg',
-          role: 'user',
-          createdAt: '2024-01-01T00:00:00Z'
+        const user = await loginInfo()
+        const userInfo = {
+          ...user,
+          createdAt: new Date().toISOString()
         }
-        
-        this.setUser(response)
-        return { success: true, data: response }
+        this.setUser(userInfo)
       } catch (error) {
         // token可能已过期，清除登录状态
-        this.logout()
-        return { success: false, error: error.message }
-      } finally {
-        this.setLoading(false)
-      }
-    },
-    
-    // 更新用户资料
-    async updateProfile(profileData) {
-      this.setLoading(true)
-      try {
-        // 调用更新资料API
-        // const response = await updateProfileApi(profileData)
-        // 模拟API响应
-        const response = { ...this.user, ...profileData }
-        
-        this.setUser(response)
-        return { success: true, data: response }
-      } catch (error) {
-        return { success: false, error: error.message }
+        this.resetUser()
       } finally {
         this.setLoading(false)
       }
     },
 
-    // 重置store到初始状态
-    resetStore() {
+    // 重置user到初始状态
+    resetUser() {
       this.user = {
         id: null,
+        logined: false,
         username: '',
-        email: '',
         avatar: '',
         role: '',
         createdAt: null
