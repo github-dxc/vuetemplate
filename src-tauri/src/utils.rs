@@ -834,6 +834,16 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
     bug.bugnote_notes = document
         .select(&bugnote_notes_selector)
         .map(|e| {
+            // handle_id
+            let (handler_id, handler) = e
+                .select(&Selector::parse(".no-margin .fa.fa-user.grey + a").unwrap())
+                .find_map(|e|{
+                    e.value().attr("href").and_then(|href| {
+                        href.split('=').last().and_then(|id| id.parse::<i64>().ok())
+                    })
+                    .map(|id| (id, e.inner_html()))
+                })
+                .unwrap_or_default();
             let time = e
                 .select(&Selector::parse(".no-margin.small.lighter").unwrap())
                 .find_map(|e| {
@@ -858,7 +868,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                 .unwrap_or("");
             // attachments
             let attachments_selector = Selector::parse(".collapse-open.noprint").unwrap();
-            let attachments = document
+            let attachments = e
                 .select(&attachments_selector)
                 .map(|e| {
                     let mut size = 0;
@@ -893,6 +903,8 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                 time,
                 note_id,
                 text: text.to_string(),
+                handler_id,
+                handler,
                 attachments,
             }
         })

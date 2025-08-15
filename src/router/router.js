@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import Login from '../views/Login.vue'
 import Image from '../components/Image.vue'
-import ImageNotes from '../components/ImageNotes.vue'
 
 const routes = [
   {
@@ -23,11 +22,6 @@ const routes = [
     path: '/image',
     name: 'Image',
     component: Image
-  },
-  {
-    path: '/image_notes',
-    name: 'ImageNotes',
-    component: ImageNotes
   }
 ]
 

@@ -200,7 +200,7 @@ export const useUserStore = defineStore('user', {
       this.setLoading(true)
       try {
         const newHost = await changeHost(host)
-        this.updateSetting({newHost})
+        this.updateSetting({host: newHost})
         return { success: true, data: newHost }
       } catch (error) {
         return { success: false, error: error.message }

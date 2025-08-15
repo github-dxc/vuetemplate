@@ -18,13 +18,14 @@
       >
         <el-table-column label="BugID" width="80" header-align="center">
           <template #default="scope">
+            <el-link class="summary-icon" @click="copyMessage(`http://${host}/view.php?id=${scope.row.bug_id}`)" icon="Document"></el-link>
             <el-link 
               type="primary" 
               :href="`http://${host}/view.php?id=${scope.row.bug_id}`" 
               target="_blank"
               class="bug-id-link"
             >
-              #{{ scope.row.bug_id }}
+              {{ scope.row.bug_id }}
             </el-link>
           </template>
         </el-table-column>
@@ -64,7 +65,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="附件" width="80" align="center" header-align="center">
+        <el-table-column label="附件" width="auto" align="center" header-align="center">
           <template #default="scope">
             <div v-if="scope.row.attachments > 0" class="attachment-info">
               <el-badge :value="scope.row.attachments" type="primary" class="attachment-badge" :max="9">
@@ -79,9 +80,9 @@
           <template #default="scope">
             <div class="attachment-info">
               <el-badge v-if="scope.row.issue_notes_count" :value="scope.row.issue_notes_count" type="primary" class="attachment-badge" :max="9">
-                <el-link class="attachment-icon" icon="Memo" @click="openImagePreview(scope.row.bug_id)" ></el-link>
+                <el-link class="attachment-icon" icon="Memo" @click="openBugDetails(scope.row.bug_id,scope.row.summary)" ></el-link>
               </el-badge>
-              <el-link v-else class="attachment-icon" icon="Memo" @click="openImagePreview(scope.row.bug_id)" ></el-link>
+              <el-link v-else class="attachment-icon" icon="Memo" @click="openBugDetails(scope.row.bug_id,scope.row.summary)" ></el-link>
             </div>
           </template>
         </el-table-column>
@@ -145,6 +146,13 @@
         @current-change="handlePageChange"
       />
     </div>
+
+    <!-- 明细展示 -->
+    <div v-if="bugDetailsVisible">
+      <el-dialog v-model="bugDetailsVisible" :title="bugDetailsTitle" width="900">
+        <BugDetails :bug-details="bugDetails"/>
+      </el-dialog>
+    </div>
   </div>
 </template>
 
@@ -156,6 +164,7 @@ import { createNewWindow } from "../../windows";
 import { apiBugInfo, initData, initBugs, updateBug } from "../../api";
 import { ElMessage } from "element-plus";
 import { useUserStore } from "../../store";
+import BugDetails from "../BugDetails.vue";
 
 //------------------data-------------------//
 
@@ -175,6 +184,10 @@ const enums = ref({
   Status: [],
   Category: []
 });
+const bugDetailsVisible = ref(false);
+const bugDetailsTitle = ref("Bug明细");
+const bugDetails = ref({});
+
 const host = computed(() => {
   return userStore.serverHost;
 })
@@ -346,7 +359,7 @@ async function openImagePreview(bug_id) {
       console.log("成功:", result);
       emit('web_images', { attachments: result.attachments, bugnote_notes: result.bugnote_notes });
       
-    }).catch(error => {0
+    }).catch(error => {
       console.error("错误:", error);
     });
   };
@@ -359,9 +372,22 @@ async function openImagePreview(bug_id) {
     visible: false,
     resizable: true,
     center: true,
-    transparent: true,
-    decorations: true,
+    transparent: false,//背景是否透明
+    decorations: true,//是否有边框
   },DOMContentLoadedCallback);
+}
+
+// 打开bug详情
+async function openBugDetails(bug_id,title) {
+  bugDetailsTitle.value = `${bug_id} - ${title}` || "Bug明细";
+  bugDetailsVisible.value = true;
+  // 发送图片信息列表给图片预览窗口
+  apiBugInfo(bug_id).then(result => {
+    console.log("成功:", result);
+    bugDetails.value = result;
+  }).catch(error => {
+    console.error("错误:", error);
+  });
 }
 
 //------------------vue/tauri-------------------//
@@ -464,6 +490,7 @@ listen('sub_bugs', (event) => {
   font-weight: 600;
   font-family: 'Monaco', 'Menlo', monospace;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  margin-left: 2px;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

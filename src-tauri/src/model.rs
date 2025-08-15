@@ -93,6 +93,8 @@ pub struct BugNote {
     pub note_id: i64,
     pub time: i64,
     pub text: String,
+    pub handler_id: i64,    //处理人
+    pub handler: String,    //处理人名称
     pub attachments: Vec<FileInfo>,
 }
 

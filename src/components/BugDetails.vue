@@ -1,49 +1,54 @@
 <template>
-  <el-container>
-    <el-main class="list-container">
-      <el-card>
-        <div v-for="(item, index) in paginatedData" :key="index" class="list-item">
-          <div class="item-content">
-            <el-row :gutter="20">
-              <el-col :span="18">
-                <div class="item-meta">
-                  <el-avatar :size="48" :src="item.avatar" />
-                  <div class="meta-content">
-                    <h4 class="item-title">{{ item.title }}</h4>
-                    <p class="item-description">{{ item.description }}</p>
+  <el-container class="list-container">
+    <el-container>
+      <el-header>
+        bug详情
+      </el-header>
+      <el-main>
+        <el-card>
+          <div v-for="(item, index) in dataSource" :key="index" class="list-item">
+            <div class="item-content">
+              <el-row :gutter="20">
+                <el-col :span="18">
+                  <div class="item-meta">
+                    <el-avatar :size="48" :src="item.avatar" />
+                    <div class="meta-content">
+                      <h4 class="item-title">{{ item.title }}</h4>
+                      <p class="item-description">{{ item.description }}</p>
+                    </div>
                   </div>
-                </div>
-                <div class="item-actions">
-                  <span class="action-item"><el-icon><i class="el-icon-heart"></i></el-icon>83</span>
-                  <span class="action-item"><el-icon><i class="el-icon-star-on"></i></el-icon>{{ item.index }}</span>
-                  <span class="action-item"><el-icon><i class="el-icon-message"></i></el-icon>Reply</span>
-                </div>
-              </el-col>
-              <el-col :span="6">
-                <div class="image-area">
-                  <img :src="item.imageSrc" alt="item image" />
-                </div>
-              </el-col>
-            </el-row>
+                  <div class="item-actions">
+                    <span class="action-item"><el-icon><i class="el-icon-heart"></i></el-icon>83</span>
+                    <span class="action-item"><el-icon><i class="el-icon-star-on"></i></el-icon>{{ item.index }}</span>
+                    <span class="action-item"><el-icon><i class="el-icon-message"></i></el-icon>Reply</span>
+                  </div>
+                </el-col>
+                <el-col :span="6">
+                  <div class="image-area">
+                    <img :src="item.imageSrc" alt="item image" />
+                  </div>
+                </el-col>
+              </el-row>
+            </div>
           </div>
-        </div>
-        <div class="pagination-container">
-          <el-pagination
-            background
-            layout="prev, pager, next"
-            :total="dataSource.length"
-            :page-size="pageSize"
-            :current-page="currentPage"
-            @current-change="handlePageChange"
-          />
-        </div>
-      </el-card>
-    </el-main>
+        </el-card>
+      </el-main>
+    </el-container>
+
+    <el-aside width="200px">操作历史</el-aside>
   </el-container>
 </template>
 
 <script setup>
-import { reactive, ref, computed } from 'vue';
+import { reactive, ref, computed, defineProps } from 'vue';
+
+const props = defineProps({
+  bugDetails: {
+    type: Object,
+    required: true,
+    default: {}
+  }
+});
 
 const names = ['Socrates', 'Balzac', 'Plato'];
 const avatarSrc = [
@@ -57,7 +62,7 @@ const imageSrc = [
   '//p1-arco.byteimg.com/tos-cn-i-uwbnlip3yd/1f61854a849a076318ed527c8fca1bbf.png~tplv-uwbnlip3yd-webp.webp',
 ];
 
-const dataSource = new Array(15).fill(null).map((_, index) => {
+const dataSource = new Array(3).fill(null).map((_, index) => {
   return {
     index: index,
     avatar: avatarSrc[index % avatarSrc.length],
@@ -68,18 +73,6 @@ const dataSource = new Array(15).fill(null).map((_, index) => {
   };
 });
 
-const currentPage = ref(1);
-const pageSize = 3;
-
-const paginatedData = computed(() => {
-  const start = (currentPage.value - 1) * pageSize;
-  const end = start + pageSize;
-  return dataSource.slice(start, end);
-});
-
-const handlePageChange = (val) => {
-  currentPage.value = val;
-};
 </script>
 
 <style scoped>
@@ -91,6 +84,7 @@ const handlePageChange = (val) => {
   padding: 20px 0;
   border-bottom: 1px solid #e9e9eb;
 }
+
 .list-item:last-child {
   border-bottom: none;
 }
@@ -155,10 +149,5 @@ const handlePageChange = (val) => {
   max-width: 100%;
   height: auto;
   display: block;
-}
-
-.pagination-container {
-  margin-top: 20px;
-  text-align: right;
 }
 </style>
