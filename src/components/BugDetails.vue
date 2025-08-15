@@ -44,7 +44,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, defineProps } from 'vue';
+import { reactive, ref, computed } from 'vue';
 
 const props = defineProps({
   bugDetails: {

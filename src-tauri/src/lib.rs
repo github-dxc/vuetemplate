@@ -149,7 +149,7 @@ async fn api_init_bugs(app: AppHandle) -> Result<Vec<Bug>, String> {
     // 查询缓存的bug列表
     let sub_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let mut bugs:Vec<Bug> = sub_bugs.into_iter().map(|(_,bug)|bug).collect();
-    bugs.sort_by_key(|b|std::cmp::Reverse(b.last_updated));
+    bugs.sort_by_key(|b|std::cmp::Reverse(b.bug_id));
     Ok(bugs)
 }
 
@@ -585,7 +585,7 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
     if notice_msgs.len() > 0 || old_map.len() != new_map.len() {
         *old_map = new_map;
         *old_hash = new_hash;
-        bugs.sort_by_key(|b| std::cmp::Reverse(b.last_updated));
+        bugs.sort_by_key(|b| std::cmp::Reverse(b.bug_id));
         let json = serde_json::to_string_pretty(&bugs).map_err(|e|format!("to json err:{}",e))?;
         let _ = app.emit("sub_bugs", bugs);
         let _ = app.emit("sub_msgs", notice_msgs);
