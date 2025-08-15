@@ -2,7 +2,9 @@
   <el-container class="list-container">
     <el-container>
       <el-header>
-        bug详情
+        <el-card>
+          bug详情
+        </el-card>
       </el-header>
       <el-main>
         <el-card>
@@ -18,9 +20,7 @@
                     </div>
                   </div>
                   <div class="item-actions">
-                    <span class="action-item"><el-icon><i class="el-icon-heart"></i></el-icon>83</span>
                     <span class="action-item"><el-icon><i class="el-icon-star-on"></i></el-icon>{{ item.index }}</span>
-                    <span class="action-item"><el-icon><i class="el-icon-message"></i></el-icon>Reply</span>
                   </div>
                 </el-col>
                 <el-col :span="6">
@@ -35,7 +35,11 @@
       </el-main>
     </el-container>
 
-    <el-aside width="200px">操作历史</el-aside>
+    <el-aside width="200px">
+      <el-card>
+        操作历史
+      </el-card>
+    </el-aside>
   </el-container>
 </template>
 
