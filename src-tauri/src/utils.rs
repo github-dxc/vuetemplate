@@ -477,7 +477,7 @@ pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<
             let priority_selector = Selector::parse(".column-priority i").unwrap();
             bug.priority = element
                 .select(&priority_selector)
-                .find_map(|e| Some(Priority::from(e.value().attr("title").unwrap_or("")).as_i64()))
+                .find_map(|e| Some(Priority::from(e.value().attr("title").unwrap_or_default()).as_i64()))
                 .unwrap_or(0);
 
             // category_id
@@ -485,7 +485,7 @@ pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<
             
             bug.category_id = element
                 .select(&category_selector)
-                .find_map(|e|category_kv.find_by_value(e.text().last().unwrap_or("").trim()).and_then(|kv|kv.key.parse::<i64>().ok()))
+                .find_map(|e|category_kv.find_by_value(e.text().last().unwrap_or_default().trim()).and_then(|kv|kv.key.parse::<i64>().ok()))
                 .unwrap_or(0);
 
             // project_id
@@ -503,7 +503,7 @@ pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<
             let severity_selector = Selector::parse(".column-severity").unwrap();
             bug.severity = element
                 .select(&severity_selector)
-                .find_map(|e| Some(Severity::from(e.inner_html().trim()).as_i64()))
+                .find_map(|e| Some(Severity::from(e.text().last().unwrap_or_default().trim()).as_i64()))
                 .unwrap_or(0);
 
             // status
@@ -637,7 +637,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
     let category_selector = Selector::parse(".bug-header-data .bug-category").unwrap();
     bug.category_id = document
         .select(&category_selector)
-        .find_map(|e|category_kv.find_by_value(e.text().last().unwrap_or("").replace("[所有项目] ", "")).and_then(|kv|kv.key.parse::<i64>().ok()))
+        .find_map(|e|category_kv.find_by_value(e.text().last().unwrap_or_default().replace("[所有项目] ", "")).and_then(|kv|kv.key.parse::<i64>().ok()))
         .unwrap_or(0);
 
     // view_status
@@ -745,7 +745,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                 .trim()
                 .split(":")
                 .nth(1)
-                .unwrap_or("")
+                .unwrap_or_default()
                 .trim()
                 .to_string()
         })
@@ -806,7 +806,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
             e.select(&Selector::parse("a:nth-of-type(2)").unwrap())
                 .for_each(|e| {
                     //<a href="file_download.php?file_id=2365&amp;type=bug">image.png</a>&#32;(179,667&#32;字节)&#32;&nbsp;&nbsp;
-                    url = format!("{}",e.value().attr("href").unwrap_or(""));
+                    url = format!("{}",e.value().attr("href").unwrap_or_default());
                     name = e.inner_html().trim().to_string();
                     e.next_sibling().map(|sibling| {
                         if sibling.value().is_text() {
@@ -865,7 +865,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
             let text = e
                 .select(&Selector::parse(".bugnote-note.bugnote-public").unwrap())
                 .find_map(|e| e.text().find_map(|s|Some(s.trim_ascii())))
-                .unwrap_or("");
+                .unwrap_or_default();
             // attachments
             let attachments_selector = Selector::parse(".collapse-open.noprint").unwrap();
             let attachments = e
@@ -877,7 +877,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                     e.select(&Selector::parse("a:nth-of-type(2)").unwrap())
                         .for_each(|e| {
                             //<a href="file_download.php?file_id=2365&amp;type=bug">image.png</a>&#32;(179,667&#32;字节)&#32;&nbsp;&nbsp;
-                            url = format!("{}",e.value().attr("href").unwrap_or("").replace("&amp;", "&"));
+                            url = format!("{}",e.value().attr("href").unwrap_or_default().replace("&amp;", "&"));
                             name = e.inner_html().trim().to_string();
                             e.next_sibling().map(|sibling| {
                                 if sibling.value().is_text() {

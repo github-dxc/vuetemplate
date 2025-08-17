@@ -34,3 +34,15 @@ export const byteArrayToBase64Image = function(byteArray, fileName) {
   // Return the complete data URL.
   return `data:${mimeType};base64,${base64}`;
 }
+
+// 格式化时间戳
+export const formatDate = (timestamp) => {
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
