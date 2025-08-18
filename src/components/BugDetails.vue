@@ -254,6 +254,7 @@ const IMAGE = ref('path/to/IMAGE.png');
 }
 
 .generated-design .vector-wrapper {
+  color: #6b7280;
   height: 12px;
   left: 120px;
   position: absolute;
