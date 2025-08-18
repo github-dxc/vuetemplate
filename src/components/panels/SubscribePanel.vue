@@ -105,7 +105,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="160" align="center" header-align="center">
+        <el-table-column label="快捷操作" width="160" align="center" header-align="center">
           <template #default="scope">
             <el-dropdown 
               split-button 
@@ -149,9 +149,9 @@
 
     <!-- 明细展示 -->
     <div v-if="bugDetailsVisible">
-      <el-dialog v-model="bugDetailsVisible" :title="bugDetailsTitle" width="900">
+      <el-drawer v-model="bugDetailsVisible" :title="bugDetailsTitle" :show-close="false" direction="rtl" size="70%">
         <BugDetails :bug-details="bugDetails"/>
-      </el-dialog>
+      </el-drawer>
     </div>
   </div>
 </template>
@@ -167,7 +167,6 @@ import { useUserStore } from "../../store";
 import BugDetails from "../BugDetails.vue";
 
 //------------------data-------------------//
-
 const userStore = useUserStore();
 const router = useRouter()
 const bugList = ref([]);
@@ -380,7 +379,7 @@ async function openImagePreview(bug_id) {
 
 // 打开bug详情
 async function openBugDetails(bug_id,title) {
-  bugDetailsTitle.value = `${bug_id} - ${title}` || "Bug明细";
+  bugDetailsTitle.value = `【${bug_id}】${title}` || "Bug明细";
   bugDetailsVisible.value = true;
   // 发送图片信息列表给图片预览窗口
   apiBugInfo(bug_id).then(result => {
@@ -698,5 +697,9 @@ listen('sub_bugs', (event) => {
 :deep(.el-tag--info) {
   background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
   color: white;
+}
+
+:deep(.el-drawer__header) {
+  margin-bottom: 0px !important;
 }
 </style>

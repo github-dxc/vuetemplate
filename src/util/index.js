@@ -46,3 +46,10 @@ export const formatDate = (timestamp) => {
     minute: '2-digit'
   });
 };
+
+export const getFirstChar = function(name) {
+  if (!name || typeof name !== 'string') {
+    return '';
+  }
+  return name.trim().charAt(0);
+}

@@ -1,92 +1,120 @@
 <template>
-  <el-container class="list-container">
-    <el-container>
-      <!-- Header: 基本信息 -->
-      <el-header class="bug-header" height="180px">
-        <el-card class="header-card" shadow="hover">
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <div class="info-item">
-                <el-icon>
-                  <User />
-                </el-icon>
-                <span class="label">报告员:</span>
-                <span class="value">{{ bugData.reporter }}</span>
-              </div>
-              <div class="info-item">
-                <el-icon>
-                  <Calendar />
-                </el-icon>
-                <span class="label">提交时间:</span>
-                <span class="value">{{ formatDate(bugData.date_submitted) }}</span>
-              </div>
-              <div class="info-item">
-                <el-icon>
-                  <PriceTag />
-                </el-icon>
-                <span class="label">标签:</span>
-                <span class="value">{{ bugData.tags || '无' }}</span>
-              </div>
-            </el-col>
-            <el-col :span="12">
-              <div class="info-item">
-                <el-icon>
-                  <Document />
-                </el-icon>
-                <span class="label">描述:</span>
-                <p class="description">{{ bugData.description }}</p>
-              </div>
-              <div class="info-item">
-                <el-icon>
-                  <List />
-                </el-icon>
-                <span class="label">重现步骤:</span>
-                <p class="steps">{{ bugData.steps_to_reproduce }}</p>
-              </div>
-            </el-col>
-          </el-row>
-        </el-card>
-      </el-header>
-      <el-main>
-        <el-card>
-          <div v-for="(item, index) in dataSource" :key="index" class="list-item">
-            <div class="item-content">
-              <el-row :gutter="20">
-                <el-col :span="18">
-                  <div class="item-meta">
-                    <el-avatar :size="48" :src="item.avatar" />
-                    <div class="meta-content">
-                      <h4 class="item-title">{{ item.title }}</h4>
-                      <p class="item-description">{{ item.description }}</p>
-                    </div>
-                  </div>
-                  <div class="item-actions">
-                    <span class="action-item"><el-icon><i class="el-icon-star-on"></i></el-icon>{{ item.index }}</span>
-                  </div>
-                </el-col>
-                <el-col :span="6">
-                  <div class="image-area">
-                    <img :src="item.imageSrc" alt="item image" />
-                  </div>
-                </el-col>
-              </el-row>
-            </div>
+  <div class="generated-design">
+    <div class="overlap-group">
+      <div class="overlap">
+        <div class="div">
+          <div class="rectangle" />
+          <div class="frame">
+            <div class="text-wrapper-0">{{ getFirstChar(bugInfo.reporter) }}</div>
           </div>
-        </el-card>
-      </el-main>
-    </el-container>
-
-    <el-aside width="200px">
-      <el-card>
-        操作历史
-      </el-card>
-    </el-aside>
-  </el-container>
+          <div class="rectangle-2" />
+        </div>
+        <div class="text-wrapper">{{ bugInfo.reporter }}</div>
+        <div class="text-wrapper-3">报告员</div>
+        <div class="rectangle-3" />
+        <div class="vector-wrapper">
+          <el-icon class="img">
+            <Briefcase />
+          </el-icon>
+        </div>
+        <div class="text-wrapper-4">活跃</div>
+        <div class="text-wrapper-5">提交时间</div>
+        <div class="text-wrapper-6">{{ formatDate(bugInfo.date_submitted) }}</div>
+        <div class="overlap-2">
+          <div class="text-wrapper-7">高优先级</div>
+        </div>
+        <div class="overlap-3">
+          <div class="text-wrapper-8">UI问题</div>
+        </div>
+        <div class="overlap-4">
+          <div class="text-wrapper-9">前端</div>
+        </div>
+        <div class="text-wrapper-10">问题描述</div>
+        <div class="text-wrapper-11">
+          在用户登录页面，当输入错误的用户名和密码时，错误提示信息没有正确显示。页面只是简单地刷新，没有给用户任何反馈，导致用户体验很差。这个问题在Chrome和Firefox浏览器上都能重现。
+        </div>
+        <div class="text-wrapper-12">重现步骤</div>
+        <div class="text-wrapper-13">展开</div>
+        <div class="img-wrapper">
+          <el-icon class="vector-2">
+            <ArrowDownBold />
+          </el-icon>
+        </div>
+        <div class="text-wrapper-14">点击展开查看详细的重现步骤...</div>
+        <div class="overlap-5">
+          <div class="frame-2">
+            <el-icon class="vector-3">
+              <Edit />
+            </el-icon>
+          </div>
+          <div class="text-wrapper-15">最后更新: 2024-01-15</div>
+        </div>
+      </div>
+      <div class="overlap-8">
+        <div class="overlap-9">
+          <div class="frame-3">
+            <el-icon class="vector-4" :size="20">
+              <Comment />
+            </el-icon>
+          </div>
+          <div class="text-wrapper-18">评论 (5)</div>
+        </div>
+        <div class="overlap-10">
+          <div class="overlap-11">
+            <div class="text-wrapper-19">李</div>
+          </div>
+          <div class="text-wrapper-20">李四</div>
+          <div class="text-wrapper-21">2024-01-15 15:45</div>
+          <div class="text-wrapper-22">
+            我也遇到了同样的问题，在Safari浏览器上也能重现。建议检查一下前端的错误处理逻辑。
+          </div>
+        </div>
+        <div class="overlap-12">
+          <div class="overlap-13">
+            <div class="text-wrapper-23">王</div>
+          </div>
+          <div class="text-wrapper-20">王五</div>
+          <div class="text-wrapper-21">2024-01-15 16:20</div>
+          <div class="text-wrapper-22">
+            已经定位到问题了，是API返回的错误信息格式有变化，前端没有正确解析。附上相关截图：
+          </div>
+          <img class="IMAGE" alt="Image" :src="IMAGE" />
+        </div>
+        <div class="overlap-14">
+          <div class="rectangle-4" />
+          <div class="rectangle-5" />
+          <div class="text-wrapper-24">赵</div>
+          <div class="text-wrapper-25">赵六</div>
+          <div class="text-wrapper-26">2024-01-15 17:10</div>
+          <div class="text-wrapper-27">
+            我来负责修复这个问题。预计今天晚上就能提交修复代码。
+          </div>
+          <div class="rectangle-6" />
+          <div class="rectangle-7" />
+          <div class="text-wrapper-28">孙</div>
+          <div class="text-wrapper-29">孙七</div>
+          <div class="text-wrapper-30">2024-01-16 09:30</div>
+          <div class="text-wrapper-31">
+            测试环境已经修复了，可以验证一下。这是修复后的效果图：
+          </div>
+          <img class="IMAGE-2" alt="Image" :src="image1" />
+        </div>
+        <div class="overlap-15">
+          <div class="text-wrapper-32">周</div>
+        </div>
+        <div class="text-wrapper-33">周八</div>
+        <div class="text-wrapper-34">2024-01-16 14:15</div>
+        <div class="text-wrapper-35">
+          验证通过！现在错误提示显示正常了，用户体验得到了很大改善。可以关闭这个问题了。
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { reactive, ref, computed } from 'vue';
-import { formatDate } from '../util'
+import { ref, computed } from 'vue';
+import { formatDate, getFirstChar } from '../util';
 
 const props = defineProps({
   bugDetails: {
@@ -95,230 +123,784 @@ const props = defineProps({
     default: {}
   }
 });
-// 使用传入的数据，如果没有则使用示例数据
-const bugData = computed(() => {
-  return props.bugDetails || {
-    "bug_id": 1,
-    "project_id": "1",
-    "project": "测试项目",
-    "category_id": 1,
-    "view_state": 10,
-    "date_submitted": 1752508800,
-    "last_updated": 1754750538,
-    "reporter_id": 1,
-    "reporter": "administrator",
-    "handler_id": 1,
-    "handler": "administrator",
-    "priority": 30,
-    "severity": 50,
-    "reproducibility": 70,
-    "status": 80,
-    "resolution": 20,
-    "summary": "测试摘要",
-    "description": "测试描述1",
-    "additional_information": "附注",
-    "steps_to_reproduce": "问题步骤",
-    "tags": "没加标签.",
-    "bugnote_notes": [
-      {
-        "note_id": 0,
-        "time": 1752508800,
-        "text": "",
-        "handler_id": 1,
-        "handler": "administrator",
-        "attachments": []
-      },
-      {
-        "note_id": 1,
-        "time": 1754668800,
-        "text": "cestasd",
-        "handler_id": 1,
-        "handler": "administrator",
-        "attachments": [
-          {
-            "size": 67078,
-            "url": "file_download.php?file_id=2&type=bug",
-            "name": "wechat_2025-08-09_224129_298.png"
-          }
-        ]
-      }
-    ],
-    "attachments": [],
-    "change_history": [
-      {
-        "bug_id": 1,
-        "updated_at": 1752508800,
-        "handler_id": 1,
-        "handler": "administrator",
-        "field": "新建问题",
-        "change": ""
-      },
-      {
-        "bug_id": 1,
-        "updated_at": 1752508800,
-        "handler_id": 1,
-        "handler": "administrator",
-        "field": "添加了以下文件：: 微信截图_20250715215845.png",
-        "change": ""
-      },
-      {
-        "bug_id": 1,
-        "updated_at": 1752595200,
-        "handler_id": 1,
-        "handler": "administrator",
-        "field": "分派给",
-        "change": "=> administrator"
-      },
-      {
-        "bug_id": 1,
-        "updated_at": 1752595200,
-        "handler_id": 1,
-        "handler": "administrator",
-        "field": "状态",
-        "change": "新建 => 已分配"
-      },
-      {
-        "bug_id": 1,
-        "updated_at": 1754323200,
-        "handler_id": 1,
-        "handler": "administrator",
-        "field": "描述已修改",
-        "change": "<a href=\"bug_revision_view_page.php?rev_id=2#r2\">查看修订历史</a>"
-      },
-      {
-        "bug_id": 1,
-        "updated_at": 1754409600,
-        "handler_id": 1,
-        "handler": "administrator",
-        "field": "状态",
-        "change": "已分配 => 已解决"
-      },
-      {
-        "bug_id": 1,
-        "updated_at": 1754409600,
-        "handler_id": 1,
-        "handler": "administrator",
-        "field": "处理状况",
-        "change": "未处理 => 已修正"
-      },
-      {
-        "bug_id": 1,
-        "updated_at": 1754668800,
-        "handler_id": 1,
-        "handler": "administrator",
-        "field": "添加了以下文件：: wechat_2025-08-09_224129_298.png",
-        "change": ""
-      },
-      {
-        "bug_id": 1,
-        "updated_at": 1754668800,
-        "handler_id": 1,
-        "handler": "administrator",
-        "field": "注释已添加: 0000001",
-        "change": ""
-      }
-    ]
-  };
-});
 
-const names = ['Socrates', 'Balzac', 'Plato'];
-const avatarSrc = [
-  '//p1-arco.byteimg.com/tos-cn-i-uwbnlip3yd/a8c8cdb109cb051163646151a4a5083b.png~tplv-uwbnlip3yd-webp.webp',
-  '//p1-arco.byteimg.com/tos-cn-i-uwbnlip3yd/e278888093bef8910e829486fb45dd69.png~tplv-uwbnlip3yd-webp.webp',
-  '//p1-arco.byteimg.com/tos-cn-i-uwbnlip3yd/9eeb1800d9b78349b24682c3518ac4a3.png~tplv-uwbnlip3yd-webp.webp',
-];
-const imageSrc = [
-  '//p1-arco.byteimg.com/tos-cn-i-uwbnlip3yd/29c1f9d7d17c503c5d7bf4e538cb7c4f.png~tplv-uwbnlip3yd-webp.webp',
-  '//p1-arco.byteimg.com/tos-cn-i-uwbnlip3yd/04d7bc31dd67dcdf380bc3f6aa07599f.png~tplv-uwbnlip3yd-webp.webp',
-  '//p1-arco.byteimg.com/tos-cn-i-uwbnlip3yd/1f61854a849a076318ed527c8fca1bbf.png~tplv-uwbnlip3yd-webp.webp',
-];
+const bugInfo = computed(() => props.bugDetails);
 
-const dataSource = new Array(3).fill(null).map((_, index) => {
-  return {
-    index: index,
-    avatar: avatarSrc[index % avatarSrc.length],
-    title: names[index % names.length],
-    description:
-      'Beijing ByteDance Technology Co., Ltd. is an enterprise located in China. ByteDance has products such as TikTok, Toutiao, volcano video and Douyin (the Chinese version of TikTok).',
-    imageSrc: imageSrc[index % imageSrc.length],
-  };
-});
-
+const IMAGE = ref('path/to/IMAGE.png');
 </script>
 
 <style scoped>
-.list-container {
-  padding: 20px;
+.generated-design {
+  align-items: start;
+  background-color: #ffffff;
+  display: grid;
+  justify-items: center;
 }
 
-.list-item {
-  padding: 20px 0;
-  border-bottom: 1px solid #e9e9eb;
+.generated-design .overlap-group {
+  background-color: #ffffff;
+  height: 100%;
+  position: relative;
+  width: 100%;
 }
 
-.list-item:last-child {
-  border-bottom: none;
+.generated-design .overlap {
+  background-color: #ffffff;
+  border: 1px solid;
+  border-color: #e5e7eb;
+  border-radius: 8px;
+  box-shadow:
+    0px 0px 0px transparent, 0px 0px 0px transparent, 0px 0px 0px transparent, 0px 0px 0px transparent, 0px 1px 2px #0000000f, 0px 1px 3px #0000001a;
+  height: 440px;
+  left: 10px;
+  right: 10px;
+  position: absolute;
+  width: 780px;
 }
 
-.item-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.generated-design .div {
+  height: 52px;
+  left: 25px;
+  position: absolute;
+  top: 31px;
+  width: 52px;
 }
 
-.item-meta {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 10px;
+.generated-design .rectangle {
+  background: linear-gradient(90deg,
+      rgba(29, 78, 216, 1) 100%,
+      rgba(59, 130, 246, 1) 0%);
+  border-radius: 33554400px;
+  box-shadow:
+    0px 0px 0px transparent, 0px 0px 0px transparent, 0px 0px 0px transparent, 0px 0px 0px transparent, 0px 2px 8px #3b82f64c;
+  height: 48px;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 48px;
 }
 
-.meta-content {
-  margin-left: 10px;
+.generated-design .frame {
+  height: 24px;
+  left: 12px;
+  position: absolute;
+  top: 12px;
+  width: 24px;
 }
 
-.item-title {
-  font-size: 16px;
-  font-weight: bold;
-  margin: 0 0 5px 0;
+.generated-design .vector {
+  height: 18px;
+  left: 4px;
+  position: absolute;
+  top: 4px;
+  width: 17px;
 }
 
-.item-description {
+.generated-design .rectangle-2 {
+  background-color: #10b981;
+  border: 2px solid;
+  border-color: #ffffff;
+  border-radius: 33554400px;
+  height: 16px;
+  left: 36px;
+  position: absolute;
+  top: 36px;
+  width: 16px;
+}
+
+.generated-design .text-wrapper-0 {
+  color: #ffffff;
+  font-family: "Inter-SemiBold", Helvetica;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 28px;
+  margin-left: 4px;
+  position: absolute;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper {
+  color: #111827;
+  font-family: "Inter-SemiBold", Helvetica;
+  font-size: 18px;
+  font-weight: 600;
+  left: 88px;
+  letter-spacing: 0;
+  line-height: 28px;
+  position: absolute;
+  top: 26px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-3 {
+  color: #6b7280;
+  font-family: "Inter-Regular", Helvetica;
   font-size: 14px;
-  color: #606266;
-  margin: 0;
+  font-weight: 400;
+  left: 88px;
+  letter-spacing: 0;
+  line-height: 21px;
+  position: absolute;
+  top: 61px;
+  white-space: nowrap;
 }
 
-.item-actions {
-  display: flex;
-  align-items: center;
-  margin-top: 10px;
+.generated-design .rectangle-3 {
+  background-color: #d1d5db;
+  border-radius: 33554400px;
+  height: 4px;
+  left: 138px;
+  position: absolute;
+  top: 71px;
+  width: 4px;
 }
 
-.action-item {
-  display: flex;
-  align-items: center;
-  margin-right: 20px;
-  color: #909399;
-  cursor: pointer;
+.generated-design .vector-wrapper {
+  height: 12px;
+  left: 150px;
+  position: absolute;
+  top: 67px;
+  width: 12px;
 }
 
-.action-item .el-icon {
-  margin-right: 4px;
+.generated-design .img {
+  height: 14px;
+  left: 1px;
+  position: absolute;
+  width: 14px;
+  bottom: 1px;
 }
 
-.image-area {
-  width: 183px;
-  height: 119px;
-  border-radius: 2px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.generated-design .text-wrapper-4 {
+  color: #6b7280;
+  font-family: "Inter-Regular", Helvetica;
+  font-size: 14px;
+  font-weight: 400;
+  left: 166px;
+  letter-spacing: 0;
+  line-height: 21px;
+  position: absolute;
+  top: 61px;
+  white-space: nowrap;
 }
 
-.image-area img {
-  max-width: 100%;
-  height: auto;
-  display: block;
+.generated-design .text-wrapper-5 {
+  color: #6b7280;
+  font-family: "Inter-Regular", Helvetica;
+  font-size: 14px;
+  font-weight: 400;
+  left: 700px;
+  letter-spacing: 0;
+  line-height: 21px;
+  position: absolute;
+  text-align: right;
+  top: 23px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-6 {
+  color: #111827;
+  font-family: "Inter-Medium", Helvetica;
+  font-size: 16px;
+  font-weight: 500;
+  left: 630px;
+  letter-spacing: 0;
+  line-height: 24px;
+  position: absolute;
+  text-align: right;
+  top: 48px;
+  white-space: nowrap;
+}
+
+.generated-design .overlap-2 {
+  background-color: #fef2f2;
+  border: 1px solid;
+  border-color: #fecaca;
+  border-radius: 33554400px;
+  height: 34px;
+  left: 25px;
+  position: absolute;
+  top: 108px;
+  width: 74px;
+}
+
+.generated-design .text-wrapper-7 {
+  color: #dc2626;
+  font-family: "Inter-Medium", Helvetica;
+  font-size: 12px;
+  font-weight: 500;
+  left: 12px;
+  letter-spacing: 0;
+  line-height: 18px;
+  position: absolute;
+  top: 8px;
+  white-space: nowrap;
+}
+
+.generated-design .overlap-3 {
+  background-color: #eff6ff;
+  border: 1px solid;
+  border-color: #dbeafe;
+  border-radius: 33554400px;
+  height: 34px;
+  left: 107px;
+  position: absolute;
+  top: 108px;
+  width: 62px;
+}
+
+.generated-design .text-wrapper-8 {
+  color: #2563eb;
+  font-family: "Inter-Medium", Helvetica;
+  font-size: 12px;
+  font-weight: 500;
+  left: 12px;
+  letter-spacing: 0;
+  line-height: 18px;
+  position: absolute;
+  top: 8px;
+  white-space: nowrap;
+}
+
+.generated-design .overlap-4 {
+  background-color: #f0fdf4;
+  border: 1px solid;
+  border-color: #bbf7d0;
+  border-radius: 33554400px;
+  height: 34px;
+  left: 177px;
+  position: absolute;
+  top: 108px;
+  width: 50px;
+}
+
+.generated-design .text-wrapper-9 {
+  color: #16a34a;
+  font-family: "Inter-Medium", Helvetica;
+  font-size: 12px;
+  font-weight: 500;
+  left: 12px;
+  letter-spacing: 0;
+  line-height: 18px;
+  position: absolute;
+  top: 8px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-10 {
+  color: #111827;
+  font-family: "Inter-SemiBold", Helvetica;
+  font-size: 16px;
+  font-weight: 600;
+  left: 24px;
+  letter-spacing: 0;
+  line-height: 24px;
+  position: absolute;
+  top: 164px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-11 {
+  color: #374151;
+  font-family: "Inter-Regular", Helvetica;
+  font-size: 16px;
+  font-weight: 400;
+  left: 24px;
+  letter-spacing: 0;
+  line-height: 26px;
+  position: absolute;
+  top: 203px;
+  width: 750px;
+}
+
+.generated-design .text-wrapper-12 {
+  color: #111827;
+  font-family: "Inter-SemiBold", Helvetica;
+  font-size: 16px;
+  font-weight: 600;
+  left: 24px;
+  letter-spacing: 0;
+  line-height: 24px;
+  position: absolute;
+  top: 276px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-13 {
+  color: #2563eb;
+  font-family: "Inter-Medium", Helvetica;
+  font-size: 14px;
+  font-weight: 500;
+  left: 700px;
+  letter-spacing: 0;
+  line-height: 21px;
+  position: absolute;
+  text-align: center;
+  top: 278px;
+  white-space: nowrap;
+}
+
+.generated-design .img-wrapper {
+  height: 16px;
+  left: 740px;
+  position: absolute;
+  top: 281px;
+  width: 16px;
+}
+
+.generated-design .vector-2 {
+  height: 16px;
+  left: 2px;
+  position: absolute;
+  bottom: 2px;
+  width: 16px;
+}
+
+.generated-design .text-wrapper-14 {
+  color: #6b7280;
+  font-family: "Inter-Regular", Helvetica;
+  font-size: 14px;
+  font-weight: 400;
+  left: 24px;
+  letter-spacing: 0;
+  line-height: 21px;
+  position: absolute;
+  top: 312px;
+  white-space: nowrap;
+}
+
+.generated-design .overlap-5 {
+  border-color: #e5e7eb;
+  border-top-style: solid;
+  border-top-width: 1px;
+  height: 56px;
+  left: 25px;
+  position: absolute;
+  top: 359px;
+  width: 720px;
+}
+
+.generated-design .frame-2 {
+  height: 16px;
+  left: -1px;
+  position: absolute;
+  top: 28px;
+  width: 16px;
+}
+
+.generated-design .vector-3 {
+  height: 15px;
+  left: 2px;
+  position: absolute;
+  bottom: 3px;
+  width: 15px;
+}
+
+.generated-design .text-wrapper-15 {
+  color: #6b7280;
+  font-family: "Inter-Regular", Helvetica;
+  font-size: 14px;
+  font-weight: 400;
+  left: 23px;
+  letter-spacing: 0;
+  line-height: 21px;
+  position: absolute;
+  top: 24px;
+  white-space: nowrap;
+}
+
+.generated-design .overlap-8 {
+  background-color: #ffffff;
+  border: 1px solid;
+  border-color: #e5e7eb;
+  border-radius: 8px;
+  box-shadow:
+    0px 0px 0px transparent, 0px 0px 0px transparent, 0px 0px 0px transparent, 0px 0px 0px transparent, 0px 1px 2px #0000000f, 0px 1px 3px #0000001a;
+  height: 913px;
+  left: 10px;
+  right: 10px;
+  position: absolute;
+  top: 464px;
+  width: 780px;
+}
+
+.generated-design .overlap-9 {
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  border-color: #e5e7eb;
+  height: 76px;
+  left: 1px;
+  position: absolute;
+  top: 1px;
+  width: 780px;
+}
+
+.generated-design .frame-3 {
+  height: 20px;
+  left: 23px;
+  position: absolute;
+  top: 27px;
+  width: 20px;
+}
+
+.generated-design .vector-4 {
+  height: 20px;
+  left: 2px;
+  position: absolute;
+  bottom: 2px;
+  width: 20px;
+}
+
+.generated-design .text-wrapper-18 {
+  color: #111827;
+  font-family: "Inter-SemiBold", Helvetica;
+  font-size: 18px;
+  font-weight: 600;
+  left: 55px;
+  letter-spacing: 0;
+  line-height: 27px;
+  position: absolute;
+  top: 22px;
+  white-space: nowrap;
+}
+
+.generated-design .overlap-10 {
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  border-color: #f3f4f6;
+  height: 97px;
+  left: 1px;
+  position: absolute;
+  top: 77px;
+  width: 720px;
+}
+
+.generated-design .overlap-11 {
+  background-color: #eff6ff;
+  border-radius: 33554400px;
+  height: 32px;
+  left: 24px;
+  position: absolute;
+  top: 24px;
+  width: 32px;
+}
+
+.generated-design .text-wrapper-19 {
+  color: #2563eb;
+  font-family: "Inter-SemiBold", Helvetica;
+  font-size: 14px;
+  font-weight: 600;
+  left: 9px;
+  letter-spacing: 0;
+  line-height: 21px;
+  position: absolute;
+  top: 5px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-20 {
+  color: #111827;
+  font-family: "Inter-Medium", Helvetica;
+  font-size: 14px;
+  font-weight: 500;
+  left: 67px;
+  letter-spacing: 0;
+  line-height: 21px;
+  position: absolute;
+  top: 22px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-21 {
+  color: #6b7280;
+  font-family: "Inter-Regular", Helvetica;
+  font-size: 12px;
+  font-weight: 400;
+  left: 103px;
+  letter-spacing: 0;
+  line-height: 18px;
+  position: absolute;
+  top: 23px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-22 {
+  color: #374151;
+  font-family: "Inter-Regular", Helvetica;
+  font-size: 14px;
+  font-weight: 400;
+  left: 67px;
+  letter-spacing: 0;
+  line-height: 22.8px;
+  position: absolute;
+  top: 46px;
+  white-space: nowrap;
+}
+
+.generated-design .overlap-12 {
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  border-color: #f3f4f6;
+  height: 263px;
+  left: 1px;
+  position: absolute;
+  top: 174px;
+  width: 720px;
+}
+
+.generated-design .overlap-13 {
+  background-color: #f0fdf4;
+  border-radius: 33554400px;
+  height: 32px;
+  left: 24px;
+  position: absolute;
+  top: 24px;
+  width: 32px;
+}
+
+.generated-design .text-wrapper-23 {
+  color: #16a34a;
+  font-family: "Inter-SemiBold", Helvetica;
+  font-size: 14px;
+  font-weight: 600;
+  left: 9px;
+  letter-spacing: 0;
+  line-height: 21px;
+  position: absolute;
+  top: 4px;
+  white-space: nowrap;
+}
+
+.generated-design .IMAGE {
+  height: 154px;
+  left: 67px;
+  position: absolute;
+  top: 83px;
+  width: 304px;
+}
+
+.generated-design .overlap-14 {
+  height: 379px;
+  left: 1px;
+  position: absolute;
+  top: 437px;
+  width: 720px;
+}
+
+.generated-design .rectangle-4 {
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  border-color: #f3f4f6;
+  height: 97px;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 720px;
+}
+
+.generated-design .rectangle-5 {
+  background-color: #fef2f2;
+  border-radius: 33554400px;
+  height: 32px;
+  left: 24px;
+  position: absolute;
+  top: 24px;
+  width: 32px;
+}
+
+.generated-design .text-wrapper-24 {
+  color: #dc2626;
+  font-family: "Inter-SemiBold", Helvetica;
+  font-size: 14px;
+  font-weight: 600;
+  left: 33px;
+  letter-spacing: 0;
+  line-height: 21px;
+  position: absolute;
+  top: 28px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-25 {
+  color: #111827;
+  font-family: "Inter-Medium", Helvetica;
+  font-size: 14px;
+  font-weight: 500;
+  left: 68px;
+  letter-spacing: 0;
+  line-height: 21px;
+  position: absolute;
+  top: 23px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-26 {
+  color: #6b7280;
+  font-family: "Inter-Regular", Helvetica;
+  font-size: 12px;
+  font-weight: 400;
+  left: 104px;
+  letter-spacing: 0;
+  line-height: 18px;
+  position: absolute;
+  top: 24px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-27 {
+  color: #374151;
+  font-family: "Inter-Regular", Helvetica;
+  font-size: 14px;
+  font-weight: 400;
+  left: 68px;
+  letter-spacing: 0;
+  line-height: 22.8px;
+  position: absolute;
+  top: 47px;
+  white-space: nowrap;
+}
+
+.generated-design .rectangle-6 {
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  border-color: #f3f4f6;
+  height: 283px;
+  left: 0;
+  position: absolute;
+  top: 96px;
+  width: 720px;
+}
+
+.generated-design .rectangle-7 {
+  background-color: #f0f9ff;
+  border-radius: 33554400px;
+  height: 32px;
+  left: 24px;
+  position: absolute;
+  top: 120px;
+  width: 32px;
+}
+
+.generated-design .text-wrapper-28 {
+  color: #0ea5e9;
+  font-family: "Inter-SemiBold", Helvetica;
+  font-size: 14px;
+  font-weight: 600;
+  left: 33px;
+  letter-spacing: 0;
+  line-height: 21px;
+  position: absolute;
+  top: 125px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-29 {
+  color: #111827;
+  font-family: "Inter-Medium", Helvetica;
+  font-size: 14px;
+  font-weight: 500;
+  left: 68px;
+  letter-spacing: 0;
+  line-height: 21px;
+  position: absolute;
+  top: 119px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-30 {
+  color: #6b7280;
+  font-family: "Inter-Regular", Helvetica;
+  font-size: 12px;
+  font-weight: 400;
+  left: 104px;
+  letter-spacing: 0;
+  line-height: 18px;
+  position: absolute;
+  top: 120px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-31 {
+  color: #374151;
+  font-family: "Inter-Regular", Helvetica;
+  font-size: 14px;
+  font-weight: 400;
+  left: 68px;
+  letter-spacing: 0;
+  line-height: 22.8px;
+  position: absolute;
+  top: 143px;
+  white-space: nowrap;
+}
+
+.generated-design .IMAGE-2 {
+  height: 174px;
+  left: 68px;
+  position: absolute;
+  top: 180px;
+  width: 288px;
+}
+
+.generated-design .overlap-15 {
+  background-color: #fef3c7;
+  border-radius: 33554400px;
+  height: 32px;
+  left: 25px;
+  position: absolute;
+  top: 840px;
+  width: 32px;
+}
+
+.generated-design .text-wrapper-32 {
+  color: #d97706;
+  font-family: "Inter-SemiBold", Helvetica;
+  font-size: 14px;
+  font-weight: 600;
+  left: 9px;
+  letter-spacing: 0;
+  line-height: 21px;
+  position: absolute;
+  top: 5px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-33 {
+  color: #111827;
+  font-family: "Inter-Medium", Helvetica;
+  font-size: 14px;
+  font-weight: 500;
+  left: 68px;
+  letter-spacing: 0;
+  line-height: 21px;
+  position: absolute;
+  top: 838px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-34 {
+  color: #6b7280;
+  font-family: "Inter-Regular", Helvetica;
+  font-size: 12px;
+  font-weight: 400;
+  left: 104px;
+  letter-spacing: 0;
+  line-height: 18px;
+  position: absolute;
+  top: 839px;
+  white-space: nowrap;
+}
+
+.generated-design .text-wrapper-35 {
+  color: #374151;
+  font-family: "Inter-Regular", Helvetica;
+  font-size: 14px;
+  font-weight: 400;
+  left: 68px;
+  letter-spacing: 0;
+  line-height: 22.8px;
+  position: absolute;
+  top: 862px;
+  white-space: nowrap;
 }
 </style>
