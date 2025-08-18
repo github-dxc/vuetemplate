@@ -1,7 +1,7 @@
 use crate::enums::*;
 use crate::model::*;
 
-use chrono::{Utc, NaiveDate, TimeZone};
+use chrono::{Utc, NaiveDateTime, TimeZone};
 use chrono_tz::Asia::Shanghai;
 use log::info;
 use reqwest::cookie::{CookieStore, Jar};
@@ -543,10 +543,10 @@ pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<
                 .find_map(|e| {
                     let date_str = e.inner_html();
                     // 解析为 NaiveDate
-                    let date = NaiveDate::parse_from_str(date_str.as_str(), "%Y-%m-%d").ok()?;
+                    let date = NaiveDateTime::parse_from_str(date_str.as_str(), "%Y-%m-%d").ok()?;
                     // 设为上海时区的0点
                     let datetime = Shanghai
-                        .from_local_datetime(&date.and_hms_opt(0, 0, 0)?)
+                        .from_local_datetime(&date)
                         .unwrap();
                     // 转为时间戳（秒）
                     Some(datetime.timestamp())
@@ -561,10 +561,10 @@ pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<
                 .find_map(|e| {
                     let date_str = e.inner_html();
                     // 解析为 NaiveDate
-                    let date = NaiveDate::parse_from_str(date_str.as_str(), "%Y-%m-%d").ok()?;
+                    let date = NaiveDateTime::parse_from_str(date_str.as_str(), "%Y-%m-%d").ok()?;
                     // 设为上海时区的0点
                     let datetime = Shanghai
-                        .from_local_datetime(&date.and_hms_opt(0, 0, 0)?)
+                        .from_local_datetime(&date)
                         .unwrap();
                     // 转为时间戳（秒）
                     Some(datetime.timestamp())
@@ -654,10 +654,10 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
         .find_map(|e| {
             let date_str = e.inner_html();
             // 解析为 NaiveDate
-            let date = NaiveDate::parse_from_str(date_str.as_str(), "%Y-%m-%d %H:%M").ok()?;
+            let date = NaiveDateTime::parse_from_str(date_str.as_str(), "%Y-%m-%d %H:%M").ok()?;
             // 设为上海时区的0点
             let datetime = Shanghai
-                .from_local_datetime(&date.and_hms_opt(0, 0, 0)?)
+                .from_local_datetime(&date)
                 .unwrap();
             // 转为时间戳（秒）
             Some(datetime.timestamp())
@@ -849,10 +849,10 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                 .find_map(|e| {
                     let date_str = e.text().last().unwrap_or(&"").trim();
                     // 解析为 NaiveDate
-                    let date = NaiveDate::parse_from_str(date_str, "%Y-%m-%d %H:%M").ok()?;
+                    let date = NaiveDateTime::parse_from_str(date_str, "%Y-%m-%d %H:%M").ok()?;
                     // 设为上海时区的0点
                     let datetime = Shanghai
-                        .from_local_datetime(&date.and_hms_opt(0, 0, 0)?)
+                        .from_local_datetime(&date)
                         .unwrap();
                     // 转为时间戳（秒）
                     Some(datetime.timestamp())
@@ -921,10 +921,10 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                 .map(|e| {
                     let date_str = e.inner_html().trim().to_string();
                     // 解析为 NaiveDate
-                    let date = NaiveDate::parse_from_str(&date_str, "%Y-%m-%d %H:%M").ok()?;
+                    let date = NaiveDateTime::parse_from_str(&date_str, "%Y-%m-%d %H:%M").ok()?;
                     // 设为上海时区的0点
                     let datetime = Shanghai
-                        .from_local_datetime(&date.and_hms_opt(0, 0, 0)?)
+                        .from_local_datetime(&date)
                         .unwrap();
                     // 转为时间戳（秒）
                     Some(datetime.timestamp())

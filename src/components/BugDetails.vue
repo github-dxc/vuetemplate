@@ -2,52 +2,49 @@
   <div class="generated-design">
     <div class="overlap-group">
       <div class="overlap">
-        <div class="div">
+        <!--展示提交员信息-->
+        <div class="option_reporter">
           <div class="rectangle" />
           <div class="frame">
             <div class="text-wrapper-0">{{ getFirstChar(bugInfo.reporter) }}</div>
           </div>
           <div class="rectangle-2" />
+          <div class="text-wrapper">{{ bugInfo.reporter }}</div>
+          <div class="text-wrapper-3">报告员</div>
+          <div class="rectangle-3" />
+          <div class="vector-wrapper">
+            <el-icon >
+              <Briefcase />
+            </el-icon>
+          </div>
+          <div class="text-wrapper-4">活跃</div>
+          <div class="text-wrapper-5">提交时间</div>
+          <div class="text-wrapper-6">{{ formatDate(bugInfo.date_submitted) }}</div>
         </div>
-        <div class="text-wrapper">{{ bugInfo.reporter }}</div>
-        <div class="text-wrapper-3">报告员</div>
-        <div class="rectangle-3" />
-        <div class="vector-wrapper">
-          <el-icon class="img">
-            <Briefcase />
-          </el-icon>
+        <!--展示选项类状态-->
+        <div class="option_tags">
+          <el-button type="primary" plain round>高优先级</el-button>
+          <el-button type="success" plain round>UI问题</el-button>
+          <el-button type="info" plain round>UI问题</el-button>
+          <el-button type="warning" plain round>Warning</el-button>
+          <el-button type="danger" plain round>Danger</el-button>
         </div>
-        <div class="text-wrapper-4">活跃</div>
-        <div class="text-wrapper-5">提交时间</div>
-        <div class="text-wrapper-6">{{ formatDate(bugInfo.date_submitted) }}</div>
-        <div class="overlap-2">
-          <div class="text-wrapper-7">高优先级</div>
-        </div>
-        <div class="overlap-3">
-          <div class="text-wrapper-8">UI问题</div>
-        </div>
-        <div class="overlap-4">
-          <div class="text-wrapper-9">前端</div>
-        </div>
+        <!--展示描述和重现步骤-->
         <div class="text-wrapper-10">问题描述</div>
         <div class="text-wrapper-11">
-          在用户登录页面，当输入错误的用户名和密码时，错误提示信息没有正确显示。页面只是简单地刷新，没有给用户任何反馈，导致用户体验很差。这个问题在Chrome和Firefox浏览器上都能重现。
+          {{ bugInfo.description }}
         </div>
         <div class="text-wrapper-12">重现步骤</div>
-        <div class="text-wrapper-13">展开</div>
-        <div class="img-wrapper">
-          <el-icon class="vector-2">
-            <ArrowDownBold />
-          </el-icon>
+        <div class="text-wrapper-14">
+          {{ bugInfo.steps_to_reproduce }}
         </div>
-        <div class="text-wrapper-14">点击展开查看详细的重现步骤...</div>
         <div class="overlap-5">
           <div class="frame-2">
             <el-icon class="vector-3">
               <Edit />
             </el-icon>
           </div>
-          <div class="text-wrapper-15">最后更新: 2024-01-15</div>
+          <div class="text-wrapper-15">最后更新: {{ formatDate(bugInfo.last_updated) }}</div>
         </div>
       </div>
       <div class="overlap-8">
@@ -151,19 +148,19 @@ const IMAGE = ref('path/to/IMAGE.png');
   border-radius: 8px;
   box-shadow:
     0px 0px 0px transparent, 0px 0px 0px transparent, 0px 0px 0px transparent, 0px 0px 0px transparent, 0px 1px 2px #0000000f, 0px 1px 3px #0000001a;
-  height: 440px;
   left: 10px;
   right: 10px;
-  position: absolute;
+  position: relative;
   width: 780px;
+  height: 440px;
 }
 
-.generated-design .div {
+.generated-design .option_reporter {
   height: 52px;
   left: 25px;
-  position: absolute;
-  top: 31px;
-  width: 52px;
+  position: relative;
+  top: 30px;
+  width: 760px;
 }
 
 .generated-design .rectangle {
@@ -202,9 +199,9 @@ const IMAGE = ref('path/to/IMAGE.png');
   border-color: #ffffff;
   border-radius: 33554400px;
   height: 16px;
-  left: 36px;
+  left: 32px;
   position: absolute;
-  top: 36px;
+  top: 32px;
   width: 16px;
 }
 
@@ -225,11 +222,11 @@ const IMAGE = ref('path/to/IMAGE.png');
   font-family: "Inter-SemiBold", Helvetica;
   font-size: 18px;
   font-weight: 600;
-  left: 88px;
+  left: 58px;
   letter-spacing: 0;
   line-height: 28px;
   position: absolute;
-  top: 26px;
+  top: 2px;
   white-space: nowrap;
 }
 
@@ -238,11 +235,11 @@ const IMAGE = ref('path/to/IMAGE.png');
   font-family: "Inter-Regular", Helvetica;
   font-size: 14px;
   font-weight: 400;
-  left: 88px;
+  left: 58px;
   letter-spacing: 0;
   line-height: 21px;
   position: absolute;
-  top: 61px;
+  top: 34px;
   white-space: nowrap;
 }
 
@@ -250,26 +247,18 @@ const IMAGE = ref('path/to/IMAGE.png');
   background-color: #d1d5db;
   border-radius: 33554400px;
   height: 4px;
-  left: 138px;
+  left: 108px;
   position: absolute;
-  top: 71px;
+  top: 43px;
   width: 4px;
 }
 
 .generated-design .vector-wrapper {
   height: 12px;
-  left: 150px;
+  left: 120px;
   position: absolute;
-  top: 67px;
+  top: 35px;
   width: 12px;
-}
-
-.generated-design .img {
-  height: 14px;
-  left: 1px;
-  position: absolute;
-  width: 14px;
-  bottom: 1px;
 }
 
 .generated-design .text-wrapper-4 {
@@ -277,11 +266,11 @@ const IMAGE = ref('path/to/IMAGE.png');
   font-family: "Inter-Regular", Helvetica;
   font-size: 14px;
   font-weight: 400;
-  left: 166px;
+  left: 140px;
   letter-spacing: 0;
   line-height: 21px;
   position: absolute;
-  top: 61px;
+  top: 35px;
   white-space: nowrap;
 }
 
@@ -290,12 +279,12 @@ const IMAGE = ref('path/to/IMAGE.png');
   font-family: "Inter-Regular", Helvetica;
   font-size: 14px;
   font-weight: 400;
-  left: 700px;
+  left: 670px;
   letter-spacing: 0;
   line-height: 21px;
   position: absolute;
   text-align: right;
-  top: 23px;
+  top: 2px;
   white-space: nowrap;
 }
 
@@ -304,88 +293,19 @@ const IMAGE = ref('path/to/IMAGE.png');
   font-family: "Inter-Medium", Helvetica;
   font-size: 16px;
   font-weight: 500;
-  left: 630px;
+  left: 600px;
   letter-spacing: 0;
   line-height: 24px;
   position: absolute;
   text-align: right;
-  top: 48px;
+  top: 34px;
   white-space: nowrap;
 }
 
-.generated-design .overlap-2 {
-  background-color: #fef2f2;
-  border: 1px solid;
-  border-color: #fecaca;
-  border-radius: 33554400px;
-  height: 34px;
+.option_tags {
+  position: relative;
+  top: 50px;
   left: 25px;
-  position: absolute;
-  top: 108px;
-  width: 74px;
-}
-
-.generated-design .text-wrapper-7 {
-  color: #dc2626;
-  font-family: "Inter-Medium", Helvetica;
-  font-size: 12px;
-  font-weight: 500;
-  left: 12px;
-  letter-spacing: 0;
-  line-height: 18px;
-  position: absolute;
-  top: 8px;
-  white-space: nowrap;
-}
-
-.generated-design .overlap-3 {
-  background-color: #eff6ff;
-  border: 1px solid;
-  border-color: #dbeafe;
-  border-radius: 33554400px;
-  height: 34px;
-  left: 107px;
-  position: absolute;
-  top: 108px;
-  width: 62px;
-}
-
-.generated-design .text-wrapper-8 {
-  color: #2563eb;
-  font-family: "Inter-Medium", Helvetica;
-  font-size: 12px;
-  font-weight: 500;
-  left: 12px;
-  letter-spacing: 0;
-  line-height: 18px;
-  position: absolute;
-  top: 8px;
-  white-space: nowrap;
-}
-
-.generated-design .overlap-4 {
-  background-color: #f0fdf4;
-  border: 1px solid;
-  border-color: #bbf7d0;
-  border-radius: 33554400px;
-  height: 34px;
-  left: 177px;
-  position: absolute;
-  top: 108px;
-  width: 50px;
-}
-
-.generated-design .text-wrapper-9 {
-  color: #16a34a;
-  font-family: "Inter-Medium", Helvetica;
-  font-size: 12px;
-  font-weight: 500;
-  left: 12px;
-  letter-spacing: 0;
-  line-height: 18px;
-  position: absolute;
-  top: 8px;
-  white-space: nowrap;
 }
 
 .generated-design .text-wrapper-10 {
@@ -427,40 +347,10 @@ const IMAGE = ref('path/to/IMAGE.png');
   white-space: nowrap;
 }
 
-.generated-design .text-wrapper-13 {
-  color: #2563eb;
-  font-family: "Inter-Medium", Helvetica;
-  font-size: 14px;
-  font-weight: 500;
-  left: 700px;
-  letter-spacing: 0;
-  line-height: 21px;
-  position: absolute;
-  text-align: center;
-  top: 278px;
-  white-space: nowrap;
-}
-
-.generated-design .img-wrapper {
-  height: 16px;
-  left: 740px;
-  position: absolute;
-  top: 281px;
-  width: 16px;
-}
-
-.generated-design .vector-2 {
-  height: 16px;
-  left: 2px;
-  position: absolute;
-  bottom: 2px;
-  width: 16px;
-}
-
 .generated-design .text-wrapper-14 {
-  color: #6b7280;
+  color: #374151;
   font-family: "Inter-Regular", Helvetica;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
   left: 24px;
   letter-spacing: 0;
