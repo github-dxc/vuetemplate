@@ -4,7 +4,7 @@
       <div class="overlap">
         <!--展示提交员信息-->
         <div class="option_reporter">
-          <div class="rectangle" />
+          <div class="rectangle" :style="{backgroundColor: getColorByUnicPalette(getFirstChar(bugInfo.reporter)).textColor}"/>
           <div class="frame">
             <div class="text-wrapper-0">{{ getFirstChar(bugInfo.reporter) }}</div>
           </div>
@@ -30,13 +30,17 @@
           <el-button type="danger" plain round>Danger</el-button>
         </div>
         <!--展示描述和重现步骤-->
-        <div class="text-wrapper-10">问题描述</div>
-        <div class="text-wrapper-11">
-          {{ bugInfo.description }}
+        <div class="option_text">
+          <div class="text-wrapper-10">问题描述</div>
+          <div class="text-wrapper-11">
+            <div v-html="bugInfo.description"></div>
+          </div>
         </div>
-        <div class="text-wrapper-12">重现步骤</div>
-        <div class="text-wrapper-14">
-          {{ bugInfo.steps_to_reproduce }}
+        <div class="option_text">
+          <div class="text-wrapper-10">重现步骤</div>
+          <div class="text-wrapper-11">
+            <div v-html="bugInfo.steps_to_reproduce"></div>
+          </div>
         </div>
         <div class="overlap-5">
           <div class="frame-2">
@@ -57,8 +61,8 @@
           <div class="text-wrapper-18">评论 (5)</div>
         </div>
         <div class="overlap-10">
-          <div class="overlap-11">
-            <div class="text-wrapper-19">李</div>
+          <div class="overlap-11" :style="{backgroundColor: getColorByUnicPalette('李四').backgroundColor}">
+            <div class="text-wrapper-19" :style="{color: getColorByUnicPalette('李四').textColor}">李</div>
           </div>
           <div class="text-wrapper-20">李四</div>
           <div class="text-wrapper-21">2024-01-15 15:45</div>
@@ -111,7 +115,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { formatDate, getFirstChar } from '../util';
+import { formatDate, getFirstChar, getColorByUnicPalette } from '../util';
 
 const props = defineProps({
   bugDetails: {
@@ -164,9 +168,6 @@ const IMAGE = ref('path/to/IMAGE.png');
 }
 
 .generated-design .rectangle {
-  background: linear-gradient(90deg,
-      rgba(29, 78, 216, 1) 100%,
-      rgba(59, 130, 246, 1) 0%);
   border-radius: 33554400px;
   box-shadow:
     0px 0px 0px transparent, 0px 0px 0px transparent, 0px 0px 0px transparent, 0px 0px 0px transparent, 0px 2px 8px #3b82f64c;
@@ -267,7 +268,7 @@ const IMAGE = ref('path/to/IMAGE.png');
   font-family: "Inter-Regular", Helvetica;
   font-size: 14px;
   font-weight: 400;
-  left: 140px;
+  left: 138px;
   letter-spacing: 0;
   line-height: 21px;
   position: absolute;
@@ -305,6 +306,16 @@ const IMAGE = ref('path/to/IMAGE.png');
 
 .option_tags {
   position: relative;
+  width: 780px;
+  height: 32px;
+  top: 50px;
+  left: 25px;
+}
+
+.option_text {
+  position: relative;
+  width: 780px;
+  height: 150px;
   top: 50px;
   left: 25px;
 }
@@ -314,51 +325,25 @@ const IMAGE = ref('path/to/IMAGE.png');
   font-family: "Inter-SemiBold", Helvetica;
   font-size: 16px;
   font-weight: 600;
-  left: 24px;
+  left: 0px;
   letter-spacing: 0;
   line-height: 24px;
-  position: absolute;
-  top: 164px;
+  position: relative;
+  top: 10px;
   white-space: nowrap;
 }
 
 .generated-design .text-wrapper-11 {
   color: #374151;
   font-family: "Inter-Regular", Helvetica;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 400;
-  left: 24px;
+  left: 5px;
   letter-spacing: 0;
   line-height: 26px;
-  position: absolute;
-  top: 203px;
+  position: relative;
+  top: 20px;
   width: 750px;
-}
-
-.generated-design .text-wrapper-12 {
-  color: #111827;
-  font-family: "Inter-SemiBold", Helvetica;
-  font-size: 16px;
-  font-weight: 600;
-  left: 24px;
-  letter-spacing: 0;
-  line-height: 24px;
-  position: absolute;
-  top: 276px;
-  white-space: nowrap;
-}
-
-.generated-design .text-wrapper-14 {
-  color: #374151;
-  font-family: "Inter-Regular", Helvetica;
-  font-size: 16px;
-  font-weight: 400;
-  left: 24px;
-  letter-spacing: 0;
-  line-height: 21px;
-  position: absolute;
-  top: 312px;
-  white-space: nowrap;
 }
 
 .generated-design .overlap-5 {
