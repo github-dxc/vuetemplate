@@ -31,18 +31,19 @@
         </div>
         <!--展示描述和重现步骤-->
         <div class="option_text">
-          <div class="text-wrapper-10">问题描述</div>
-          <div class="text-wrapper-11">
+          <div class="text-field">问题描述</div>
+          <div class="text-content">
             <div v-html="bugInfo.description"></div>
           </div>
         </div>
         <div class="option_text">
-          <div class="text-wrapper-10">重现步骤</div>
-          <div class="text-wrapper-11">
+          <div class="text-field">重现步骤</div>
+          <div class="text-content">
             <div v-html="bugInfo.steps_to_reproduce"></div>
           </div>
         </div>
-        <div class="overlap-5">
+        <!--最后更新时间-->
+        <div class="option_last_updated">
           <div class="frame-2">
             <el-icon class="vector-3">
               <Edit />
@@ -51,7 +52,7 @@
           <div class="text-wrapper-15">最后更新: {{ formatDate(bugInfo.last_updated) }}</div>
         </div>
       </div>
-      <div class="overlap-8">
+      <div class="overlap-comment">
         <div class="overlap-9">
           <div class="frame-3">
             <el-icon class="vector-4" :size="20">
@@ -156,14 +157,13 @@ const IMAGE = ref('path/to/IMAGE.png');
   right: 10px;
   position: relative;
   width: 780px;
-  height: 440px;
 }
 
 .generated-design .option_reporter {
   height: 52px;
-  left: 25px;
+  margin-left: 25px;
   position: relative;
-  top: 30px;
+  margin-top: 30px;
   width: 760px;
 }
 
@@ -308,67 +308,65 @@ const IMAGE = ref('path/to/IMAGE.png');
   position: relative;
   width: 780px;
   height: 32px;
-  top: 50px;
-  left: 25px;
+  margin-top: 20px;
+  margin-left: 25px;
 }
 
 .option_text {
   position: relative;
   width: 780px;
-  height: 150px;
-  top: 50px;
-  left: 25px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  margin-left: 25px;
 }
 
-.generated-design .text-wrapper-10 {
+.generated-design .text-field {
   color: #111827;
   font-family: "Inter-SemiBold", Helvetica;
   font-size: 16px;
   font-weight: 600;
-  left: 0px;
   letter-spacing: 0;
   line-height: 24px;
   position: relative;
-  top: 10px;
   white-space: nowrap;
 }
 
-.generated-design .text-wrapper-11 {
+.generated-design .text-content {
   color: #374151;
   font-family: "Inter-Regular", Helvetica;
   font-size: 14px;
   font-weight: 400;
-  left: 5px;
+  margin-top: 10px;
+  margin-left: 5px;
   letter-spacing: 0;
   line-height: 26px;
   position: relative;
-  top: 20px;
   width: 750px;
 }
 
-.generated-design .overlap-5 {
+.generated-design .option_last_updated {
   border-color: #e5e7eb;
   border-top-style: solid;
   border-top-width: 1px;
   height: 56px;
-  left: 25px;
-  position: absolute;
-  top: 359px;
+  margin-left: 25px;
+  position: relative;
+  margin-top: 10px;
   width: 720px;
 }
 
 .generated-design .frame-2 {
   height: 16px;
   left: -1px;
-  position: absolute;
-  top: 28px;
+  position: relative;
+  top: 18px;
   width: 16px;
 }
 
 .generated-design .vector-3 {
   height: 15px;
   left: 2px;
-  position: absolute;
+  position: relative;
   bottom: 3px;
   width: 15px;
 }
@@ -382,11 +380,11 @@ const IMAGE = ref('path/to/IMAGE.png');
   letter-spacing: 0;
   line-height: 21px;
   position: absolute;
-  top: 24px;
+  top: 14px;
   white-space: nowrap;
 }
 
-.generated-design .overlap-8 {
+.generated-design .overlap-comment {
   background-color: #ffffff;
   border: 1px solid;
   border-color: #e5e7eb;
@@ -396,8 +394,8 @@ const IMAGE = ref('path/to/IMAGE.png');
   height: 913px;
   left: 10px;
   right: 10px;
-  position: absolute;
-  top: 464px;
+  position: relative;
+  top: 20px;
   width: 780px;
 }
 
