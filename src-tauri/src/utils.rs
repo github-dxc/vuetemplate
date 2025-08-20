@@ -873,10 +873,10 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                 .find_map(|e| e.text().find_map(|s|Some(s.trim_ascii())))
                 .unwrap_or_default();
             // attachments
-            let attachments_selector = Selector::parse(".collapse-open.noprint").unwrap();
+            let attachments_selector = Selector::parse("td.bugnote-note").unwrap();
             let attachments = e
                 .select(&attachments_selector)
-                .map(|e| {
+                .filter_map(|e| {
                     let mut size = 0;
                     let mut url = String::new();
                     let mut name = String::new();
@@ -902,7 +902,10 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                                 }
                             });
                         });
-                    FileInfo { size, url, name }
+                    if url.is_empty() || name.is_empty() {
+                        return None;
+                    };
+                    Some(FileInfo { size, url, name })
                 })
                 .collect();
             BugNote {

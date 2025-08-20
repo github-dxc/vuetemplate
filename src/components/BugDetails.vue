@@ -75,22 +75,11 @@
             <div v-html="bugNote.text"></div>
           </div>
           
-          <div v-for="img in bugNote.attachments" class="demo-image__error">
+          <div v-for="(img, index) in bugNote.attachments" class="demo-image__error">
             <div class="block">
               <span class="demonstration">{{ img.name }}</span>
-              <el-image :src="img.url_base64" />
+              <el-image :src="img.url_base64" @click="openImagePreview(index)"/>
             </div>
-          </div>
-        </div>
-
-        <div class="overlap-comment-detail">
-          <div class="overlap-background">
-            <div class="text-wrapper-surname">王</div>
-          </div>
-          <div class="text-wrapper-name">王五</div>
-          <div class="text-wrapper-time">2024-01-15 16:20</div>
-          <div class="text-wrapper-content">
-            已经定位到问题了，是API返回的错误信息格式有变化，前端没有正确解析。附上相关截图：
           </div>
         </div>
       </div>
@@ -102,6 +91,8 @@
 import { ref, computed, onMounted } from 'vue';
 import { formatDate, getFirstChar, getColorByUnicPalette, byteArrayToBase64Image } from '../util';
 import { apiBugInfo, imageBase64 } from '../api';
+import { createNewWindow } from '../windows';
+import { emit } from '@tauri-apps/api/event';
 
 const props = defineProps({
   bugId: {
@@ -113,6 +104,26 @@ const props = defineProps({
 
 const bugInfo = ref({});
 const bugNotes = ref({});
+
+// 打开图片预览
+const openImagePreview = async function(index) {
+  const DOMContentLoadedCallback = () => {
+    // 发送图片信息列表给图片预览窗口
+    emit('web_images', { attachments: bugInfo.value.attachments, bugnote_notes: bugInfo.value.bugnote_notes, show_index: index});
+  };
+  // label需要在capabilities/default.json中声明权限
+  await createNewWindow('image', {
+    url: '/image', // 窗口加载的URL
+    title: 'image',
+    width: 1600,
+    height: 900,
+    visible: false,
+    resizable: true,
+    center: true,
+    transparent: false,//背景是否透明
+    decorations: true,//是否有边框
+  },DOMContentLoadedCallback);
+}
 
 onMounted(() => {
   try {

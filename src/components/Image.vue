@@ -1,6 +1,6 @@
 <template>
   <div class="transparent-background">
-    <el-image-viewer v-if="showPreview" :url-list="srcList" show-progress :close-on-press-escape="true"
+    <el-image-viewer v-if="showPreview" :url-list="srcList" show-progress :close-on-press-escape="true" :initial-index="imageInitIndex"
       @close="closeHandler">
       <template #progress="{ activeIndex, total }">
         <span>{{ activeIndex + 1 + ' - ' + total }}</span>
@@ -68,17 +68,10 @@ document.addEventListener('DOMContentLoaded', () => {
   appWindow.emit('DOMContentLoaded', { message: 'DOM fully loaded and parsed' });
 });
 
-const srcList = ref([
-  // 'https://fuss10.elemecdn.com/a/3f/3302e58f9a181d2509f3dc0fa68b0jpeg.jpeg',
-  // 'https://fuss10.elemecdn.com/1/34/19aa98b1fcb2781c4fba33d850549jpeg.jpeg',
-  // 'https://fuss10.elemecdn.com/0/6f/e35ff375812e6b0020b6b4e8f9583jpeg.jpeg',
-  // 'https://fuss10.elemecdn.com/9/bb/e27858e973f5d7d3904835f46abbdjpeg.jpeg',
-  // 'https://fuss10.elemecdn.com/d/e6/c4d93a3805b3ce3f323f7974e6f78jpeg.jpeg',
-  // 'https://fuss10.elemecdn.com/3/28/bbf893f792f03a54408b3b7a7ebf0jpeg.jpeg',
-  // 'https://fuss10.elemecdn.com/2/11/6535bcfb26e4c79b48ddde44f4b6fjpeg.jpeg',
-])
+const srcList = ref([])
 const imageNotes = ref([]);
 const imageNames = ref([]);
+const imageInitIndex = ref(0);
 const showPreview = ref(true)
 const isMinimized = ref(false)
 
@@ -132,33 +125,35 @@ const changeWindowSize = () => {
 }
 
 // 监听展示的图片列表
-listen('web_images', (event) => {
+listen('web_images', async (event) => {
   console.log('web_images:', event.payload)
   const payloadValue = event.payload;
   srcList.value = [];
   imageNames.value = [];
   imageNotes.value = [];
+  imageInitIndex.value = payloadValue.show_index || 0;
   try {
-    payloadValue.attachments.forEach((item) => {
-      imageBase64(item.url).then((bytes) => {
+    for (let i = 0; i < payloadValue.attachments.length; i++) {
+      const item = payloadValue.attachments[i];
+      const bytes = await imageBase64(item.url);
+      if (bytes) {
+        srcList.value.push(byteArrayToBase64Image(bytes, item.name));
+        imageNotes.value.push("");
+        imageNames.value.push(item.name);
+      }
+    }
+    for (let i = 0; i < payloadValue.bugnote_notes.length; i++) {
+      const note = payloadValue.bugnote_notes[i];
+      for (let j = 0; j < note.attachments.length; j++) {
+        const item = note.attachments[j];
+        const bytes = await imageBase64(item.url);
         if (bytes) {
           srcList.value.push(byteArrayToBase64Image(bytes, item.name));
-          imageNotes.value.push("");
+          imageNotes.value.push(note.text);
           imageNames.value.push(item.name);
         }
-      });
-    });
-    payloadValue.bugnote_notes.forEach((i) => {
-      i.attachments.forEach((item) => {
-        imageBase64(item.url).then((bytes) => {
-          if (bytes) {
-            srcList.value.push(byteArrayToBase64Image(bytes, item.name));
-            imageNotes.value.push(i.text);
-            imageNames.value.push(item.name);
-          }
-        });
-      });
-    });
+      }
+    }
   } catch (error) {
     console.error('下载图片失败:', error);
     return;
