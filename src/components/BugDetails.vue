@@ -52,6 +52,8 @@
           <div class="text-wrapper-15">最后更新: {{ formatDate(bugInfo.last_updated) }}</div>
         </div>
       </div>
+
+      <!--评论区/时间线-->
       <div class="overlap-comment">
         <div class="overlap-9">
           <div class="frame-3">
@@ -59,55 +61,37 @@
               <Comment />
             </el-icon>
           </div>
-          <div class="text-wrapper-18">评论 (5)</div>
+          <div class="text-wrapper-comment">评论 (5)</div>
         </div>
-        <div class="overlap-10">
-          <div class="overlap-11" :style="{backgroundColor: getColorByUnicPalette('李四').backgroundColor}">
-            <div class="text-wrapper-19" :style="{color: getColorByUnicPalette('李四').textColor}">李</div>
+        <div v-for="bugNote in bugNotes" class="overlap-comment-detail">
+          <div class="overlap-background" :style="{backgroundColor: getColorByUnicPalette(getFirstChar(bugNote.handler)).backgroundColor}">
+            <div class="text-wrapper-surname" :style="{color: getColorByUnicPalette(getFirstChar(bugNote.handler)).textColor}">{{ getFirstChar(bugNote.handler) }}</div>
           </div>
-          <div class="text-wrapper-20">李四</div>
-          <div class="text-wrapper-21">2024-01-15 15:45</div>
-          <div class="text-wrapper-22">
-            我也遇到了同样的问题，在Safari浏览器上也能重现。建议检查一下前端的错误处理逻辑。
+          <div class="text-wrapper-header">
+            <div class="text-wrapper-name">{{ bugNote.handler }}</div>
+            <div class="text-wrapper-time">{{ formatDate(bugNote.time) }}</div>
+          </div>
+          <div class="text-wrapper-content">
+            <div v-html="bugNote.text"></div>
+          </div>
+          
+          <div v-for="img in bugNote.attachments" class="demo-image__error">
+            <div class="block">
+              <span class="demonstration">{{ img.name }}</span>
+              <el-image :src="img.url_base64" />
+            </div>
           </div>
         </div>
-        <div class="overlap-12">
-          <div class="overlap-13">
-            <div class="text-wrapper-23">王</div>
+
+        <div class="overlap-comment-detail">
+          <div class="overlap-background">
+            <div class="text-wrapper-surname">王</div>
           </div>
-          <div class="text-wrapper-20">王五</div>
-          <div class="text-wrapper-21">2024-01-15 16:20</div>
-          <div class="text-wrapper-22">
+          <div class="text-wrapper-name">王五</div>
+          <div class="text-wrapper-time">2024-01-15 16:20</div>
+          <div class="text-wrapper-content">
             已经定位到问题了，是API返回的错误信息格式有变化，前端没有正确解析。附上相关截图：
           </div>
-          <img class="IMAGE" alt="Image" :src="IMAGE" />
-        </div>
-        <div class="overlap-14">
-          <div class="rectangle-4" />
-          <div class="rectangle-5" />
-          <div class="text-wrapper-24">赵</div>
-          <div class="text-wrapper-25">赵六</div>
-          <div class="text-wrapper-26">2024-01-15 17:10</div>
-          <div class="text-wrapper-27">
-            我来负责修复这个问题。预计今天晚上就能提交修复代码。
-          </div>
-          <div class="rectangle-6" />
-          <div class="rectangle-7" />
-          <div class="text-wrapper-28">孙</div>
-          <div class="text-wrapper-29">孙七</div>
-          <div class="text-wrapper-30">2024-01-16 09:30</div>
-          <div class="text-wrapper-31">
-            测试环境已经修复了，可以验证一下。这是修复后的效果图：
-          </div>
-          <img class="IMAGE-2" alt="Image" :src="image1" />
-        </div>
-        <div class="overlap-15">
-          <div class="text-wrapper-32">周</div>
-        </div>
-        <div class="text-wrapper-33">周八</div>
-        <div class="text-wrapper-34">2024-01-16 14:15</div>
-        <div class="text-wrapper-35">
-          验证通过！现在错误提示显示正常了，用户体验得到了很大改善。可以关闭这个问题了。
         </div>
       </div>
     </div>
@@ -115,20 +99,54 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { formatDate, getFirstChar, getColorByUnicPalette } from '../util';
+import { ref, computed, onMounted } from 'vue';
+import { formatDate, getFirstChar, getColorByUnicPalette, byteArrayToBase64Image } from '../util';
+import { apiBugInfo, imageBase64 } from '../api';
 
 const props = defineProps({
-  bugDetails: {
-    type: Object,
+  bugId: {
+    type: Number,
     required: true,
-    default: {}
+    default: 0
   }
 });
 
-const bugInfo = computed(() => props.bugDetails);
+const bugInfo = ref({});
+const bugNotes = ref({});
 
-const IMAGE = ref('path/to/IMAGE.png');
+onMounted(() => {
+  try {
+    apiBugInfo(props.bugId).then(result => {
+      console.log("成功:", result);
+      bugInfo.value = result;
+      const allNotes = result.bugnote_notes || [];
+      if (result.attachments.length > 0) {
+        allNotes.push({
+          handler: result.reporter,
+          handler_id: result.reporter_id,
+          time: result.date_submitted,
+          attachments: result.attachments,
+        });
+      }
+      bugNotes.value = allNotes;
+      bugNotes.value.forEach((i) => {
+        i.attachments.forEach((item) => {
+          imageBase64(item.url).then((bytes) => {
+            if (bytes) {
+              item.url_base64 = byteArrayToBase64Image(bytes, item.name);
+            }
+          });
+        });
+      });
+    }).catch(error => {
+      console.error("错误:", error);
+    });
+  } catch (error) {
+    console.error('下载图片失败:', error);
+    return;
+  }
+})
+
 </script>
 
 <style scoped>
@@ -391,12 +409,12 @@ const IMAGE = ref('path/to/IMAGE.png');
   border-radius: 8px;
   box-shadow:
     0px 0px 0px transparent, 0px 0px 0px transparent, 0px 0px 0px transparent, 0px 0px 0px transparent, 0px 1px 2px #0000000f, 0px 1px 3px #0000001a;
-  height: 913px;
   left: 10px;
   right: 10px;
   position: relative;
   top: 20px;
   width: 780px;
+  margin-bottom: 10px;
 }
 
 .generated-design .overlap-9 {
@@ -405,7 +423,7 @@ const IMAGE = ref('path/to/IMAGE.png');
   border-color: #e5e7eb;
   height: 76px;
   left: 1px;
-  position: absolute;
+  position: relative;
   top: 1px;
   width: 780px;
 }
@@ -413,7 +431,7 @@ const IMAGE = ref('path/to/IMAGE.png');
 .generated-design .frame-3 {
   height: 20px;
   left: 23px;
-  position: absolute;
+  position: relative;
   top: 27px;
   width: 20px;
 }
@@ -421,12 +439,12 @@ const IMAGE = ref('path/to/IMAGE.png');
 .generated-design .vector-4 {
   height: 20px;
   left: 2px;
-  position: absolute;
+  position: relative;
   bottom: 2px;
   width: 20px;
 }
 
-.generated-design .text-wrapper-18 {
+.generated-design .text-wrapper-comment {
   color: #111827;
   font-family: "Inter-SemiBold", Helvetica;
   font-size: 18px;
@@ -439,28 +457,27 @@ const IMAGE = ref('path/to/IMAGE.png');
   white-space: nowrap;
 }
 
-.generated-design .overlap-10 {
+.generated-design .overlap-comment-detail {
   border-bottom-style: solid;
   border-bottom-width: 1px;
   border-color: #f3f4f6;
-  height: 97px;
   left: 1px;
-  position: absolute;
-  top: 77px;
-  width: 720px;
+  position: relative;
+  top: 0px;
+  width: 700px;
 }
 
-.generated-design .overlap-11 {
+.generated-design .overlap-background {
   background-color: #eff6ff;
   border-radius: 33554400px;
   height: 32px;
   left: 24px;
-  position: absolute;
+  position: relative;
   top: 24px;
   width: 32px;
 }
 
-.generated-design .text-wrapper-19 {
+.generated-design .text-wrapper-surname {
   color: #2563eb;
   font-family: "Inter-SemiBold", Helvetica;
   font-size: 14px;
@@ -472,8 +489,14 @@ const IMAGE = ref('path/to/IMAGE.png');
   top: 5px;
   white-space: nowrap;
 }
+.text-wrapper-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  top: 0px;
+}
 
-.generated-design .text-wrapper-20 {
+.generated-design .text-wrapper-name {
   color: #111827;
   font-family: "Inter-Medium", Helvetica;
   font-size: 14px;
@@ -481,25 +504,24 @@ const IMAGE = ref('path/to/IMAGE.png');
   left: 67px;
   letter-spacing: 0;
   line-height: 21px;
-  position: absolute;
-  top: 22px;
+  position: relative;
   white-space: nowrap;
 }
 
-.generated-design .text-wrapper-21 {
+.generated-design .text-wrapper-time {
   color: #6b7280;
   font-family: "Inter-Regular", Helvetica;
   font-size: 12px;
   font-weight: 400;
-  left: 103px;
+  margin-left: 8px;
+  left: 66px;
   letter-spacing: 0;
   line-height: 18px;
-  position: absolute;
-  top: 23px;
+  position: relative;
   white-space: nowrap;
 }
 
-.generated-design .text-wrapper-22 {
+.generated-design .text-wrapper-content {
   color: #374151;
   font-family: "Inter-Regular", Helvetica;
   font-size: 14px;
@@ -507,274 +529,37 @@ const IMAGE = ref('path/to/IMAGE.png');
   left: 67px;
   letter-spacing: 0;
   line-height: 22.8px;
-  position: absolute;
-  top: 46px;
+  position: relative;
+  margin-top: 15px;
+  margin-bottom: 20px;
   white-space: nowrap;
 }
 
-.generated-design .overlap-12 {
-  border-bottom-style: solid;
-  border-bottom-width: 1px;
-  border-color: #f3f4f6;
-  height: 263px;
-  left: 1px;
-  position: absolute;
-  top: 174px;
-  width: 720px;
+.demo-image__error {
+  position: relative;
+  height: 232px;
+  margin-top: -10px;
+  margin-left: 20px;
+  margin-bottom: 10px;
 }
 
-.generated-design .overlap-13 {
-  background-color: #f0fdf4;
-  border-radius: 33554400px;
-  height: 32px;
-  left: 24px;
-  position: absolute;
-  top: 24px;
-  width: 32px;
+.demo-image__error .block {
+  text-align: center;
+  display: inline-block;
+  width: 49%;
+  box-sizing: border-box;
+  vertical-align: top;
 }
-
-.generated-design .text-wrapper-23 {
-  color: #16a34a;
-  font-family: "Inter-SemiBold", Helvetica;
+.demo-image__error .demonstration {
+  display: block;
+  color: var(--el-text-color-secondary);
   font-size: 14px;
-  font-weight: 600;
-  left: 9px;
-  letter-spacing: 0;
-  line-height: 21px;
-  position: absolute;
-  top: 4px;
-  white-space: nowrap;
 }
-
-.generated-design .IMAGE {
-  height: 154px;
-  left: 67px;
-  position: absolute;
-  top: 83px;
-  width: 304px;
-}
-
-.generated-design .overlap-14 {
-  height: 379px;
-  left: 1px;
-  position: absolute;
-  top: 437px;
-  width: 720px;
-}
-
-.generated-design .rectangle-4 {
-  border-bottom-style: solid;
-  border-bottom-width: 1px;
-  border-color: #f3f4f6;
-  height: 97px;
-  left: 0;
-  position: absolute;
-  top: 0;
-  width: 720px;
-}
-
-.generated-design .rectangle-5 {
-  background-color: #fef2f2;
-  border-radius: 33554400px;
-  height: 32px;
-  left: 24px;
-  position: absolute;
-  top: 24px;
-  width: 32px;
-}
-
-.generated-design .text-wrapper-24 {
-  color: #dc2626;
-  font-family: "Inter-SemiBold", Helvetica;
-  font-size: 14px;
-  font-weight: 600;
-  left: 33px;
-  letter-spacing: 0;
-  line-height: 21px;
-  position: absolute;
-  top: 28px;
-  white-space: nowrap;
-}
-
-.generated-design .text-wrapper-25 {
-  color: #111827;
-  font-family: "Inter-Medium", Helvetica;
-  font-size: 14px;
-  font-weight: 500;
-  left: 68px;
-  letter-spacing: 0;
-  line-height: 21px;
-  position: absolute;
-  top: 23px;
-  white-space: nowrap;
-}
-
-.generated-design .text-wrapper-26 {
-  color: #6b7280;
-  font-family: "Inter-Regular", Helvetica;
-  font-size: 12px;
-  font-weight: 400;
-  left: 104px;
-  letter-spacing: 0;
-  line-height: 18px;
-  position: absolute;
-  top: 24px;
-  white-space: nowrap;
-}
-
-.generated-design .text-wrapper-27 {
-  color: #374151;
-  font-family: "Inter-Regular", Helvetica;
-  font-size: 14px;
-  font-weight: 400;
-  left: 68px;
-  letter-spacing: 0;
-  line-height: 22.8px;
-  position: absolute;
-  top: 47px;
-  white-space: nowrap;
-}
-
-.generated-design .rectangle-6 {
-  border-bottom-style: solid;
-  border-bottom-width: 1px;
-  border-color: #f3f4f6;
-  height: 283px;
-  left: 0;
-  position: absolute;
-  top: 96px;
-  width: 720px;
-}
-
-.generated-design .rectangle-7 {
-  background-color: #f0f9ff;
-  border-radius: 33554400px;
-  height: 32px;
-  left: 24px;
-  position: absolute;
-  top: 120px;
-  width: 32px;
-}
-
-.generated-design .text-wrapper-28 {
-  color: #0ea5e9;
-  font-family: "Inter-SemiBold", Helvetica;
-  font-size: 14px;
-  font-weight: 600;
-  left: 33px;
-  letter-spacing: 0;
-  line-height: 21px;
-  position: absolute;
-  top: 125px;
-  white-space: nowrap;
-}
-
-.generated-design .text-wrapper-29 {
-  color: #111827;
-  font-family: "Inter-Medium", Helvetica;
-  font-size: 14px;
-  font-weight: 500;
-  left: 68px;
-  letter-spacing: 0;
-  line-height: 21px;
-  position: absolute;
-  top: 119px;
-  white-space: nowrap;
-}
-
-.generated-design .text-wrapper-30 {
-  color: #6b7280;
-  font-family: "Inter-Regular", Helvetica;
-  font-size: 12px;
-  font-weight: 400;
-  left: 104px;
-  letter-spacing: 0;
-  line-height: 18px;
-  position: absolute;
-  top: 120px;
-  white-space: nowrap;
-}
-
-.generated-design .text-wrapper-31 {
-  color: #374151;
-  font-family: "Inter-Regular", Helvetica;
-  font-size: 14px;
-  font-weight: 400;
-  left: 68px;
-  letter-spacing: 0;
-  line-height: 22.8px;
-  position: absolute;
-  top: 143px;
-  white-space: nowrap;
-}
-
-.generated-design .IMAGE-2 {
-  height: 174px;
-  left: 68px;
-  position: absolute;
-  top: 180px;
-  width: 288px;
-}
-
-.generated-design .overlap-15 {
-  background-color: #fef3c7;
-  border-radius: 33554400px;
-  height: 32px;
-  left: 25px;
-  position: absolute;
-  top: 840px;
-  width: 32px;
-}
-
-.generated-design .text-wrapper-32 {
-  color: #d97706;
-  font-family: "Inter-SemiBold", Helvetica;
-  font-size: 14px;
-  font-weight: 600;
-  left: 9px;
-  letter-spacing: 0;
-  line-height: 21px;
-  position: absolute;
-  top: 5px;
-  white-space: nowrap;
-}
-
-.generated-design .text-wrapper-33 {
-  color: #111827;
-  font-family: "Inter-Medium", Helvetica;
-  font-size: 14px;
-  font-weight: 500;
-  left: 68px;
-  letter-spacing: 0;
-  line-height: 21px;
-  position: absolute;
-  top: 838px;
-  white-space: nowrap;
-}
-
-.generated-design .text-wrapper-34 {
-  color: #6b7280;
-  font-family: "Inter-Regular", Helvetica;
-  font-size: 12px;
-  font-weight: 400;
-  left: 104px;
-  letter-spacing: 0;
-  line-height: 18px;
-  position: absolute;
-  top: 839px;
-  white-space: nowrap;
-}
-
-.generated-design .text-wrapper-35 {
-  color: #374151;
-  font-family: "Inter-Regular", Helvetica;
-  font-size: 14px;
-  font-weight: 400;
-  left: 68px;
-  letter-spacing: 0;
-  line-height: 22.8px;
-  position: absolute;
-  top: 862px;
-  white-space: nowrap;
+.demo-image__error .el-image {
+  padding: 0 5px;
+  max-width: 300px;
+  max-height: 200px;
+  width: 100%;
+  height: 200px;
 }
 </style>

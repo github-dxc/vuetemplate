@@ -665,13 +665,19 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
         .unwrap_or(0);
 
     // last_updated
-    let last_modified_selector = Selector::parse("input[name=\"last_updated\"]").unwrap();
+    let last_modified_selector = Selector::parse(".bug-header-data .bug-last-modified").unwrap();
     bug.last_updated = document
         .select(&last_modified_selector)
         .find_map(|e| {
-            e.value()
-                .attr("value")
-                .map(|e| e.parse::<i64>().unwrap_or(0))
+            let date_str = e.inner_html();
+            // 解析为 NaiveDate
+            let date = NaiveDateTime::parse_from_str(date_str.as_str(), "%Y-%m-%d %H:%M").ok()?;
+            // 设为上海时区的0点
+            let datetime = Shanghai
+                .from_local_datetime(&date)
+                .unwrap();
+            // 转为时间戳（秒）
+            Some(datetime.timestamp())
         })
         .unwrap_or(0);
 

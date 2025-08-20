@@ -149,8 +149,8 @@
 
     <!-- 明细展示 -->
     <div v-if="bugDetailsVisible">
-      <el-drawer v-model="bugDetailsVisible" :title="bugDetailsTitle" :show-close="false" direction="rtl" size="70%">
-        <BugDetails :bug-details="bugDetails"/>
+      <el-drawer v-model="bugDetailsVisible" :title="bugDetailsTitle" :show-close="false" direction="rtl" size="71%">
+        <BugDetails :bug-id="bugId"/>
       </el-drawer>
     </div>
   </div>
@@ -185,7 +185,7 @@ const enums = ref({
 });
 const bugDetailsVisible = ref(false);
 const bugDetailsTitle = ref("Bug明细");
-const bugDetails = ref({});
+const bugId = ref(0);
 
 const host = computed(() => {
   return userStore.serverHost;
@@ -380,13 +380,7 @@ async function openImagePreview(bug_id) {
 async function openBugDetails(bug_id,title) {
   bugDetailsTitle.value = `【${bug_id}】${title}` || "Bug明细";
   bugDetailsVisible.value = true;
-  // 发送图片信息列表给图片预览窗口
-  apiBugInfo(bug_id).then(result => {
-    console.log("成功:", result);
-    bugDetails.value = result;
-  }).catch(error => {
-    console.error("错误:", error);
-  });
+  bugId.value = bug_id;
 }
 
 //------------------vue/tauri-------------------//
