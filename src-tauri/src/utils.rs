@@ -328,7 +328,7 @@ pub async fn bug_note_add(
             .file_name(file_name)
             .mime_str(&mime) // 设置MIME类型
             .unwrap();
-        form = form.part("attachment", file_part); // 这里的"attachment"是表单中文件字段的名称
+        form = form.part("ufile", file_part); // 这里的"attachment"是表单中文件字段的名称
     }
 
     // 构建请求头
