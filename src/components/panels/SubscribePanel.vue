@@ -150,7 +150,7 @@
     <!-- 明细展示 -->
     <div v-if="bugDetailsVisible">
       <el-drawer v-model="bugDetailsVisible" :title="bugDetailsTitle" :show-close="false" direction="rtl" size="71%">
-        <BugDetails :bug-id="bugId"/>
+        <BugDetails :bug-id="bugId" :enums="enums"/>
       </el-drawer>
     </div>
   </div>
@@ -181,7 +181,8 @@ const enums = ref({
   ViewStatus: [],
   Resolution: [],
   Status: [],
-  Category: []
+  Category: [],
+  Users: [],
 });
 const bugDetailsVisible = ref(false);
 const bugDetailsTitle = ref("Bug明细");
@@ -330,6 +331,10 @@ async function handleCommand(command) {
     const result = await updateBug({ bug_id: bug_id, status: status, resolution: resolution });
     console.log("更新成功", result);
   } catch (error) {
+    ElMessage({
+      message: '更新失败，请稍后重试',
+      type: 'error',
+    });
     console.error("更新失败", error);
   }
 }

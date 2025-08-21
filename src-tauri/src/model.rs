@@ -62,6 +62,7 @@ pub struct BugInfo {
     pub view_state: i64,                //查看权限
     pub date_submitted: i64,            //报告日期
     pub last_updated: i64,              //最后更新时间
+    pub last_updated_sec: i64,          //最后更新时间(用于更新的)
     pub reporter_id: i64,               //报告员id
     pub reporter: String,               //报告员
     pub handler_id: i64,                //处理人

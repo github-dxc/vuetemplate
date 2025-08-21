@@ -17,17 +17,17 @@
               <Briefcase />
             </el-icon>
           </div>
-          <div class="text-wrapper-4">活跃</div>
+          <div class="text-wrapper-4">{{ bugInfo.project }}</div>
           <div class="text-wrapper-5">提交时间</div>
           <div class="text-wrapper-6">{{ formatDate(bugInfo.date_submitted) }}</div>
         </div>
         <!--展示选项类状态-->
         <div class="option_tags">
-          <el-button type="primary" plain round>高优先级</el-button>
-          <el-button type="success" plain round>UI问题</el-button>
-          <el-button type="info" plain round>UI问题</el-button>
-          <el-button type="warning" plain round>Warning</el-button>
-          <el-button type="danger" plain round>Danger</el-button>
+          <el-button type="danger" plain round>{{ bugSeverity.get(String(bugInfo.severity)) }}</el-button>
+          <el-button type="warning" plain round>{{ bugStatus.get(String(bugInfo.status)) }}</el-button>
+          <el-button type="primary" plain round>{{ bugResolution.get(String(bugInfo.resolution)) }}</el-button>
+          <el-button type="success" plain round>{{ bugCategory.get(String(bugInfo.category_id)) }}</el-button>
+          <el-button type="info" plain round>{{ bugUsers.get(String(bugInfo.handler_id)) }}</el-button>
         </div>
         <!--展示描述和重现步骤-->
         <div class="option_text">
@@ -61,7 +61,7 @@
               <Comment />
             </el-icon>
           </div>
-          <div class="text-wrapper-comment">评论 (5)</div>
+          <div class="text-wrapper-comment">评论 ({{ bugNotes.length }})</div>
         </div>
         <div v-for="bugNote in bugNotes" class="overlap-comment-detail">
           <div class="overlap-background" :style="{backgroundColor: getColorByUnicPalette(getFirstChar(bugNote.handler)).backgroundColor}">
@@ -78,7 +78,7 @@
           <div v-for="(img, index) in bugNote.attachments" class="demo-image__error">
             <div class="block">
               <span class="demonstration">{{ img.name }}</span>
-              <el-image :src="img.url_base64" @click="openImagePreview(index)"/>
+              <el-image :src="img.url_base64" @click="openImagePreview(index)" fit="contain"/>
             </div>
           </div>
         </div>
@@ -99,11 +99,81 @@ const props = defineProps({
     type: Number,
     required: true,
     default: 0
+  },
+  enums: {
+    type: Object,
+    required: true,
+    default: () => ({})
   }
-});
+}); 
 
 const bugInfo = ref({});
 const bugNotes = ref({});
+
+const bugProject = computed(() => {
+  const myMap = new Map();
+  props.enums.Project.forEach(item => {
+    myMap.set(item.key, item.value);
+  });
+  return myMap;
+})
+const bugPriority = computed(() => {
+  const myMap = new Map();
+  props.enums.Priority.forEach(item => {
+    myMap.set(item.key, item.value);
+  });
+  return myMap;
+})
+const bugSeverity = computed(() => {
+  const myMap = new Map();
+  props.enums.Severity.forEach(item => {
+    myMap.set(item.key, item.value);
+  });
+  return myMap;
+})
+const bugReproducibility = computed(() => {
+  const myMap = new Map();
+  props.enums.Reproducibility.forEach(item => {
+    myMap.set(item.key, item.value);
+  });
+  return myMap;
+})
+const bugViewStatus = computed(() => {
+  const myMap = new Map();
+  props.enums.ViewStatus.forEach(item => {
+    myMap.set(item.key, item.value);
+  });
+  return myMap;
+})
+const bugResolution = computed(() => {
+  const myMap = new Map();
+  props.enums.Resolution.forEach(item => {
+    myMap.set(item.key, item.value);
+  });
+  return myMap;
+})
+const bugStatus = computed(() => {
+  const myMap = new Map();
+  props.enums.Status.forEach(item => {
+    myMap.set(item.key, item.value);
+  });
+  return myMap;
+})
+const bugCategory = computed(() => {
+  const myMap = new Map();
+  props.enums.Category.forEach(item => {
+    myMap.set(item.key, item.value);
+  });
+  return myMap;
+})
+const bugUsers = computed(() => {
+  const myMap = new Map();
+  props.enums.Users.forEach(item => {
+    myMap.set(item.key, item.value);
+  });
+  return myMap;
+})
+
 
 // 打开图片预览
 const openImagePreview = async function(index) {
@@ -497,7 +567,7 @@ onMounted(() => {
   letter-spacing: 0;
   line-height: 21px;
   position: absolute;
-  top: 5px;
+  top: 6px;
   white-space: nowrap;
 }
 .text-wrapper-header {
@@ -548,8 +618,8 @@ onMounted(() => {
 
 .demo-image__error {
   position: relative;
-  height: 232px;
-  margin-top: -10px;
+  height: 222px;
+  margin-top: -20px;
   margin-left: 20px;
   margin-bottom: 10px;
 }

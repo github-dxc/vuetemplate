@@ -1,14 +1,275 @@
-<div id="attachment_preview_3_open" class=" collapse-open noprint">
-    <a href="file_download.php?file_id=3&amp;type=bug"><i class="fa fa-file-image-o" title="png file icon"></i></a>&#32;
-    <a href="file_download.php?file_id=3&amp;type=bug">wechat_2025-08-09_224129_298.png</a>&#32;(67,078&#32;字节)
-    <a class="noprint"
-        href="bug_file_delete.php?file_id=3&bug_file_delete_token=202508090n6A2dAEbAvRwGG-VC6t85B8MtTMD7zg">
-        <i class="1 ace-icon fa fa-trash-o"></i></a>&#32;<a id="attachment_preview_3_open_link"
-        class="collapse-link noprint"><i class="fa fa-minus-square-o" title="-"></i>
-    </a>
-    <div class="bug-attachment-preview-image">
-        <a href="file_download.php?file_id=3&amp;type=bug">
-            <img src="file_download.php?file_id=3&amp;type=bug&amp;show_inline=1&amp;file_show_inline_token=20250809L201PsDX8JkaLc0u-HZCNP87gah7gliI" alt="" style="border: 0; max-height:250px;" />
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <title>MantisBT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <link rel="stylesheet" type="text/css"
+        href="http://bug.test.com/css/default.css?cache_key=991bb728eea2923f36cfa9c64025e9ae" />
+    <link rel="stylesheet" type="text/css" href="http://bug.test.com/css/dropzone-5.5.0.min.css" />
+    <link rel="stylesheet" type="text/css" href="http://bug.test.com/css/bootstrap-3.4.1.min.css" />
+    <link rel="stylesheet" type="text/css" href="http://bug.test.com/css/font-awesome-4.7.0.min.css" />
+    <link rel="stylesheet" type="text/css"
+        href="http://bug.test.com/css/fonts.css?cache_key=991bb728eea2923f36cfa9c64025e9ae" />
+    <link rel="stylesheet" type="text/css" href="http://bug.test.com/css/bootstrap-datetimepicker-4.17.47.min.css" />
+    <link rel="stylesheet" type="text/css"
+        href="http://bug.test.com/css/ace.min.css?cache_key=991bb728eea2923f36cfa9c64025e9ae" />
+    <link rel="stylesheet" type="text/css"
+        href="http://bug.test.com/css/ace-mantis.css?cache_key=991bb728eea2923f36cfa9c64025e9ae" />
+    <link rel="stylesheet" type="text/css"
+        href="http://bug.test.com/css/ace-skins.min.css?cache_key=991bb728eea2923f36cfa9c64025e9ae" />
+
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
+    <link rel="search" type="application/opensearchdescription+xml" title="MantisBT：全文搜索"
+        href="http://bug.test.com/browser_search_plugin.php?type=text" />
+    <link rel="search" type="application/opensearchdescription+xml" title="MantisBT：按问题Id搜索"
+        href="http://bug.test.com/browser_search_plugin.php?type=id" />
+    <script type="text/javascript" src="/javascript_config.php?cache_key=990a348b488b9c163bcdc2bc816bb905"></script>
+    <script type="text/javascript"
+        src="/javascript_translations.php?cache_key=aaa06b70c166522c6368bc2bbf601c96"></script>
+    <script type="text/javascript" src="/js/jquery-2.2.4.min.js"></script>
+    <script type="text/javascript" src="/js/dropzone-5.5.0.min.js"></script>
+    <script type="text/javascript" src="/js/common.js"></script>
+</head>
+
+<body class="skin-3">
+    <style>
+        * {
+            font-family: "Open Sans";
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5 {
+            font-family: "Open Sans";
+        }
+    </style>
+    <div id="navbar" class="navbar navbar-default navbar-collapse navbar-fixed-top noprint">
+        <div id="navbar-container" class="navbar-container"><button id="menu-toggler" type="button"
+                class="navbar-toggle menu-toggler pull-left hidden-lg hidden-md" data-target="#sidebar"><span
+                    class="sr-only">Toggle sidebar</span><span class="icon-bar"></span><span
+                    class="icon-bar"></span><span class="icon-bar"></span></button>
+            <div class="navbar-header"><a href="/my_view_page.php" class="navbar-brand"><span class="smaller-75">
+                        MantisBT </span></a><button type="button"
+                    class="navbar-toggle navbar-toggle collapsed pull-right hidden-sm hidden-md hidden-lg"
+                    data-toggle="collapse" data-target=".navbar-buttons,.navbar-menu"><span class="sr-only">Toggle user
+                        menu</span><i class="fa fa-user ace-icon fa-2x white"></i> </button></div>
+            <div class="navbar-buttons navbar-header navbar-collapse collapse">
+                <ul class="nav ace-nav">
+                    <li class="hidden-sm hidden-xs">
+                        <div class="btn-group btn-corner padding-right-8 padding-left-8"><a
+                                class="btn btn-primary btn-sm" href="bug_report_page.php"><i class="fa fa-edit "></i>
+                                提交问题</a></div>
+                    </li>
+                    <li class="grey" id="dropdown_projects_menu">
+                        <a data-toggle="dropdown" href="#" class="dropdown-toggle">
+                            &#160;云计算-管理端&#160;
+                            <i class="fa fa-angle-down ace-icon bigger-110"></i>
+                        </a>
+                        <ul id="projects-list"
+                            class=" dropdown-menu dropdown-menu-right dropdown-yellow dropdown-caret dropdown-close">
+                            <li>
+                                <div class="projects-searchbox"><input class="search form-control input-md"
+                                        placeholder="搜索" /></div>
+                            </li>
+                            <li class="divider"></li>
+                            <li>
+                                <div class="scrollable-menu">
+                                    <ul class="list dropdown-yellow no-margin">
+                                        <li><a class="project-link" href="/set_project.php?project_id=0">所有项目</a></li>
+                                        <li class="divider"></li>
+                                        <li><a class="project-link" href="/set_project.php?project_id=22">EasyLink</a>
+                                        </li>
+                                        <li><a class="project-link"
+                                                href="/set_project.php?project_id=22;24">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EasyLink-用户端</a>
+                                        </li>
+                                        <li><a class="project-link"
+                                                href="/set_project.php?project_id=22;23">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EasyLink-管理端</a>
+                                        </li>
+                                        <li><a class="project-link" href="/set_project.php?project_id=9">云计算</a></li>
+                                        <li><a class="project-link"
+                                                href="/set_project.php?project_id=9;11">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云计算-用户端</a>
+                                        </li>
+                                        <li><a class="project-link"
+                                                href="/set_project.php?project_id=9;10">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云计算-管理端</a>
+                                        </li>
+                                        <li><a class="project-link"
+                                                href="/set_project.php?project_id=9;21">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云计算-线上问题</a>
+                                        </li>
+                                        <li><a class="project-link" href="/set_project.php?project_id=26">云计算海外版</a>
+                                        </li>
+                                        <li><a class="project-link"
+                                                href="/set_project.php?project_id=26;30">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pre环境-云计算海外版-用户端</a>
+                                        </li>
+                                        <li><a class="project-link"
+                                                href="/set_project.php?project_id=26;31">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pre环境-云计算海外版-管理端</a>
+                                        </li>
+                                        <li><a class="project-link"
+                                                href="/set_project.php?project_id=26;28">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云计算海外版-用户端</a>
+                                        </li>
+                                        <li><a class="project-link"
+                                                href="/set_project.php?project_id=26;27">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云计算海外版-管理端</a>
+                                        </li>
+                                        <li><a class="project-link" href="/set_project.php?project_id=13">云转码</a></li>
+                                        <li><a class="project-link"
+                                                href="/set_project.php?project_id=13;16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云转码-用户端</a>
+                                        </li>
+                                        <li><a class="project-link"
+                                                href="/set_project.php?project_id=13;17">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;云转码-管理端</a>
+                                        </li>
+                                        <li><a class="project-link" href="/set_project.php?project_id=12">证书系统</a></li>
+                                        <li><a class="project-link" href="/set_project.php?project_id=25">资源管理系统</a>
+                                        </li>
+                                        <li><a class="project-link"
+                                                href="/set_project.php?project_id=25;33">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pre环境-资源管理系统</a>
+                                        </li>
+                                        <li><a class="project-link"
+                                                href="/set_project.php?project_id=25;32">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Test环境-资源管理系统</a>
+                                        </li>
+                                        <li><a class="project-link" href="/set_project.php?project_id=18">钱包</a></li>
+                                        <li><a class="project-link"
+                                                href="/set_project.php?project_id=18;20">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;钱包-用户端</a>
+                                        </li>
+                                        <li><a class="project-link"
+                                                href="/set_project.php?project_id=18;19">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;钱包-管理端</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="grey"><a data-toggle="dropdown" href="#" class="dropdown-toggle"><i
+                                class="fa fa-user ace-icon fa-2x white"></i> <span
+                                class="user-info">dengxiangcheng</span><i class="fa fa-angle-down ace-icon"></i></a>
+                        <ul
+                            class="user-menu dropdown-menu dropdown-menu-right dropdown-yellow dropdown-caret dropdown-close">
+                            <li><a href="/account_page.php"><i class="fa fa-user ace-icon"></i> 个人资料</a></li>
+                            <li><a
+                                    href="http://bug.test.com/issues_rss.php?username=dengxiangcheng&amp;key=LyRq8A-GncRBx54p5wi_WYsCgfNimr_yE4rJRSKZ8bUVgQfZuht1Qs2CNpEtac4EiIdc8n2UmChB7fNMLdcr&amp;project_id=10"><i
+                                        class="fa fa-rss-square orange ace-icon"></i> RSS</a></li>
+                            <li class="divider"></li>
+                            <li><a href="/logout_page.php"><i class="fa fa-sign-out ace-icon"></i> 注销</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="main-container" id="main-container">
+        <div id="sidebar" class="sidebar sidebar-fixed responsive compact ">
+            <ul class="nav nav-list">
+                <li>
+                    <a href="/my_view_page.php">
+                        <i class="fa fa-dashboard menu-icon"></i>
+                        <span class="menu-text"> 我的视图 </span>
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+                <li>
+                    <a href="/view_all_bug_page.php">
+                        <i class="fa fa-list-alt menu-icon"></i>
+                        <span class="menu-text"> 查看问题 </span>
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+                <li>
+                    <a href="/bug_report_page.php">
+                        <i class="fa fa-edit menu-icon"></i>
+                        <span class="menu-text"> 提交问题 </span>
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+                <li>
+                    <a href="/changelog_page.php">
+                        <i class="fa fa-retweet menu-icon"></i>
+                        <span class="menu-text"> 变更日志 </span>
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+                <li>
+                    <a href="/roadmap_page.php">
+                        <i class="fa fa-road menu-icon"></i>
+                        <span class="menu-text"> 路线图 </span>
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+            </ul>
+            <div id="sidebar-btn" class="sidebar-toggle sidebar-collapse"><i
+                    data-icon2="ace-icon fa fa-angle-double-right" data-icon1="ace-icon fa fa-angle-double-left"
+                    class="ace-icon fa fa-angle-double-left"></i></div>
+        </div>
+        <div class="main-content">
+            <div id="breadcrumbs" class="breadcrumbs noprint">
+                <ul class="breadcrumb">
+                    <li><i class="fa fa-user home-icon active"></i> <a href="/account_page.php">dengxiangcheng ( 邓祥成 )
+                        </a>
+                        <span class="label hidden-xs label-default arrowed">开发人员</span>
+                    </li>
+                </ul>
+                <div class="nav-recent hidden-xs">最近浏览的: <a href="/view.php?id=2744"
+                        title="[已分配] 【运营管理-用户列表】详情：登录次数统计错误（先别改）">0002744</a>, <a href="/view.php?id=2725"
+                        title="[已解决] 【登录】密码错误 账号锁定后，重置密码后应允许账号登录" class="resolved">0002725</a>, <a
+                        href="/view.php?id=2755" title="[已关闭] 【运营-资讯中心】相关资讯关联的文章被删除后，还是会占用相关资讯的名额"
+                        class="resolved">0002755</a>, <a href="/view.php?id=2742"
+                        title="[已解决] 【系统设置-管理员日志】新建云服务器规格显示了两份" class="resolved">0002742</a>, <a
+                        href="/view.php?id=2686" title="[已分配] 【官网-购买】单次购买不能超出配置上限提示语优化">0002686</a></div>
+                <div id="nav-search" class="nav-search">
+                    <form class="form-search" method="post" action="/jump_to_bug.php"><span class="input-icon"><input
+                                type="text" name="bug_id" autocomplete="off" class="nav-search-input"
+                                placeholder="问题 #"><i class="fa fa-search ace-icon nav-search-icon"></i></span></form>
+                </div>
+            </div>
+            <div class="page-content">
+                <div class="row">
+                    <div class="col-md-12 col-xs-12">
+                        <div class="space-20"></div>
+                        <div class="alert alert-danger">
+                            <p class="bold">APPLICATION ERROR #1105</p>
+                            <p>此问题被另一用户更新，请返回问题并再次提交您的更改。</p>
+                            <div class="error-info">请使用浏览器的“返回”按钮来返回到上一页，这样您可以找到发生了什么问题或者进行别的操作；您也可以点击导航栏中的其它项。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="clearfix"></div>
+        <div class="space-20"></div>
+        <div class="footer noprint">
+            <div class="footer-inner">
+                <div class="footer-content">
+                    <div class="col-md-6 col-xs-12 no-padding">
+                        <address>
+                            <strong>Powered by <a href="https://www.mantisbt.org" title="bug tracking software">MantisBT
+                                </a></strong> <br>
+                            <small>Copyright &copy; 2000 - 2025 MantisBT Team</small><br><small>联系<a
+                                    href="mailto:webmaster@example.com"
+                                    title="Contact the webmaster via e-mail.">管理员</a>获取援助</small><br>
+                        </address>
+                    </div>
+                    <div class="col-md-6 col-xs-12">
+                        <div class="pull-right" id="powered-by-mantisbt-logo">
+                            <a href="https://www.mantisbt.org"
+                                title="Mantis Bug Tracker: a free and open source web based bug tracking system."><img
+                                    src="/images/mantis_logo.png" width="102" height="35"
+                                    alt="Powered by Mantis Bug Tracker: a free and open source web based bug tracking system." /></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <a class="btn-scroll-up btn btn-sm btn-inverse display" id="btn-scroll-up" href="#">
+            <i class="fa fa-angle-double-up ace-icon icon-only bigger-110"></i>
         </a>
     </div>
-</div>
+    <script type="text/javascript" src="/js/bootstrap-3.4.1.min.js"></script>
+    <script type="text/javascript" src="/js/moment-with-locales-2.29.4.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap-datetimepicker-4.17.47.min.js"></script>
+    <script type="text/javascript" src="/js/typeahead.jquery-1.3.4.min.js"></script>
+    <script type="text/javascript" src="/js/list-2.3.1.min.js"></script>
+    <script type="text/javascript" src="/js/ace.min.js"></script>
+</body>
+
+</html>

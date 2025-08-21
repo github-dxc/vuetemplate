@@ -291,6 +291,7 @@ pub async fn bug_update(
         .map_err(|e| e.to_string())?;
 
     let text = resp.text().await.map_err(|e| e.to_string())?;
+
     Ok(text)
 }
 
@@ -681,6 +682,17 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
         })
         .unwrap_or(0);
 
+    // last_updated_sec
+    let last_updated_selector = Selector::parse("input[name=\"last_updated\"]").unwrap();
+    bug.last_updated_sec = document
+        .select(&last_updated_selector)
+        .find_map(|e| {
+            e.value()
+                .attr("value")
+                .map(|e| e.parse::<i64>().unwrap_or(0))
+        })
+        .unwrap_or(0);
+
     // reporter_id
     let handler_selector = Selector::parse("tbody .bug-reporter a").unwrap();
     bug.reporter_id = document
@@ -992,6 +1004,22 @@ pub fn category_data(document: &Html) -> Result<Vec<KV>, String> {
         .collect();
     Ok(r)
 }
+// 查询用户列表数据
+pub fn users_data(document: &Html) -> Result<Vec<KV>, String> {
+    let slector = Selector::parse("#handler_id option").unwrap();
+    let r: Vec<KV> = document
+        .select(&slector)
+        .filter_map(|e| {
+            let value = e.inner_html().trim().split('(').next().unwrap_or_default().to_string();
+            let key = e.value().attr("value").map(|id|id.to_owned())?;
+            if key == "" {
+                return None;
+            }
+            Some(KV{key,value})
+        })
+        .collect();
+    Ok(r)
+}
 
 // 查询过滤参数
 pub fn filters_data(document: &Html) -> Result<Vec<KV>, String> {
@@ -1029,6 +1057,16 @@ pub fn get_data_filter_id(document: &Html) -> Result<String, String> {
         .ok_or("not found".to_string())
 }
 
+// 查询错误
+pub fn get_error_info(document: &Html) -> Option<String> {
+    // 创建选择器
+    let selector = Selector::parse(".alert.alert-danger")
+        .ok()?;
+    document
+        .select(&selector)
+        .find_map(|e| e.text().collect::<Vec<_>>().join("").trim().to_string().into())
+}
+
 pub fn get_hash<T: Hash>(t: &T) -> u64 {
     let mut s = DefaultHasher::new();
     t.hash(&mut s);
@@ -1041,4 +1079,14 @@ pub fn set_project_cookie(jar: Arc<Jar>,project_id: &str,host: &str) -> Result<(
     let url = &Url::parse(&origin).unwrap();
     jar.add_cookie_str(&cookie, url);
     Ok(())
+}
+
+pub fn println_cookies(jar: &Jar, host: &str) {
+    let origin = format!("http://{}", host);
+    let url = Url::parse(&origin).unwrap();
+    jar.cookies(&url).and_then(|c|{
+        let s = c.to_str().ok()?;
+        println!("cookies:{}",s);
+        Some(())
+    });
 }

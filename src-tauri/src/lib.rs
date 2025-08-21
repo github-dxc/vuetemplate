@@ -104,6 +104,7 @@ struct MyState {
 
     catgory_kv: Arc<Mutex<Vec<KV>>>,//分组的kv信息
     project_kv: Arc<Mutex<Vec<KV>>>,//项目的kv信息
+    users_kv: Arc<Mutex<Vec<KV>>>,//用户的kv信息
 }
 
 // 初始化数据
@@ -116,6 +117,9 @@ async fn api_init_data(app: AppHandle) -> Result<String, String> {
 
     // 查询分组列表
     let category = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    
+    // 查询用户列表
+    let users = state.users_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
 
     let mut hm = HashMap::new();
     hm.insert("Priority", Priority::kv());
@@ -124,6 +128,7 @@ async fn api_init_data(app: AppHandle) -> Result<String, String> {
     hm.insert("ViewStatus", ViewStatus::kv());
     hm.insert("Category", category);
     hm.insert("Project", projects);
+    hm.insert("Users", users);
     hm.insert("Status", Status::kv());
     hm.insert("Resolution", Resolution::kv());
     serde_json::to_string(&hm).map_err(|e|format!("serde_json err:{}",e))
@@ -281,7 +286,7 @@ async fn api_update_bug(
     let bug = UpdateBug {
         bug_update_token,
         bug_id,
-        last_updated: bug_info.last_updated,
+        last_updated: bug_info.last_updated_sec,
         category_id: bug_info.category_id,
         view_state: bug_info.view_state,
         handler_id: bug_info.handler_id,
@@ -297,7 +302,11 @@ async fn api_update_bug(
         bugnote_text: "".to_string(),
     };
     println!("{:?}",bug);
-    bug_update(jar.clone(), bug, &host).await?;
+    let resp = bug_update(jar.clone(), bug, &host).await?;
+    if let Some(s) = get_error_info(&Html::parse_document(resp.as_str())){
+        println_cookies(&jar, &host);
+        return Err(s);
+    };
 
     // 更新订阅数据
     update_sub_data(app).await?;
@@ -394,8 +403,10 @@ fn init_project_catgory(app: AppHandle) -> Result<(),String> {
 
         let mut projects = vec![];
         let mut category = vec![];
+        let mut users = vec![];
         // 如果当前是已登录，则获取分组和项目
         if logined {
+            // 查询项目列表
             {
                 let jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                 let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
@@ -411,11 +422,18 @@ fn init_project_catgory(app: AppHandle) -> Result<(),String> {
                 let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
                 let project_id = projects.last().ok_or("projects error".to_owned())?.key.clone();
                 let body = bug_report_page(jar_, &host, &project_id).await.map_err(|e|format!("filters_params err:{}",e))?;
-                category = category_data(&Html::parse_document(body.as_str()))?;
+                let dc = Html::parse_document(body.as_str());
+                category = category_data(&dc)?;
                 let mut catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
                 *catgory_kv = category.clone();
+
+                // 查询用户列表
+                users = users_data(&dc)?;
+                let mut users_kv = state.users_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+                *users_kv = users.clone();
+
             }
-            if category.len() == 0|| projects.len() == 0 {
+            if category.len() == 0|| projects.len() == 0 || users.len() == 0 {
                 return Err("".to_string());
             }
         } else {
@@ -423,6 +441,8 @@ fn init_project_catgory(app: AppHandle) -> Result<(),String> {
             *project_kv = projects;
             let mut catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
             *catgory_kv = category;
+            let mut users_kv = state.users_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+            *users_kv = users;
         };
         Ok(())
     });
