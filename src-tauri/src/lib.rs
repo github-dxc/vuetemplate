@@ -8,7 +8,7 @@ use log::{debug, info, warn};
 use model::*;
 use reqwest::cookie::{CookieStore, Jar};
 use scraper::Html;
-use serde::Serialize;
+use serde::{de, Serialize};
 use tauri_plugin_store::StoreExt;
 use url::Url;
 use std::collections::HashMap;
@@ -45,6 +45,7 @@ pub fn run() {
             api_bug_list,
             api_image_bytes,
             api_update_bug,
+            api_bug_note_add,
             api_check_update,
             api_download_and_install
         ])
@@ -249,8 +250,14 @@ async fn api_bug_info(
 async fn api_update_bug(
     app: AppHandle,
     bug_id: i64,
+    severity: i64,
     status: i64,
     resolution: i64,
+    category_id: i64,
+    handler_id: i64,
+    summary: String,
+    description: String,
+    steps_to_reproduce: String,
 ) -> Result<String, String> {
     let state = app.state::<MyState>().clone();
     let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
@@ -287,18 +294,18 @@ async fn api_update_bug(
         bug_update_token,
         bug_id,
         last_updated: bug_info.last_updated_sec,
-        category_id: bug_info.category_id,
+        category_id: if category_id == 0 { bug_info.category_id } else { category_id },
         view_state: bug_info.view_state,
-        handler_id: bug_info.handler_id,
+        handler_id: if handler_id == 0 { bug_info.handler_id } else { handler_id },
         priority: bug_info.priority,
-        severity: bug_info.severity,
+        severity: if severity == 0 { bug_info.severity } else { severity },
         reproducibility: bug_info.reproducibility,
-        status: status,
-        resolution: resolution,
-        summary: bug_info.summary,
-        description: bug_info.description,
+        status: if status == 0 { bug_info.status } else { status },
+        resolution: if resolution == 0 { bug_info.resolution } else { resolution },
+        summary: if summary == "" { bug_info.summary } else { summary },
+        description: if description == "" { bug_info.description } else { description },
         additional_information: bug_info.additional_information,
-        steps_to_reproduce: bug_info.steps_to_reproduce,
+        steps_to_reproduce: if steps_to_reproduce == "" { bug_info.steps_to_reproduce } else { steps_to_reproduce },
         bugnote_text: "".to_string(),
     };
     println!("{:?}",bug);
@@ -312,6 +319,42 @@ async fn api_update_bug(
     update_sub_data(app).await?;
     Ok("更新成功".to_string())
 }
+
+// 保存note
+#[tauri::command(rename_all = "snake_case")]
+async fn api_bug_note_add(app: AppHandle, bug_id: i64, bugnote_text: String,file_path: Option<String>) -> Result<(), String> {
+    let state = app.state::<MyState>().clone();
+    let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    if !logined {
+        return Err("未登录".to_string());
+    }
+
+    // 查询bug详情
+    let bugnote_add_token;
+    {
+        let body = my_view_detail(jar.clone(), bug_id, &host).await?;
+        let document = Html::parse_document(body.as_str());
+        bugnote_add_token = get_page_token(&document, "bugnote_add_token")?;
+    }
+    // 保存note
+    let resp = bug_note_add(jar.clone(), BugNoteAdd{
+        bug_id,
+        bugnote_add_token,
+        bugnote_text,
+        max_file_size: 2097152, // 默认值
+        file_path
+    }, &host).await?;
+
+    if let Some(s) = get_error_info(&Html::parse_document(resp.as_str())){
+        println_cookies(&jar, &host);
+        return Err(s);
+    };
+
+    Ok(())
+}
+
 
 // 下载图片
 #[tauri::command(rename_all = "snake_case")]

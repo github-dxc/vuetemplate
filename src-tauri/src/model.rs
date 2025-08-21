@@ -53,7 +53,7 @@ pub struct BugList {
     pub limit: i64,
 }
 
-#[derive(Debug, Default, Serialize)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct BugInfo {
     pub bug_id: i64,
     pub project_id: String,                //项目id
@@ -82,14 +82,14 @@ pub struct BugInfo {
     pub change_history: Vec<ChangeHistory>, //变更历史
 }
 
-#[derive(Debug, Default, Serialize)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct FileInfo {
     pub size: i64,
     pub url: String,
     pub name: String,
 }
 
-#[derive(Debug, Default, Serialize)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct BugNote {
     pub note_id: i64,
     pub time: i64,
@@ -177,4 +177,13 @@ pub struct FiltersParams {
 pub struct LoginInfo {
     pub logined: bool,
     pub username: String,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+pub struct BugNoteAdd {
+    pub bugnote_add_token: String,
+    pub bug_id: i64,
+    pub bugnote_text: String,
+    pub max_file_size: i64,
+    pub file_path: Option<String>
 }

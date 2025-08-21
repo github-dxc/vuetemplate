@@ -11,6 +11,7 @@ use reqwest::header::{
 };
 use reqwest::redirect::Policy;
 use reqwest::Client;
+use reqwest::multipart::{Form, Part};
 use scraper::{Html, Selector};
 use serde_html_form;
 use std::collections::hash_map::DefaultHasher;
@@ -286,6 +287,75 @@ pub async fn bug_update(
     let resp = client
         .post(url)
         .body(body)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let text = resp.text().await.map_err(|e| e.to_string())?;
+
+    Ok(text)
+}
+
+// bugnote_add 请求
+pub async fn bug_note_add(
+    jar: Arc<Jar>, 
+    bug: BugNoteAdd,
+    host: &str,
+) -> Result<String, String> {
+    let origin = format!("http://{}",host);
+    let url = origin.to_string()+"/bugnote_add.php";
+    println!("bug_note_add bug: {:?}", bug);
+
+    // 构造 multipart/form-data 表单
+    let mut form = Form::new()
+        .text("bugnote_text", bug.bugnote_text.to_string())
+        .text("bug_id", bug.bug_id.to_string())
+        .text("max_file_size", bug.max_file_size.to_string())
+        .text("bugnote_add_token", bug.bugnote_add_token.to_string());
+
+    // 如果提供了文件路径，则添加文件部分
+    if let Some(path) = bug.file_path {
+        let file_bytes = tokio::fs::read(&path).await
+            .map_err(|e| format!("无法读取文件: {}", e))?;
+        let file_name = std::path::Path::new(&path)
+            .file_name()
+            .and_then(|os_str| os_str.to_str())
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| "unnamed_file".to_string());
+
+        let mime = get_mime_type_from_filename(&file_name);
+        let file_part = Part::bytes(file_bytes)
+            .file_name(file_name)
+            .mime_str(&mime) // 设置MIME类型
+            .unwrap();
+        form = form.part("attachment", file_part); // 这里的"attachment"是表单中文件字段的名称
+    }
+
+    // 构建请求头
+    let mut headers = HeaderMap::new();
+    headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
+    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
+    headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
+    headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
+
+    // 创建 reqwest 客户端
+    let client = Client::builder()
+        .timeout(Duration::from_secs(2))
+        .cookie_provider(jar)
+        .danger_accept_invalid_certs(true) // --insecure
+        .default_headers(headers)
+        .redirect(Policy::custom(|attempt| {
+            // 自定义重定向策略
+            attempt.stop()
+        }))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    // 发送 GET 请求
+    let resp = client
+        .post(url)
+        .multipart(form)
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -1089,4 +1159,12 @@ pub fn println_cookies(jar: &Jar, host: &str) {
         println!("cookies:{}",s);
         Some(())
     });
+}
+
+fn get_mime_type_from_filename(filename: &str) -> String {
+    let mime_type = mime_guess::from_path(filename)
+        .first_or_octet_stream();
+    
+    // Convert the Mime object to a String
+    mime_type.to_string()
 }

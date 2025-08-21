@@ -27,7 +27,7 @@
           <el-button type="warning" plain round>{{ bugStatus.get(String(bugInfo.status)) }}</el-button>
           <el-button type="primary" plain round>{{ bugResolution.get(String(bugInfo.resolution)) }}</el-button>
           <el-button type="success" plain round>{{ bugCategory.get(String(bugInfo.category_id)) }}</el-button>
-          <el-button type="info" plain round>{{ bugUsers.get(String(bugInfo.handler_id)) }}</el-button>
+          <el-button type="info" plain round @click="addBugNote">{{ bugUsers.get(String(bugInfo.handler_id)) }}</el-button>
         </div>
         <!--展示描述和重现步骤-->
         <div class="option_text">
@@ -90,7 +90,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { formatDate, getFirstChar, getColorByUnicPalette, byteArrayToBase64Image } from '../util';
-import { apiBugInfo, imageBase64 } from '../api';
+import { apiBugInfo, bugNoteAdd, imageBase64 } from '../api';
 import { createNewWindow } from '../windows';
 import { emit } from '@tauri-apps/api/event';
 
@@ -174,6 +174,17 @@ const bugUsers = computed(() => {
   return myMap;
 })
 
+const addBugNote = async function() {
+  let bug_id = props.bugId;
+  let bugnote_text = "dxcdxc";
+  let file_path = "D:/15520/Pictures/wechat_2025-08-21_214419_925.png";
+  bugNoteAdd({bug_id,bugnote_text,file_path}).then(result => {
+    console.log("成功:", result);
+    getBugInfo();
+  }).catch(error => {
+    console.error("错误:", error);
+  });
+}
 
 // 打开图片预览
 const openImagePreview = async function(index) {
@@ -195,37 +206,36 @@ const openImagePreview = async function(index) {
   },DOMContentLoadedCallback);
 }
 
-onMounted(() => {
-  try {
-    apiBugInfo(props.bugId).then(result => {
-      console.log("成功:", result);
-      bugInfo.value = result;
-      const allNotes = result.bugnote_notes || [];
-      if (result.attachments.length > 0) {
-        allNotes.push({
-          handler: result.reporter,
-          handler_id: result.reporter_id,
-          time: result.date_submitted,
-          attachments: result.attachments,
-        });
-      }
-      bugNotes.value = allNotes;
-      bugNotes.value.forEach((i) => {
-        i.attachments.forEach((item) => {
-          imageBase64(item.url).then((bytes) => {
-            if (bytes) {
-              item.url_base64 = byteArrayToBase64Image(bytes, item.name);
-            }
-          });
+const getBugInfo = function() {
+  apiBugInfo(props.bugId).then(result => {
+    console.log("成功:", result);
+    bugInfo.value = result;
+    const allNotes = result.bugnote_notes || [];
+    if (result.attachments.length > 0) {
+      allNotes.push({
+        handler: result.reporter,
+        handler_id: result.reporter_id,
+        time: result.date_submitted,
+        attachments: result.attachments,
+      });
+    }
+    bugNotes.value = allNotes;
+    bugNotes.value.forEach((i) => {
+      i.attachments.forEach((item) => {
+        imageBase64(item.url).then((bytes) => {
+          if (bytes) {
+            item.url_base64 = byteArrayToBase64Image(bytes, item.name);
+          }
         });
       });
-    }).catch(error => {
-      console.error("错误:", error);
     });
-  } catch (error) {
-    console.error('下载图片失败:', error);
-    return;
-  }
+  }).catch(error => {
+    console.error("错误:", error);
+  });
+}
+
+onMounted(() => {
+  getBugInfo();
 })
 
 </script>
