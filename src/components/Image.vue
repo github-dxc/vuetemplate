@@ -133,7 +133,8 @@ listen('web_images', async (event) => {
   imageNotes.value = [];
   imageInitIndex.value = payloadValue.show_index || 0;
   try {
-    for (let i = 0; i < payloadValue.attachments.length; i++) {
+    const count1 = payloadValue.attachments?.length || 0;
+    for (let i = 0; i < count1; i++) {
       const item = payloadValue.attachments[i];
       const bytes = await imageBase64(item.url);
       if (bytes) {
@@ -142,6 +143,7 @@ listen('web_images', async (event) => {
         imageNames.value.push(item.name);
       }
     }
+    const count2 = payloadValue.bugnote_notes?.length || 0;
     for (let i = 0; i < payloadValue.bugnote_notes.length; i++) {
       const note = payloadValue.bugnote_notes[i];
       for (let j = 0; j < note.attachments.length; j++) {

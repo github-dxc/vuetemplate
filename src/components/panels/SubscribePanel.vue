@@ -51,7 +51,14 @@
         <el-table-column prop="handler" label="处理人" width="110" header-align="center">
           <template #default="scope">
             <div class="handler-info">
-              <span class="handler-name">{{ scope.row.handler || '未分配' }}</span>
+              <el-popover placement="bottom-start" :width="400" trigger="click" :hide-after="10">
+                <template #reference>
+                  <el-button type="warning" size="small" plain>{{ bugUsers.get(String(scope.row.handler_id)) }}</el-button>
+                </template>
+                <div class="flex gap-2 mt-4">
+                  <el-check-tag class="option_check_tag" v-for="item in bugUsers" :checked="item[0]===String(scope.row.handler_id)" type="warning" @change="changeBug({bug_id:scope.row.bug_id,handler_id:Number(item[0])})">{{ item[1] }}</el-check-tag>
+                </div>
+              </el-popover>
             </div>
           </template>
         </el-table-column>
@@ -192,7 +199,16 @@ const host = computed(() => {
   return userStore.serverHost;
 })
 
-// 获取Status的值
+const bugUsers = computed(() => {
+  const myMap = new Map();
+  enums.value.Users.forEach(item => {
+    if (item.key !== "0") {
+      myMap.set(item.key, item.value);
+    }
+  });
+  return myMap;
+})
+
 const bugStatus = computed(() => {
   const myMap = new Map();
   enums.value.Status.forEach(item => {
@@ -201,7 +217,6 @@ const bugStatus = computed(() => {
   return myMap;
 })
 
-// 获取Severity的值
 const bugSeverity = computed(() => {
   const myMap = new Map();
   enums.value.Severity.forEach(item => {
@@ -337,6 +352,19 @@ async function handleCommand(command) {
     });
     console.error("更新失败", error);
   }
+}
+
+const changeBug = function(data) {
+  updateBug(data).then(result => {
+    console.log("更新成功:", result);
+    getBugInfo();
+  }).catch(error => {
+    ElMessage({
+      message: '更新失败，请稍后重试',
+      type: 'error',
+    });
+    console.error("更新失败:", error);
+  });
 }
 
 function handlePageChange(currentPage) {
@@ -507,12 +535,6 @@ listen('sub_bugs', (event) => {
   align-items: center;
   gap: 8px;
   justify-content: center;
-}
-
-.handler-name {
-  font-size: 12px;
-  color: #4b5563;
-  font-weight: 500;
 }
 
 .summary-content {
@@ -700,4 +722,10 @@ listen('sub_bugs', (event) => {
 :deep(.el-drawer__header) {
   margin-bottom: 0px !important;
 }
+
+.option_check_tag {
+  position: relative;
+  margin: 3px;
+}
+
 </style>

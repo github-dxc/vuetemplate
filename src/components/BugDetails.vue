@@ -23,11 +23,56 @@
         </div>
         <!--展示选项类状态-->
         <div class="option_tags">
-          <el-button type="danger" plain round>{{ bugSeverity.get(String(bugInfo.severity)) }}</el-button>
-          <el-button type="warning" plain round>{{ bugStatus.get(String(bugInfo.status)) }}</el-button>
-          <el-button type="primary" plain round>{{ bugResolution.get(String(bugInfo.resolution)) }}</el-button>
-          <el-button type="success" plain round>{{ bugCategory.get(String(bugInfo.category_id)) }}</el-button>
-          <el-button type="info" plain round @click="addBugNote">{{ bugUsers.get(String(bugInfo.handler_id)) }}</el-button>
+          <!--解决情况-->
+          <el-popover placement="bottom-start" :width="400" trigger="hover" :hide-after="10">
+            <template #reference>
+              <el-button type="danger" plain round>{{ bugSeverity.get(String(bugInfo.severity)) }}</el-button>
+            </template>
+            <div class="flex gap-2 mt-4">
+              <el-check-tag class="option_check_tag" v-for="item in bugSeverity" :checked="item[0]===String(bugInfo.severity)" type="danger" @change="changeBug({severity:Number(item[0])})">{{ item[1] }}</el-check-tag>
+            </div>
+          </el-popover>
+          
+          <!--解决情况-->
+          <el-popover placement="bottom-start" :width="400" trigger="hover" :hide-after="10">
+            <template #reference>
+              <el-button type="warning" plain round>{{ bugStatus.get(String(bugInfo.status)) }}</el-button>
+            </template>
+            <div class="flex gap-2 mt-4">
+              <el-check-tag class="option_check_tag" v-for="item in bugStatus" :checked="item[0]===String(bugInfo.status)" type="warning" @change="changeBug({status:Number(item[0])})">{{ item[1] }}</el-check-tag>
+            </div>
+          </el-popover>
+          
+          <!--处理情况-->
+          <el-popover placement="bottom-start" :width="400" trigger="hover" :hide-after="10">
+            <template #reference>
+              <el-button type="primary" plain round>{{ bugResolution.get(String(bugInfo.resolution)) }}</el-button>
+            </template>
+            <div class="flex gap-2 mt-4">
+              <el-check-tag class="option_check_tag" v-for="item in bugResolution" :checked="item[0]===String(bugInfo.resolution)" type="primary" @change="changeBug({resolution:Number(item[0])})">{{ item[1] }}</el-check-tag>
+            </div>
+          </el-popover>
+          
+          <!--分组-->
+          <el-popover placement="bottom-start" :width="400" trigger="hover" :hide-after="10">
+            <template #reference>
+              <el-button type="success" plain round>{{ bugCategory.get(String(bugInfo.category_id)) }}</el-button>
+            </template>
+            <div class="flex gap-2 mt-4">
+              <el-check-tag class="option_check_tag" v-for="item in bugCategory" :checked="item[0]===String(bugInfo.category_id)" type="success" @change="changeBug({category_id:Number(item[0])})">{{ item[1] }}</el-check-tag>
+            </div>
+          </el-popover>
+          
+          <!--处理人-->
+          <el-popover placement="bottom-start" :width="400" trigger="hover" :hide-after="10">
+            <template #reference>
+              <el-button type="info" plain round>{{ bugUsers.get(String(bugInfo.handler_id)) }}</el-button>
+            </template>
+            <div class="flex gap-2 mt-4">
+              <el-check-tag class="option_check_tag" v-for="item in bugUsers" :checked="item[0]===String(bugInfo.handler_id)" type="primary" @change="changeBug({handler_id:Number(item[0])})">{{ item[1] }}</el-check-tag>
+            </div>
+          </el-popover>
+          
         </div>
         <!--展示描述和重现步骤-->
         <div class="option_text">
@@ -90,7 +135,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { formatDate, getFirstChar, getColorByUnicPalette, byteArrayToBase64Image } from '../util';
-import { apiBugInfo, bugNoteAdd, imageBase64 } from '../api';
+import { apiBugInfo, bugNoteAdd, imageBase64, updateBug } from '../api';
+import { ElMessage } from "element-plus";
 import { createNewWindow } from '../windows';
 import { emit } from '@tauri-apps/api/event';
 
@@ -113,63 +159,81 @@ const bugNotes = ref({});
 const bugProject = computed(() => {
   const myMap = new Map();
   props.enums.Project.forEach(item => {
-    myMap.set(item.key, item.value);
+    if (item.key !== "0") {
+      myMap.set(item.key, item.value);
+    }
   });
   return myMap;
 })
 const bugPriority = computed(() => {
   const myMap = new Map();
   props.enums.Priority.forEach(item => {
-    myMap.set(item.key, item.value);
+    if (item.key !== "0") {
+      myMap.set(item.key, item.value);
+    }
   });
   return myMap;
 })
 const bugSeverity = computed(() => {
   const myMap = new Map();
   props.enums.Severity.forEach(item => {
-    myMap.set(item.key, item.value);
+    if (item.key !== "0") {
+      myMap.set(item.key, item.value);
+    }
   });
   return myMap;
 })
 const bugReproducibility = computed(() => {
   const myMap = new Map();
   props.enums.Reproducibility.forEach(item => {
-    myMap.set(item.key, item.value);
+    if (item.key !== "0") {
+      myMap.set(item.key, item.value);
+    }
   });
   return myMap;
 })
 const bugViewStatus = computed(() => {
   const myMap = new Map();
   props.enums.ViewStatus.forEach(item => {
-    myMap.set(item.key, item.value);
+    if (item.key !== "0") {
+      myMap.set(item.key, item.value);
+    }
   });
   return myMap;
 })
 const bugResolution = computed(() => {
   const myMap = new Map();
   props.enums.Resolution.forEach(item => {
-    myMap.set(item.key, item.value);
+    if (item.key !== "0") {
+      myMap.set(item.key, item.value);
+    }
   });
   return myMap;
 })
 const bugStatus = computed(() => {
   const myMap = new Map();
   props.enums.Status.forEach(item => {
-    myMap.set(item.key, item.value);
+    if (item.key !== "0") {
+      myMap.set(item.key, item.value);
+    }
   });
   return myMap;
 })
 const bugCategory = computed(() => {
   const myMap = new Map();
   props.enums.Category.forEach(item => {
-    myMap.set(item.key, item.value);
+    if (item.key !== "0") {
+      myMap.set(item.key, item.value);
+    }
   });
   return myMap;
 })
 const bugUsers = computed(() => {
   const myMap = new Map();
   props.enums.Users.forEach(item => {
-    myMap.set(item.key, item.value);
+    if (item.key !== "0") {
+      myMap.set(item.key, item.value);
+    }
   });
   return myMap;
 })
@@ -182,7 +246,32 @@ const addBugNote = async function() {
     console.log("成功:", result);
     getBugInfo();
   }).catch(error => {
+    ElMessage({
+      message: '更新失败，请稍后重试',
+      type: 'error',
+    });
     console.error("错误:", error);
+  });
+}
+
+const changeBug = function(data) {
+  if (!bugInfo.last_updated_sec) {
+    ElMessage({
+      message: '无法更新，可能是因为没有权限，请刷新后重试',
+      type: 'warning',
+    });
+    return;
+  }
+  data.bug_id = props.bugId;
+  updateBug(data).then(result => {
+    console.log("更新成功:", result);
+    getBugInfo();
+  }).catch(error => {
+    ElMessage({
+      message: '更新失败，请稍后重试',
+      type: 'error',
+    });
+    console.error("更新失败:", error);
   });
 }
 
@@ -190,7 +279,7 @@ const addBugNote = async function() {
 const openImagePreview = async function(index) {
   const DOMContentLoadedCallback = () => {
     // 发送图片信息列表给图片预览窗口
-    emit('web_images', { attachments: bugInfo.value.attachments, bugnote_notes: bugInfo.value.bugnote_notes, show_index: index});
+    emit('web_images', { bugnote_notes: bugInfo.value.bugnote_notes, show_index: index});
   };
   // label需要在capabilities/default.json中声明权限
   await createNewWindow('image', {
@@ -419,6 +508,11 @@ onMounted(() => {
   height: 32px;
   margin-top: 20px;
   margin-left: 25px;
+}
+
+.option_check_tag {
+  position: relative;
+  margin: 3px;
 }
 
 .option_text {
