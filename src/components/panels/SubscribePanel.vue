@@ -357,7 +357,6 @@ async function handleCommand(command) {
 const changeBug = function(data) {
   updateBug(data).then(result => {
     console.log("更新成功:", result);
-    getBugInfo();
   }).catch(error => {
     ElMessage({
       message: '更新失败，请稍后重试',
@@ -421,9 +420,9 @@ async function openBugDetails(bug_id,title) {
 // 初始化
 onMounted(async () => {
   // 初始化枚举数据
-  api_init_data()
+  await api_init_data();
   // 查询bug列表
-  api_bug_list()
+  await api_bug_list();
 });
 
 // 监听rust发送的消息

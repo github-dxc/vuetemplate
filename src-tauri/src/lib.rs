@@ -8,7 +8,6 @@ use log::{debug, info, warn};
 use model::*;
 use reqwest::cookie::{CookieStore, Jar};
 use scraper::Html;
-use serde::{de, Serialize};
 use tauri_plugin_store::StoreExt;
 use url::Url;
 use std::collections::HashMap;
@@ -18,6 +17,7 @@ use tauri_plugin_notification::{NotificationExt, PermissionState};
 use tauri_plugin_updater::{Update, UpdaterExt};
 use tokio::time::{interval, Duration};
 use tokio::signal;
+use tokio::runtime::Runtime;
 use serde_json::{Value};
 use std::collections::HashSet;
 use utils::*;
@@ -439,7 +439,8 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
 // 初始化分组和项目
 fn init_project_catgory(app: AppHandle) -> Result<(),String> {
     // 开启线程执行异步函数
-    tauri::async_runtime::spawn(async move {
+    let rt = Runtime::new().unwrap();
+    rt.block_on(async move {
         let state = app.state::<MyState>().clone();
         
         let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
@@ -488,8 +489,7 @@ fn init_project_catgory(app: AppHandle) -> Result<(),String> {
             *users_kv = users;
         };
         Ok(())
-    });
-    Ok(())
+    })
 }
 
 //保存全局状态

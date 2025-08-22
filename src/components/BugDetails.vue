@@ -78,13 +78,32 @@
         <div class="option_text">
           <div class="text-field">问题描述</div>
           <div class="text-content">
-            <div v-html="bugInfo.description"></div>
+            <div class="text" v-if="!showDescriptionEdit" v-html="bugInfo.description" @click="focusDescriptionEditor"></div>
+            <div v-else class="editor-container">
+              <QuillEditor
+                ref="descriptionEditor"
+                v-model:content="bugInfo.description"
+                contentType="html"
+                :toolbar="toolbarOptions"
+                @blur="showDescriptionEdit=!showDescriptionEdit"
+              />
+            </div>
           </div>
+          
         </div>
         <div class="option_text">
           <div class="text-field">重现步骤</div>
           <div class="text-content">
-            <div v-html="bugInfo.steps_to_reproduce"></div>
+            <div class="text" v-if="!showStepsEdit" v-html="bugInfo.steps_to_reproduce" @click="focusStepsEditor"></div>
+            <div v-else class="editor-container">
+              <QuillEditor
+                ref="stepsEditor"
+                v-model:content="bugInfo.steps_to_reproduce"
+                contentType="html"
+                :toolbar="toolbarOptions"
+                @blur="showStepsEdit=!showStepsEdit"
+              />
+            </div>
           </div>
         </div>
         <!--最后更新时间-->
@@ -134,6 +153,8 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { QuillEditor } from '@vueup/vue-quill';
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import { formatDate, getFirstChar, getColorByUnicPalette, byteArrayToBase64Image } from '../util';
 import { apiBugInfo, bugNoteAdd, imageBase64, updateBug } from '../api';
 import { ElMessage } from "element-plus";
@@ -152,6 +173,39 @@ const props = defineProps({
     default: () => ({})
   }
 }); 
+
+const toolbarOptions = [
+  [{ header: [1, 2, 3, false] }],
+  [{ list: 'ordered' }, { list: 'bullet' }],
+  ['bold', 'italic', 'underline'],
+  ['link', 'blockquote', 'code-block', 'image'],
+];
+const descriptionEditor = ref(null);
+const stepsEditor = ref(null);
+const showDescriptionEdit = ref(false);
+const showStepsEdit = ref(false);
+const focusDescriptionEditor = () => {
+  showDescriptionEdit.value=!showDescriptionEdit.value;
+  setTimeout(()=>{
+    if (descriptionEditor.value) {
+      let q = descriptionEditor.value.getQuill();
+      q.focus();
+      const length = q.getLength();
+      q.setSelection(length, 0);
+    }
+  },200)
+};
+const focusStepsEditor = () => {
+  showStepsEdit.value=!showStepsEdit.value;
+  setTimeout(()=>{
+    if (stepsEditor.value) {
+      let q = stepsEditor.value.getQuill();
+      q.focus();
+      const length = q.getLength();
+      q.setSelection(length, 0);
+    }
+  },200)
+};
 
 const bugInfo = ref({});
 const bugNotes = ref({});
@@ -535,16 +589,19 @@ onMounted(() => {
 }
 
 .generated-design .text-content {
-  color: #374151;
-  font-family: "Inter-Regular", Helvetica;
-  font-size: 14px;
-  font-weight: 400;
   margin-top: 10px;
   margin-left: 5px;
-  letter-spacing: 0;
-  line-height: 26px;
   position: relative;
   width: 750px;
+}
+
+.generated-design .text-content .text {
+  color: #374151;
+  font-family: "Inter-Regular", Helvetica;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 26px;
 }
 
 .generated-design .option_last_updated {
