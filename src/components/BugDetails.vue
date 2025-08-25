@@ -78,14 +78,14 @@
         <div class="option_text">
           <div class="text-field">问题描述</div>
           <div class="text-content">
-            <div class="text" v-if="!showDescriptionEdit" v-html="bugInfo.description" @click="focusDescriptionEditor"></div>
+            <div class="text" v-if="!showDescriptionEdit" v-html="bugInfo.description||'点击此处添加描述'" @click="focusDescriptionEditor"></div>
             <div v-else class="editor-container">
               <QuillEditor
                 ref="descriptionEditor"
                 v-model:content="bugInfo.description"
                 contentType="html"
                 :toolbar="toolbarOptions"
-                @blur="showDescriptionEdit=!showDescriptionEdit"
+                @blur="blurDescriptionEditor"
               />
             </div>
           </div>
@@ -94,14 +94,14 @@
         <div class="option_text">
           <div class="text-field">重现步骤</div>
           <div class="text-content">
-            <div class="text" v-if="!showStepsEdit" v-html="bugInfo.steps_to_reproduce" @click="focusStepsEditor"></div>
+            <div class="text" v-if="!showStepsEdit" v-html="bugInfo.steps_to_reproduce||'点击此处添加重现步骤'" @click="focusStepsEditor"></div>
             <div v-else class="editor-container">
               <QuillEditor
                 ref="stepsEditor"
                 v-model:content="bugInfo.steps_to_reproduce"
                 contentType="html"
                 :toolbar="toolbarOptions"
-                @blur="showStepsEdit=!showStepsEdit"
+                @blur="blurStepsEditor"
               />
             </div>
           </div>
@@ -152,7 +152,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { QuillEditor } from '@vueup/vue-quill';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import { formatDate, getFirstChar, getColorByUnicPalette, byteArrayToBase64Image } from '../util';
@@ -206,8 +206,16 @@ const focusStepsEditor = () => {
     }
   },200)
 };
-
+const blurDescriptionEditor = () => {
+  showDescriptionEdit.value=!showDescriptionEdit.value;
+  changeBug({description: bugInfo.value.description});
+};
+const blurStepsEditor = () => {
+  showStepsEdit.value=!showStepsEdit.value;
+  changeBug({steps_to_reproduce: bugInfo.value.steps_to_reproduce});
+};
 const bugInfo = ref({});
+const oldBugInfo = ref({});
 const bugNotes = ref({});
 
 const bugProject = computed(() => {
@@ -309,6 +317,19 @@ const addBugNote = async function() {
 }
 
 const changeBug = function(data) {
+  console.log("更新数据:", data);
+  // 如果data中的数据与oldBugInfo中的数据相同，则不进行更新
+  let isChanged = false;
+  for (let key in data) {
+    if (data[key] !== oldBugInfo.value[key]) {
+      isChanged = true;
+      break;
+    }
+  }
+  if (!isChanged) {
+    console.log("数据未改变，跳过更新");
+    return;
+  }
   if (!bugInfo.last_updated_sec) {
     ElMessage({
       message: '无法更新，可能是因为没有权限，请刷新后重试',
@@ -353,6 +374,7 @@ const getBugInfo = function() {
   apiBugInfo(props.bugId).then(result => {
     console.log("成功:", result);
     bugInfo.value = result;
+    oldBugInfo.value = {...result};
     const allNotes = result.bugnote_notes || [];
     if (result.attachments.length > 0) {
       allNotes.push({
@@ -372,6 +394,13 @@ const getBugInfo = function() {
         });
       });
     });
+    // 把a标签改为使用新窗口打开
+    setTimeout(() => {
+      const links = document.querySelectorAll('.text-content a');
+      links.forEach(link => {
+        link.setAttribute('target', '_blank');
+      });
+    }, 200);
   }).catch(error => {
     console.error("错误:", error);
   });
@@ -654,7 +683,7 @@ onMounted(() => {
   left: 10px;
   right: 10px;
   position: relative;
-  top: 20px;
+  top: 15px;
   width: 780px;
   margin-bottom: 10px;
 }
@@ -663,7 +692,7 @@ onMounted(() => {
   border-bottom-style: solid;
   border-bottom-width: 1px;
   border-color: #e5e7eb;
-  height: 76px;
+  height: 65px;
   left: 1px;
   position: relative;
   top: 1px;
@@ -674,7 +703,7 @@ onMounted(() => {
   height: 20px;
   left: 23px;
   position: relative;
-  top: 27px;
+  top: 22px;
   width: 20px;
 }
 
@@ -695,7 +724,7 @@ onMounted(() => {
   letter-spacing: 0;
   line-height: 27px;
   position: absolute;
-  top: 22px;
+  top: 17px;
   white-space: nowrap;
 }
 
@@ -779,7 +808,7 @@ onMounted(() => {
 
 .demo-image__error {
   position: relative;
-  height: 222px;
+  height: 200px;
   margin-top: -20px;
   margin-left: 20px;
   margin-bottom: 10px;
@@ -800,8 +829,8 @@ onMounted(() => {
 .demo-image__error .el-image {
   padding: 0 5px;
   max-width: 300px;
-  max-height: 200px;
+  max-height: 170px;
   width: 100%;
-  height: 200px;
+  height: 170px;
 }
 </style>
