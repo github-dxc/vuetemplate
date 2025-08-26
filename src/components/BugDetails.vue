@@ -1,7 +1,7 @@
 <template>
   <div class="generated-design">
     <div class="overlap-group">
-      <div class="overlap">
+      <div class="overlap" ref="contentRef">
         <!--展示提交员信息-->
         <div class="option_reporter">
           <div class="rectangle" :style="{backgroundColor: getColorByUnicPalette(getFirstChar(bugInfo.reporter)).textColor}"/>
@@ -85,7 +85,7 @@
                 v-model:content="bugInfo.description"
                 contentType="html"
                 :toolbar="toolbarOptions"
-                @blur="blurDescriptionEditor"
+                @ready="onEditorReady"
               />
             </div>
           </div>
@@ -101,7 +101,7 @@
                 v-model:content="bugInfo.steps_to_reproduce"
                 contentType="html"
                 :toolbar="toolbarOptions"
-                @blur="blurStepsEditor"
+                @ready="onEditorReady"
               />
             </div>
           </div>
@@ -152,8 +152,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import { QuillEditor } from '@vueup/vue-quill';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { QuillEditor,Quill } from '@vueup/vue-quill';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import { formatDate, getFirstChar, getColorByUnicPalette, byteArrayToBase64Image } from '../util';
 import { apiBugInfo, bugNoteAdd, imageBase64, updateBug } from '../api';
@@ -174,17 +174,24 @@ const props = defineProps({
   }
 }); 
 
+const emits = defineEmits(['alabelClickFn']);
+
+const contentRef = ref(null);
 const toolbarOptions = [
   [{ header: [1, 2, 3, false] }],
   [{ list: 'ordered' }, { list: 'bullet' }],
   ['bold', 'italic', 'underline'],
-  ['link', 'blockquote', 'code-block', 'image'],
+  ['link', 'blockquote', 'code-block', 'image', 'video'],
+  ['save']  // 添加保存按钮
 ];
 const descriptionEditor = ref(null);
 const stepsEditor = ref(null);
 const showDescriptionEdit = ref(false);
 const showStepsEdit = ref(false);
-const focusDescriptionEditor = () => {
+const focusDescriptionEditor = (e) => {
+  if (e.target.tagName.toLowerCase() === 'a') {
+    return;
+  }
   showDescriptionEdit.value=!showDescriptionEdit.value;
   setTimeout(()=>{
     if (descriptionEditor.value) {
@@ -195,7 +202,10 @@ const focusDescriptionEditor = () => {
     }
   },200)
 };
-const focusStepsEditor = () => {
+const focusStepsEditor = (e) => {
+  if (e.target.tagName.toLowerCase() === 'a') {
+    return;
+  }
   showStepsEdit.value=!showStepsEdit.value;
   setTimeout(()=>{
     if (stepsEditor.value) {
@@ -206,14 +216,25 @@ const focusStepsEditor = () => {
     }
   },200)
 };
-const blurDescriptionEditor = () => {
-  showDescriptionEdit.value=!showDescriptionEdit.value;
-  changeBug({description: bugInfo.value.description});
+const onEditorReady = (quill) => {
+  const toolbar = quill.getModule('toolbar');
+  toolbar.addHandler('save', () => {
+    // 获取当前编辑器实例
+    const currentEditor = quill;
+    // 获取当前编辑器的内容
+    const content = currentEditor.root.innerHTML;
+    
+    // 判断是哪个编辑器并保存相应内容
+    if (currentEditor === descriptionEditor.value?.getQuill()) {
+      changeBug({ description: content });
+      showDescriptionEdit.value = false;
+    } else if (currentEditor === stepsEditor.value?.getQuill()) {
+      changeBug({ steps_to_reproduce: content });
+      showStepsEdit.value = false;
+    }
+  });
 };
-const blurStepsEditor = () => {
-  showStepsEdit.value=!showStepsEdit.value;
-  changeBug({steps_to_reproduce: bugInfo.value.steps_to_reproduce});
-};
+
 const bugInfo = ref({});
 const oldBugInfo = ref({});
 const bugNotes = ref({});
@@ -326,6 +347,7 @@ const changeBug = function(data) {
       break;
     }
   }
+  console.log("旧数据:", oldBugInfo.value);
   if (!isChanged) {
     console.log("数据未改变，跳过更新");
     return;
@@ -394,13 +416,6 @@ const getBugInfo = function() {
         });
       });
     });
-    // 把a标签改为使用新窗口打开
-    setTimeout(() => {
-      const links = document.querySelectorAll('.text-content a');
-      links.forEach(link => {
-        link.setAttribute('target', '_blank');
-      });
-    }, 200);
   }).catch(error => {
     console.error("错误:", error);
   });
@@ -408,9 +423,46 @@ const getBugInfo = function() {
 
 onMounted(() => {
   getBugInfo();
+
+  // 监听内容区域的a标签点击事件，传递到外面用外部浏览器打开
+  const clickHandler = (e) => {
+    const a = e.target.closest('a');
+    //如果a标签是editor-container的子元素且不是.ql-preview，则不处理
+    if (a && e.target.closest('.editor-container') && !e.target.closest('.ql-preview')) {
+      return;
+    }
+    if (a) {
+      e.preventDefault(); // 阻止默认行为
+      emits('alabelClickFn', a.href);
+    }
+  };
+  contentRef.value.addEventListener('click', clickHandler);
+  onBeforeUnmount(() => {
+    contentRef.value?.removeEventListener('click', clickHandler);
+  });
+
+  
+  // 注册富文本自定义格式
+  const Inline = Quill.import('blots/inline');
+  class SaveBlot extends Inline {}
+  SaveBlot.blotName = 'save';
+  SaveBlot.tagName = 'span';
+  Quill.register(SaveBlot);
+  // 注册富文本自定义图标
+  const icons = Quill.import('ui/icons');
+  icons['save'] = `<svg viewBox="0 0 24 24" width="18" height="18">
+    <path fill="currentColor" d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+  </svg>`;
+
 })
 
 </script>
+
+<style>
+.ql-tooltip.ql-editing {
+  left: 20px !important;
+}
+</style>
 
 <style scoped>
 .generated-design {
@@ -631,6 +683,15 @@ onMounted(() => {
   font-weight: 400;
   letter-spacing: 0;
   line-height: 26px;
+}
+
+:deep(.text-content .text p) {
+  margin: 0px;
+}
+
+.generated-design .text-content .editor-container {
+  position: relative;
+  left: -15px;
 }
 
 .generated-design .option_last_updated {
