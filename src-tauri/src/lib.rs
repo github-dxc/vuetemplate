@@ -322,7 +322,7 @@ async fn api_update_bug(
 
 // 保存note
 #[tauri::command(rename_all = "snake_case")]
-async fn api_bug_note_add(app: AppHandle, bug_id: i64, bugnote_text: String,file_path: Option<String>) -> Result<(), String> {
+async fn api_bug_note_add(app: AppHandle, bug_id: i64, bugnote_text: String,file_path: Vec<String>) -> Result<(), String> {
     let state = app.state::<MyState>().clone();
     let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();

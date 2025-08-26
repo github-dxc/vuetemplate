@@ -314,7 +314,7 @@ pub async fn bug_note_add(
         .text("bugnote_add_token", bug.bugnote_add_token.to_string());
 
     // 如果提供了文件路径，则添加文件部分
-    if let Some(path) = bug.file_path {
+    for (i,path) in bug.file_path.iter().enumerate() {
         let file_bytes = tokio::fs::read(&path).await
             .map_err(|e| format!("无法读取文件: {}", e))?;
         let file_name = std::path::Path::new(&path)
@@ -328,7 +328,7 @@ pub async fn bug_note_add(
             .file_name(file_name)
             .mime_str(&mime) // 设置MIME类型
             .unwrap();
-        form = form.part("ufile", file_part); // 这里的"attachment"是表单中文件字段的名称
+        form = form.part(format!("ufile[{}]",i), file_part); // 这里的"attachment"是表单中文件字段的名称
     }
 
     // 构建请求头
@@ -885,6 +885,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
 
     // attachments
     let attachments_selector = Selector::parse(".bug-attach-tags .well.well-xs").unwrap();
+    // let attachments_selector = Selector::parse(".bugnote-note").unwrap();
     bug.attachments = document
         .select(&attachments_selector)
         .map(|e| {
@@ -962,7 +963,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                     let mut size = 0;
                     let mut url = String::new();
                     let mut name = String::new();
-                    e.select(&Selector::parse("a:nth-of-type(2)").unwrap())
+                    e.select(&Selector::parse(".collapse-open.noprint a:nth-of-type(2)").unwrap())
                         .for_each(|e| {
                             //<a href="file_download.php?file_id=2365&amp;type=bug">image.png</a>&#32;(179,667&#32;字节)&#32;&nbsp;&nbsp;
                             url = format!("{}",e.value().attr("href").unwrap_or_default().replace("&amp;", "&"));

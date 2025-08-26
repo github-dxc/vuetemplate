@@ -21,6 +21,7 @@
           <div class="text-wrapper-5">提交时间</div>
           <div class="text-wrapper-6">{{ formatDate(bugInfo.date_submitted) }}</div>
         </div>
+        <el-button @click="addBugNote">添加评论</el-button>
         <!--展示选项类状态-->
         <div class="option_tags">
           <!--解决情况-->
@@ -323,8 +324,8 @@ const bugUsers = computed(() => {
 
 const addBugNote = async function() {
   let bug_id = props.bugId;
-  let bugnote_text = "dxcdxc";
-  let file_path = "D:/15520/Pictures/wechat_2025-08-21_214419_925.png";
+  let bugnote_text = "dxcdxc1";
+  let file_path = ["D:/15520/Pictures/wechat_2025-08-21_214419_925.png","D:/15520/Pictures/wechat_2025-08-09_224129_298.png"];
   bugNoteAdd({bug_id,bugnote_text,file_path}).then(result => {
     console.log("成功:", result);
     getBugInfo();
@@ -347,12 +348,11 @@ const changeBug = function(data) {
       break;
     }
   }
-  console.log("旧数据:", oldBugInfo.value);
   if (!isChanged) {
     console.log("数据未改变，跳过更新");
     return;
   }
-  if (!bugInfo.last_updated_sec) {
+  if (!bugInfo.value.last_updated_sec) {
     ElMessage({
       message: '无法更新，可能是因为没有权限，请刷新后重试',
       type: 'warning',
