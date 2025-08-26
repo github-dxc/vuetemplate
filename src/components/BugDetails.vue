@@ -78,7 +78,7 @@
         <div class="option_text">
           <div class="text-field">问题描述</div>
           <div class="text-content">
-            <div class="text" v-if="!showDescriptionEdit" v-html="bugInfo.description||'点击此处添加描述'" @click="focusDescriptionEditor"></div>
+            <div class="text" v-if="!showDescriptionEdit" v-html="bugInfo.description||'双击此处添加描述'" @dblclick="focusDescriptionEditor"></div>
             <div v-else class="editor-container">
               <QuillEditor
                 ref="descriptionEditor"
@@ -94,7 +94,7 @@
         <div class="option_text">
           <div class="text-field">重现步骤</div>
           <div class="text-content">
-            <div class="text" v-if="!showStepsEdit" v-html="bugInfo.steps_to_reproduce||'点击此处添加重现步骤'" @click="focusStepsEditor"></div>
+            <div class="text" v-if="!showStepsEdit" v-html="bugInfo.steps_to_reproduce||'双击此处添加重现步骤'" @dblclick="focusStepsEditor"></div>
             <div v-else class="editor-container">
               <QuillEditor
                 ref="stepsEditor"
