@@ -185,5 +185,6 @@ pub struct BugNoteAdd {
     pub bug_id: i64,
     pub bugnote_text: String,
     pub max_file_size: i64,
-    pub file_path: Vec<String>
+    pub file_path: Vec<String>,
+    pub binary_file: Vec<(String, Vec<u8>)>, // (filename, filecontent)
 }

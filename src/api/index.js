@@ -40,8 +40,8 @@ export const updateBug = async ({ bug_id, severity=0, status=0, resolution=0, ca
   return await invoke("api_update_bug",{bug_id,severity,status,resolution,category_id,handler_id,summary,description,steps_to_reproduce});
 };
 
-export const bugNoteAdd = async ({bug_id,bugnote_text,file_path=[]}) => {
-  return await invoke("api_bug_note_add",{bug_id,bugnote_text,file_path});
+export const bugNoteAdd = async ({bug_id,bugnote_text,file_path=[],binary_file=[]}) => {
+  return await invoke("api_bug_note_add",{bug_id,bugnote_text,file_path,binary_file});
 }
 
 export const imageBase64 = async (uri) => {

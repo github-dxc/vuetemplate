@@ -150,7 +150,7 @@
     </div>
   </div>
   <div class="overlap-comment-button">
-    <Annotation />
+    <Annotation @submit="uploadAnotation"/>
   </div>
 </template>
 
@@ -325,11 +325,17 @@ const bugUsers = computed(() => {
   return myMap;
 })
 
-const addBugNote = async function() {
+const uploadAnotation = async (submitData)=> {
+  console.log("提交注释:", submitData);
   let bug_id = props.bugId;
-  let bugnote_text = "dxcdxc1";
-  let file_path = ["D:/15520/Pictures/wechat_2025-08-21_214419_925.png","D:/15520/Pictures/wechat_2025-08-09_224129_298.png"];
-  bugNoteAdd({bug_id,bugnote_text,file_path}).then(result => {
+  let bugnote_text = submitData.content;
+  let binary_file = [];
+  for (let i = 0; i < submitData.files.length; i++) {
+    let file = submitData.files[i];
+    const arrayBuffer = await file.raw.arrayBuffer();
+    binary_file.push([file.name, Array.from(new Uint8Array(arrayBuffer))]);
+  }
+  bugNoteAdd({bug_id,bugnote_text,binary_file}).then(result => {
     console.log("成功:", result);
     getBugInfo();
   }).catch(error => {

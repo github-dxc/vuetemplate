@@ -304,7 +304,6 @@ pub async fn bug_note_add(
 ) -> Result<String, String> {
     let origin = format!("http://{}",host);
     let url = origin.to_string()+"/bugnote_add.php";
-    println!("bug_note_add bug: {:?}", bug);
 
     // 构造 multipart/form-data 表单
     let mut form = Form::new()
@@ -314,7 +313,8 @@ pub async fn bug_note_add(
         .text("bugnote_add_token", bug.bugnote_add_token.to_string());
 
     // 如果提供了文件路径，则添加文件部分
-    for (i,path) in bug.file_path.iter().enumerate() {
+    let mut i:usize = 0;
+    for path in bug.file_path {
         let file_bytes = tokio::fs::read(&path).await
             .map_err(|e| format!("无法读取文件: {}", e))?;
         let file_name = std::path::Path::new(&path)
@@ -329,8 +329,18 @@ pub async fn bug_note_add(
             .mime_str(&mime) // 设置MIME类型
             .unwrap();
         form = form.part(format!("ufile[{}]",i), file_part); // 这里的"attachment"是表单中文件字段的名称
+        i+=1;
     }
-
+    // 如果是二进制文件，则添加文件部分
+    for (file_name,file_bytes) in bug.binary_file {
+        let mime = get_mime_type_from_filename(&file_name);
+        let file_part = Part::bytes(file_bytes)
+            .file_name(file_name)
+            .mime_str(&mime) // 设置MIME类型
+            .unwrap();
+        form = form.part(format!("ufile[{}]",i), file_part); // 这里的"attachment"是表单中文件字段的名称
+        i+=1;
+    }
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
@@ -955,36 +965,37 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                 .find_map(|e| e.text().find_map(|s|Some(s.trim_ascii())))
                 .unwrap_or_default();
             // attachments
-            let attachments_selector = Selector::parse("td.bugnote-note").unwrap();
+            let attachments_selector = Selector::parse("td.bugnote-note a").unwrap();
             let attachments = e
                 .select(&attachments_selector)
                 .filter_map(|e| {
+                    //<a href="file_download.php?file_id=2365&amp;type=bug">image.png</a>&#32;(179,667&#32;字节)&#32;&nbsp;&nbsp;
+                    // if let Some(pe) = e.parent() {
+                    //     if pe == "attachment_preview_22_closed" {
+                    //         return None;
+                    //     }
+                    // }
                     let mut size = 0;
-                    let mut url = String::new();
-                    let mut name = String::new();
-                    e.select(&Selector::parse("a:nth-of-type(2)").unwrap())
-                        .for_each(|e| {
-                            //<a href="file_download.php?file_id=2365&amp;type=bug">image.png</a>&#32;(179,667&#32;字节)&#32;&nbsp;&nbsp;
-                            url = format!("{}",e.value().attr("href").unwrap_or_default().replace("&amp;", "&"));
-                            name = e.inner_html().trim().to_string();
-                            e.next_sibling().map(|sibling| {
-                                if sibling.value().is_text() {
-                                    size = sibling
-                                        .value()
-                                        .as_text()
-                                        .map(|text| text.trim().to_string())
-                                        .unwrap_or(String::new())
-                                        .replace("字节", "")
-                                        .replace("(", "")
-                                        .replace(")", "")
-                                        .replace(",", "")
-                                        .trim()
-                                        .parse::<i64>()
-                                        .unwrap_or(0);
-                                }
-                            });
-                        });
-                    if url.is_empty() || name.is_empty() {
+                    let url = format!("{}",e.value().attr("href").unwrap_or_default().replace("&amp;", "&"));
+                    let name = e.inner_html().trim().to_string();
+                    e.next_sibling().map(|sibling| {
+                        if sibling.value().is_text() {
+                            size = sibling
+                                .value()
+                                .as_text()
+                                .map(|text| text.trim().to_string())
+                                .unwrap_or(String::new())
+                                .replace("字节", "")
+                                .replace("(", "")
+                                .replace(")", "")
+                                .replace(",", "")
+                                .trim()
+                                .parse::<i64>()
+                                .unwrap_or(0);
+                        }
+                    });
+                    println!("size:{}",size);
+                    if url.is_empty() || name.is_empty() || size == 0 {
                         return None;
                     };
                     Some(FileInfo { size, url, name })

@@ -10,7 +10,7 @@ use reqwest::cookie::{CookieStore, Jar};
 use scraper::Html;
 use tauri_plugin_store::StoreExt;
 use url::Url;
-use std::collections::HashMap;
+use std::collections::{binary_heap, HashMap};
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, Manager, WindowEvent};
 use tauri_plugin_notification::{NotificationExt, PermissionState};
@@ -322,7 +322,8 @@ async fn api_update_bug(
 
 // 保存note
 #[tauri::command(rename_all = "snake_case")]
-async fn api_bug_note_add(app: AppHandle, bug_id: i64, bugnote_text: String,file_path: Vec<String>) -> Result<(), String> {
+async fn api_bug_note_add(app: AppHandle, bug_id: i64, bugnote_text: String,
+    file_path: Vec<String>,binary_file: Vec<(String, Vec<u8>)>) -> Result<(), String> {
     let state = app.state::<MyState>().clone();
     let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
@@ -344,7 +345,8 @@ async fn api_bug_note_add(app: AppHandle, bug_id: i64, bugnote_text: String,file
         bugnote_add_token,
         bugnote_text,
         max_file_size: 2097152, // 默认值
-        file_path
+        file_path,
+        binary_file,
     }, &host).await?;
 
     if let Some(s) = get_error_info(&Html::parse_document(resp.as_str())){
