@@ -21,7 +21,6 @@
           <div class="text-wrapper-5">提交时间</div>
           <div class="text-wrapper-6">{{ formatDate(bugInfo.date_submitted) }}</div>
         </div>
-        <el-button @click="addBugNote">添加评论</el-button>
         <!--展示选项类状态-->
         <div class="option_tags">
           <!--解决情况-->
@@ -150,6 +149,9 @@
       </div>
     </div>
   </div>
+  <div class="overlap-comment-button">
+    <Annotation />
+  </div>
 </template>
 
 <script setup>
@@ -161,6 +163,7 @@ import { apiBugInfo, bugNoteAdd, imageBase64, updateBug } from '../api';
 import { ElMessage } from "element-plus";
 import { createNewWindow } from '../windows';
 import { emit } from '@tauri-apps/api/event';
+import Annotation from './Annotation.vue';
 
 const props = defineProps({
   bugId: {
@@ -182,7 +185,7 @@ const toolbarOptions = [
   [{ header: [1, 2, 3, false] }],
   [{ list: 'ordered' }, { list: 'bullet' }],
   ['bold', 'italic', 'underline'],
-  ['link', 'blockquote', 'code-block', 'image', 'video'],
+  ['link', 'blockquote', 'code-block'],
   ['save']  // 添加保存按钮
 ];
 const descriptionEditor = ref(null);
@@ -397,14 +400,15 @@ const getBugInfo = function() {
     console.log("成功:", result);
     bugInfo.value = result;
     oldBugInfo.value = {...result};
-    const allNotes = result.bugnote_notes || [];
+    let allNotes = result.bugnote_notes || [];
     if (result.attachments.length > 0) {
-      allNotes.push({
+      const attNote = {
         handler: result.reporter,
         handler_id: result.reporter_id,
         time: result.date_submitted,
         attachments: result.attachments,
-      });
+      };
+      allNotes = [attNote, ...allNotes];
     }
     bugNotes.value = allNotes;
     bugNotes.value.forEach((i) => {
@@ -893,5 +897,10 @@ onMounted(() => {
   max-height: 170px;
   width: 100%;
   height: 170px;
+}
+.overlap-comment-button {
+  position: fixed;
+  bottom: 30px;
+  right: 45px;
 }
 </style>

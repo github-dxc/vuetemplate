@@ -885,7 +885,6 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
 
     // attachments
     let attachments_selector = Selector::parse(".bug-attach-tags .well.well-xs").unwrap();
-    // let attachments_selector = Selector::parse(".bugnote-note").unwrap();
     bug.attachments = document
         .select(&attachments_selector)
         .map(|e| {
@@ -963,7 +962,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                     let mut size = 0;
                     let mut url = String::new();
                     let mut name = String::new();
-                    e.select(&Selector::parse(".collapse-open.noprint a:nth-of-type(2)").unwrap())
+                    e.select(&Selector::parse("a:nth-of-type(2)").unwrap())
                         .for_each(|e| {
                             //<a href="file_download.php?file_id=2365&amp;type=bug">image.png</a>&#32;(179,667&#32;字节)&#32;&nbsp;&nbsp;
                             url = format!("{}",e.value().attr("href").unwrap_or_default().replace("&amp;", "&"));
