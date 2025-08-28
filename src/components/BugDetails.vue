@@ -142,6 +142,7 @@
           <div v-for="(img, index) in bugNote.attachments" class="demo-image__error">
             <div class="block">
               <span class="demonstration">{{ img.name }}</span>
+              {{ index }}
               <el-image :src="img.url_base64" @click="openImagePreview(index)" fit="contain"/>
             </div>
           </div>
@@ -184,7 +185,7 @@ const contentRef = ref(null);
 const toolbarOptions = [
   [{ header: [1, 2, 3, false] }],
   [{ list: 'ordered' }, { list: 'bullet' }],
-  ['bold', 'italic', 'underline'],
+  ['bold', 'italic', 'underline', 'strike'],
   ['link', 'blockquote', 'code-block'],
   ['save']  // 添加保存按钮
 ];
@@ -385,7 +386,7 @@ const changeBug = function(data) {
 const openImagePreview = async function(index) {
   const DOMContentLoadedCallback = () => {
     // 发送图片信息列表给图片预览窗口
-    emit('web_images', { bugnote_notes: bugInfo.value.bugnote_notes, show_index: index});
+    emit('web_images', { bugnote_notes: bugNotes.value, show_index: index});
   };
   // label需要在capabilities/default.json中声明权限
   await createNewWindow('image', {

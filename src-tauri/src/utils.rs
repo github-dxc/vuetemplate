@@ -994,7 +994,6 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                                 .unwrap_or(0);
                         }
                     });
-                    println!("size:{}",size);
                     if url.is_empty() || name.is_empty() || size == 0 {
                         return None;
                     };
