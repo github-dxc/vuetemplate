@@ -388,7 +388,12 @@ async function openImagePreview(bug_id) {
     // 发送图片信息列表给图片预览窗口
     apiBugInfo(bug_id).then(result => {
       console.log("成功:", result);
-      emit('web_images', { attachments: result.attachments, bugnote_notes: result.bugnote_notes });
+      let sendData = result.bugnote_notes||[];
+      if (result.attachments && result.attachments.length>0) {
+        let attNote = { note_id: 0, time: 0, handler_id: 0, handler: "", text: "" , attachments: result.attachments};
+        sendData = [attNote, ...result.bugnote_notes];
+      }
+      emit('web_images', { bugnote_notes: sendData });
       
     }).catch(error => {
       console.error("错误:", error);

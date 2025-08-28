@@ -965,16 +965,11 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                 .find_map(|e| e.text().find_map(|s|Some(s.trim_ascii())))
                 .unwrap_or_default();
             // attachments
-            let attachments_selector = Selector::parse("td.bugnote-note a").unwrap();
+            let attachments_selector = Selector::parse("td.bugnote-note>a , td.bugnote-note>.collapse-open>a").unwrap();
             let attachments = e
                 .select(&attachments_selector)
                 .filter_map(|e| {
                     //<a href="file_download.php?file_id=2365&amp;type=bug">image.png</a>&#32;(179,667&#32;字节)&#32;&nbsp;&nbsp;
-                    // if let Some(pe) = e.parent() {
-                    //     if pe == "attachment_preview_22_closed" {
-                    //         return None;
-                    //     }
-                    // }
                     let mut size = 0;
                     let url = format!("{}",e.value().attr("href").unwrap_or_default().replace("&amp;", "&"));
                     let name = e.inner_html().trim().to_string();

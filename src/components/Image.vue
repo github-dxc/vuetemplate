@@ -1,6 +1,6 @@
 <template>
   <div class="transparent-background">
-    <el-image-viewer v-if="showPreview" :url-list="srcList" show-progress :close-on-press-escape="true" :initial-index="imageInitIndex"
+    <el-image-viewer v-if="showPreview" :url-list="srcBase64" show-progress :close-on-press-escape="true" :initial-index="imageInitIndex" @switch="switchHandle"
       @close="closeHandler">
       <template #progress="{ activeIndex, total }">
         <span>{{ activeIndex + 1 + ' - ' + total }}</span>
@@ -41,7 +41,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { ElIcon } from 'element-plus'
 import {
   Back,
@@ -59,6 +59,7 @@ import { listen } from '@tauri-apps/api/event';
 import { imageBase64 } from '../api';
 import { byteArrayToBase64Image } from '../util';
 import { changeSize } from '../windows';
+import { lo } from 'element-plus/es/locales.mjs';
 
 document.addEventListener('DOMContentLoaded', () => {
   // 获取当前窗口的实例
@@ -68,11 +69,12 @@ document.addEventListener('DOMContentLoaded', () => {
   appWindow.emit('DOMContentLoaded', { message: 'DOM fully loaded and parsed' });
 });
 
-const srcList = ref([])
+const srcList = ref([]);
+const srcBase64 = ref([]);
 const imageNotes = ref([]);
 const imageNames = ref([]);
 const imageInitIndex = ref(0);
-const showPreview = ref(true)
+const showPreview = ref(false)
 const isMinimized = ref(false)
 
 const closeHandler = () => {
@@ -129,30 +131,29 @@ listen('web_images', async (event) => {
   console.log('web_images:', event.payload)
   const payloadValue = event.payload;
   srcList.value = [];
+  srcBase64.value = [];
   imageNames.value = [];
   imageNotes.value = [];
-  imageInitIndex.value = payloadValue.show_index || 0;
+  let note_index = payloadValue.note_index || 0;
+  let show_index = payloadValue.show_index || 0;
   try {
-    const count1 = payloadValue.attachments?.length || 0;
-    for (let i = 0; i < count1; i++) {
-      const item = payloadValue.attachments[i];
-      const bytes = await imageBase64(item.url);
-      if (bytes) {
-        srcList.value.push(byteArrayToBase64Image(bytes, item.name));
-        imageNotes.value.push("");
-        imageNames.value.push(item.name);
-      }
-    }
-    const count2 = payloadValue.bugnote_notes?.length || 0;
+    // 先把图片地址放进去
     for (let i = 0; i < payloadValue.bugnote_notes.length; i++) {
       const note = payloadValue.bugnote_notes[i];
       for (let j = 0; j < note.attachments.length; j++) {
         const item = note.attachments[j];
-        const bytes = await imageBase64(item.url);
-        if (bytes) {
-          srcList.value.push(byteArrayToBase64Image(bytes, item.name));
-          imageNotes.value.push(note.text);
-          imageNames.value.push(item.name);
+        srcList.value.push(item.url);
+        srcBase64.value.push('');
+        imageNotes.value.push(note.text);
+        imageNames.value.push(item.name);
+        if (note_index === i && show_index === j) {
+          //先下载需要显示的那张
+          const bytes = await imageBase64(item.url);
+          if (bytes) {
+            srcBase64.value[srcBase64.value.length - 1] = byteArrayToBase64Image(bytes, item.name);
+          }
+          imageInitIndex.value = srcList.value.length-1;
+          showPreview.value = true;
         }
       }
     }
@@ -161,6 +162,21 @@ listen('web_images', async (event) => {
     return;
   }
 })
+
+// 监听激活的标，激活那个显示哪个图片
+const switchHandle = (index) => {
+  // 如果当前图片的 base64 还没有下载，则下载
+  if (!srcBase64.value[index]) {
+    const url = srcList.value[index];
+    imageBase64(url).then((bytes) => {
+      if (bytes) {
+        srcBase64.value[index] = byteArrayToBase64Image(bytes, imageNames.value[index]);
+      }
+    }).catch((error) => {
+      console.error('下载图片失败:', error);
+    });
+  }
+};
 
 onMounted(() => {
 })

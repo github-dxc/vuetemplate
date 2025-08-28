@@ -127,7 +127,7 @@
           </div>
           <div class="text-wrapper-comment">评论 ({{ bugNotes.length }})</div>
         </div>
-        <div v-for="bugNote in bugNotes" class="overlap-comment-detail">
+        <div v-for="(bugNote,note_index) in bugNotes" class="overlap-comment-detail">
           <div class="overlap-background" :style="{backgroundColor: getColorByUnicPalette(getFirstChar(bugNote.handler)).backgroundColor}">
             <div class="text-wrapper-surname" :style="{color: getColorByUnicPalette(getFirstChar(bugNote.handler)).textColor}">{{ getFirstChar(bugNote.handler) }}</div>
           </div>
@@ -142,8 +142,7 @@
           <div v-for="(img, index) in bugNote.attachments" class="demo-image__error">
             <div class="block">
               <span class="demonstration">{{ img.name }}</span>
-              {{ index }}
-              <el-image :src="img.url_base64" @click="openImagePreview(index)" fit="contain"/>
+              <el-image :src="img.url_base64" @click="openImagePreview(note_index,index)" fit="contain"/>
             </div>
           </div>
         </div>
@@ -383,10 +382,10 @@ const changeBug = function(data) {
 }
 
 // 打开图片预览
-const openImagePreview = async function(index) {
+const openImagePreview = async function(note_index,show_index) {
   const DOMContentLoadedCallback = () => {
     // 发送图片信息列表给图片预览窗口
-    emit('web_images', { bugnote_notes: bugNotes.value, show_index: index});
+    emit('web_images', { bugnote_notes: bugNotes.value, note_index: note_index, show_index: show_index});
   };
   // label需要在capabilities/default.json中声明权限
   await createNewWindow('image', {
@@ -883,7 +882,7 @@ onMounted(() => {
   height: 200px;
   margin-top: -20px;
   margin-left: 20px;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 
 .demo-image__error .block {
@@ -904,7 +903,23 @@ onMounted(() => {
   max-height: 170px;
   width: 100%;
   height: 170px;
+
+  border-radius: 16px;
+  border: 2px solid #ddd;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  overflow: hidden;
 }
+.demo-image__error .el-image:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.15),
+    0 4px 10px rgba(0, 0, 0, 0.1);
+  border-color: #ccc;
+}
+
 .overlap-comment-button {
   position: fixed;
   bottom: 30px;
