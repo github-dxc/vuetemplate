@@ -274,7 +274,6 @@ const historys = ref([]);
 const switchTab = (tab) => {
   activeTab.value = tab
   // 在这里处理选项卡切换逻辑
-  console.log(`切换到 ${tab} 选项卡`)
 }
 
 const bugProject = computed(() => {
@@ -360,7 +359,6 @@ const bugUsers = computed(() => {
 })
 
 const uploadAnotation = async (submitData)=> {
-  console.log("提交注释:", submitData);
   let bug_id = props.bugId;
   let bugnote_text = submitData.content;
   let binary_file = [];
@@ -1070,7 +1068,7 @@ onMounted(() => {
   height: 170px;
 
   border-radius: 16px;
-  border: 2px solid #ddd;
+  border: 1.5px solid rgba(226, 232, 240, 0.8);
   box-shadow: 
     0 4px 12px rgba(0, 0, 0, 0.1),
     0 2px 4px rgba(0, 0, 0, 0.06);
@@ -1082,7 +1080,7 @@ onMounted(() => {
   box-shadow: 
     0 8px 25px rgba(0, 0, 0, 0.15),
     0 4px 10px rgba(0, 0, 0, 0.1);
-  border-color: #ccc;
+  border-color: #ddd;
 }
 
 .overlap-comment-button {
