@@ -120,14 +120,34 @@
       <!--评论区/时间线-->
       <div class="overlap-comment">
         <div class="overlap-9">
-          <div class="frame-3">
-            <el-icon class="vector-4" :size="20">
-              <Comment />
-            </el-icon>
+          <div class="tab-item" :class="{ active: activeTab === 'comment' }" @click="switchTab('comment')">
+            <div class="frame-3">
+              <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M20 2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4l4 4 4-4h4a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/>
+                  <path d="M8 10h8M8 14h6"/>
+              </svg>
+            </div>
+            <div class="text-wrapper-comment">
+              评论
+              <span class="count-badge">{{ bugNotes.length }}</span>
+            </div>
           </div>
-          <div class="text-wrapper-comment">评论 ({{ bugNotes.length }})</div>
+
+          <div class="text-wrapper-split"><span>/</span></div>
+
+          <div class="tab-item" :class="{ active: activeTab === 'operation' }" @click="switchTab('operation')">
+            <div class="frame-3">
+              <el-icon :size="20"><BellFilled /></el-icon>
+            </div>
+            <div class="text-wrapper-comment">
+              历史
+              <span class="count-badge">{{ historys.length }}</span>
+            </div>
+          </div>
         </div>
-        <div v-for="(bugNote,note_index) in bugNotes" class="overlap-comment-detail">
+
+        <!--评论区-->
+        <div  v-show="activeTab === 'comment'" v-for="(bugNote,note_index) in bugNotes" class="overlap-comment-detail">
           <div class="overlap-background" :style="{backgroundColor: getColorByUnicPalette(getFirstChar(bugNote.handler)).backgroundColor}">
             <div class="text-wrapper-surname" :style="{color: getColorByUnicPalette(getFirstChar(bugNote.handler)).textColor}">{{ getFirstChar(bugNote.handler) }}</div>
           </div>
@@ -146,6 +166,11 @@
             </div>
           </div>
         </div>
+
+        <!--时间线-->
+        <div v-show="activeTab === 'operation'" class="operation-history-list">
+          <OperationCard v-for="(history, index) in historys" :key="index" :username="history.username" :timestamp="history.timestamp" :operations="history.operations"></OperationCard>
+        </div>
       </div>
     </div>
   </div>
@@ -159,11 +184,12 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { QuillEditor,Quill } from '@vueup/vue-quill';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import { formatDate, getFirstChar, getColorByUnicPalette, byteArrayToBase64Image } from '../util';
-import { apiBugInfo, bugNoteAdd, imageBase64, updateBug } from '../api';
+import { apiBugInfo, browserOpen, bugNoteAdd, imageBase64, updateBug } from '../api';
 import { ElMessage } from "element-plus";
 import { createNewWindow } from '../windows';
 import { emit } from '@tauri-apps/api/event';
 import Annotation from './Annotation.vue';
+import OperationCard from './OperationCard.vue';
 
 const props = defineProps({
   bugId: {
@@ -178,7 +204,7 @@ const props = defineProps({
   }
 }); 
 
-const emits = defineEmits(['alabelClickFn']);
+const emits = defineEmits();
 
 const contentRef = ref(null);
 const toolbarOptions = [
@@ -239,9 +265,17 @@ const onEditorReady = (quill) => {
   });
 };
 
+const activeTab = ref('comment') // 默认选中评论
 const bugInfo = ref({});
 const oldBugInfo = ref({});
-const bugNotes = ref({});
+const bugNotes = ref([]);
+const historys = ref([]);
+
+const switchTab = (tab) => {
+  activeTab.value = tab
+  // 在这里处理选项卡切换逻辑
+  console.log(`切换到 ${tab} 选项卡`)
+}
 
 const bugProject = computed(() => {
   const myMap = new Map();
@@ -416,6 +450,7 @@ const getBugInfo = function() {
       };
       allNotes = [attNote, ...allNotes];
     }
+    // 下载图片
     bugNotes.value = allNotes;
     bugNotes.value.forEach((i) => {
       i.attachments.forEach((item) => {
@@ -426,6 +461,21 @@ const getBugInfo = function() {
         });
       });
     });
+    // 处理历史记录
+    let change_history = result.change_history || [];
+    for (let i = 0; i < change_history.length; i++) {
+      const e = change_history[i];
+      let item = historys.value.find(h => h.username === e.handler && h.timestamp === formatDate(e.updated_at))
+      if (item) {
+        item.operations.push(`${e.field} ${e.change}`);
+      }else {
+        historys.value.push({
+          username: e.handler,
+          timestamp: formatDate(e.updated_at),
+          operations: [`${e.field} ${e.change}`]
+        });
+      }
+    }
   }).catch(error => {
     console.error("错误:", error);
   });
@@ -443,7 +493,7 @@ onMounted(() => {
     }
     if (a) {
       e.preventDefault(); // 阻止默认行为
-      emits('alabelClickFn', a.href);
+      browserOpen(a.href);
     }
   };
   contentRef.value.addEventListener('click', clickHandler);
@@ -756,47 +806,162 @@ onMounted(() => {
   position: relative;
   top: 15px;
   width: 780px;
+  min-height: 330px;
   margin-bottom: 10px;
 }
-
 .generated-design .overlap-9 {
-  border-bottom-style: solid;
-  border-bottom-width: 1px;
-  border-color: #e5e7eb;
-  height: 65px;
-  left: 1px;
-  position: relative;
-  top: 1px;
-  width: 780px;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    border-color: #e5e7eb;
+    height: 65px;
+    left: 1px;
+    position: relative;
+    top: 1px;
+    width: 780px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.generated-design .tab-item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    margin-right: 20px;
+    position: relative;
+}
+
+.generated-design .tab-item:hover {
+    background-color: #f3f4f6;
+    transform: translateY(-1px);
+}
+
+.generated-design .tab-item.active {
+    background-color: #3b82f6;
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.generated-design .tab-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: -9px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #3b82f6;
 }
 
 .generated-design .frame-3 {
-  height: 20px;
-  left: 23px;
-  position: relative;
-  top: 22px;
-  width: 20px;
+    height: 20px;
+    width: 20px;
+    margin-right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
 }
 
-.generated-design .vector-4 {
-  height: 20px;
-  left: 2px;
-  position: relative;
-  bottom: 2px;
-  width: 20px;
+.generated-design .tab-item.active .frame-3 {
+    color: white;
+    transform: scale(1.1);
 }
 
 .generated-design .text-wrapper-comment {
-  color: #111827;
-  font-family: "Inter-SemiBold", Helvetica;
-  font-size: 18px;
-  font-weight: 600;
-  left: 55px;
-  letter-spacing: 0;
-  line-height: 27px;
-  position: absolute;
-  top: 17px;
-  white-space: nowrap;
+    color: #111827;
+    font-family: "Inter-SemiBold", Helvetica;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 27px;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+.generated-design .tab-item.active .text-wrapper-comment {
+    color: white;
+    font-weight: 700;
+}
+
+.generated-design .text-wrapper-split {
+    color: #d1d5db;
+    font-family: "Inter-SemiBold", Helvetica;
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 15px;
+    letter-spacing: 0;
+    line-height: 27px;
+    white-space: nowrap;
+    user-select: none;
+}
+
+/* 数字徽章样式 */
+.generated-design .count-badge {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-left: 6px;
+    transition: all 0.3s ease;
+    min-width: 20px;
+    text-align: center;
+}
+
+.generated-design .tab-item.active .count-badge {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .generated-design .overlap-9 {
+        width: 100%;
+        padding: 0 15px;
+    }
+    
+    .generated-design .text-wrapper-comment {
+        font-size: 16px;
+    }
+    
+    .generated-design .tab-item {
+        padding: 6px 12px;
+        margin-right: 15px;
+    }
+}
+
+/* 动画效果 */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.generated-design .tab-item.active {
+    animation: pulse 0.3s ease-out;
+}
+
+/* 图标样式 */
+.icon {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+.operation-history-list {
+  padding: 10px;
+}
+
+.operation-history-list .operation-card {
+  margin-bottom: 5px;
 }
 
 .generated-design .overlap-comment-detail {

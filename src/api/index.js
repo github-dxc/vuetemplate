@@ -47,3 +47,7 @@ export const bugNoteAdd = async ({bug_id,bugnote_text,file_path=[],binary_file=[
 export const imageBase64 = async (uri) => {
   return await invoke("api_image_bytes",{uri});
 };
+
+export const browserOpen = async (url) => {
+  return await invoke("api_browser_open",{url});
+};

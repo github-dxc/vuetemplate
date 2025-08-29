@@ -157,7 +157,7 @@
     <!-- 明细展示 -->
     <div v-if="bugDetailsVisible">
       <el-drawer v-model="bugDetailsVisible" :title="bugDetailsTitle" :show-close="false" direction="rtl" size="71%">
-        <BugDetails :bug-id="bugId" :enums="enums" @alabel-click-fn="jumpOuterBrowser"/>
+        <BugDetails :bug-id="bugId" :enums="enums"/>
       </el-drawer>
     </div>
   </div>
@@ -418,24 +418,6 @@ async function openBugDetails(bug_id,title) {
   bugDetailsTitle.value = `【${bug_id}】${title}` || "Bug明细";
   bugDetailsVisible.value = true;
   bugId.value = bug_id;
-}
-
-async function jumpOuterBrowser(url) {
-  console.log("跳转外部浏览器:", url);
-  // 判断是否为外部链接
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    // 检查是否不是当前应用的域名
-    if (!url.startsWith(window.location.origin)) {
-      // 模拟一个a标签，然后触发点击事件，最后清除a标签，因为在主页面点击a标签会跳转外部浏览器
-      const a = document.createElement('a');
-      a.href = url;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer'; // 安全性考虑
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-  }
 }
 
 //------------------vue/tauri-------------------//
