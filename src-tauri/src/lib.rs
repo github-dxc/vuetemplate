@@ -8,9 +8,10 @@ use log::{debug, info, warn};
 use model::*;
 use reqwest::cookie::{CookieStore, Jar};
 use scraper::Html;
+use tauri_plugin_opener::OpenerExt;
 use tauri_plugin_store::StoreExt;
 use url::Url;
-use std::collections::{binary_heap, HashMap};
+use std::collections::{HashMap};
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, Manager, WindowEvent};
 use tauri_plugin_notification::{NotificationExt, PermissionState};
@@ -35,6 +36,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .manage(MyState::default()) // 注册全局状态
         .invoke_handler(tauri::generate_handler![
+            api_browser_open,
             api_init_data,
             api_init_bugs,
             api_change_host,
@@ -106,6 +108,22 @@ struct MyState {
     catgory_kv: Arc<Mutex<Vec<KV>>>,//分组的kv信息
     project_kv: Arc<Mutex<Vec<KV>>>,//项目的kv信息
     users_kv: Arc<Mutex<Vec<KV>>>,//用户的kv信息
+}
+
+// 打开外部浏览器地址
+#[tauri::command(rename_all = "snake_case")]
+async fn api_browser_open(app: tauri::AppHandle, url: String) -> Result<(), String> {
+    println!("open url:{}",url);
+    // 如果url只有路径，则补全
+    let url = if url.starts_with("http://") || url.starts_with("https://") {
+        url
+    } else {
+        let state = app.state::<MyState>().clone();
+        let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+        let uri = if url.starts_with("/") { url } else { format!("/{}", url) };
+        format!("http://{}{}", host, uri)
+    };
+    app.opener().open_url(url, None::<&str>).map_err(|e|format!("open_url err:{}",e))
 }
 
 // 初始化数据
@@ -388,10 +406,10 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
     let logined_value = store.get("logined").unwrap_or(Value::from(false));
     let username_value = store.get("username").unwrap_or(Value::from(""));
     let cookie_value = store.get("cookies").unwrap_or(Value::from(""));
-    println!("init:{};{};{}",logined_value,username_value,cookie_value);
     let default_host: &'static str = "localhost:8989";
     // let default_host: &'static str = "bug.test.com";
     let host_value = store.get("host").unwrap_or(Value::from(default_host));
+    println!("logined:{};username:{};cookie:{};host:{}",logined_value,username_value,cookie_value,host_value);
     let hv = host_value.as_str().and_then(|v|{
         if v == "" {
             return Some(default_host);
