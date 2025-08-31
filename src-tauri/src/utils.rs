@@ -521,6 +521,68 @@ pub async fn filters_params(
     Ok(text)
 }
 
+// 查询my_view_page_details数据
+pub fn my_view_page_details(document: &Html) -> Result<Vec<OperateLogs>, Box<dyn std::error::Error>> {
+    // 创建选择器
+    let selector =
+        Selector::parse(".profile-activity.clearfix").map_err(|e| format!("Selector 解析失败: {:?}", e))?;
+
+    // 收集所有匹配元素的文本
+    let results: Vec<OperateLogs> = document
+        .select(&selector)
+        .map(|element| {
+            let mut bug = OperateLogs::default();
+            // bug_id
+            let id_slector = Selector::parse(".issue_id>a").unwrap();
+            bug.bug_id = element
+                .select(&id_slector)
+                .find_map(|e| e.inner_html().parse::<i64>().ok())
+                .unwrap_or(0);
+
+            // handler_id
+            let handler_selector = Selector::parse(".action .username>a").unwrap();
+            bug.handler_id = element
+                .select(&handler_selector)
+                .find_map(|e| {
+                    //  handler
+                    bug.handler = e.inner_html();
+                    e.value().attr("href").and_then(|href| {
+                        href.split('=').last().and_then(|id| id.parse::<i64>().ok())
+                    })
+                })
+                .unwrap_or(0);
+            
+            // last_updated
+            let last_modified_selector = Selector::parse(".time").unwrap();
+            // <td class="column-last-modified">2025-06-18 23:15</td>
+            bug.last_updated = element
+                .select(&last_modified_selector)
+                .find_map(|e| {
+                    let date_str = e.text().last().unwrap_or_default().replace("\"", "").trim().to_string();
+                    // 解析为 NaiveDate
+                    let date = NaiveDateTime::parse_from_str(date_str.as_str(), "%Y-%m-%d %H:%M").ok()?;
+                    // 设为上海时区的0点
+                    let datetime = Shanghai
+                        .from_local_datetime(&date)
+                        .unwrap();
+                    // 转为时间戳（秒）
+                    Some(datetime.timestamp())
+                })
+                .unwrap_or(0);
+
+            // content
+            let content_selector = Selector::parse(".action").unwrap();
+            bug.content = element
+                .select(&content_selector)
+                .find_map(|e| Some(e.inner_html()))
+                .unwrap_or_default();
+            bug
+        })
+        .collect();
+
+    Ok(results)
+}
+
 // 查询view_all_set数据
 pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<KV>) -> Result<BugList, Box<dyn std::error::Error>> {
     // 创建选择器

@@ -188,3 +188,12 @@ pub struct BugNoteAdd {
     pub file_path: Vec<String>,
     pub binary_file: Vec<(String, Vec<u8>)>, // (filename, filecontent)
 }
+
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+pub struct OperateLogs {
+    pub handler: String,
+    pub handler_id: i64,
+    pub bug_id: i64,
+    pub content: String,
+    pub last_updated: i64,
+}

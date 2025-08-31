@@ -915,7 +915,7 @@ onMounted(() => {
 .demo-image__error .el-image:hover {
   transform: translateY(-2px);
   box-shadow: 
-    0 8px 25px rgba(0, 0, 0, 0.15),
+    0 8px 25px rgba(0, 0, 0, 0.15),0
     0 4px 10px rgba(0, 0, 0, 0.1);
   border-color: #ccc;
 }
