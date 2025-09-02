@@ -628,7 +628,7 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
     bugs = bugs.into_iter().filter(|b| seen.insert(b.bug_id)).collect();
     // info!("find bugs: {:?}", bugs);
 
-    // TODO 只查询今天更新的数据的详情，获取日志信息，通知前端
+    // TODO 只查询今天更新的数据的详情，获取日志信息，按照时间顺序保存到今天的state中，通知前端
 
     // 上次的bugs、hash
     let mut old_map = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
