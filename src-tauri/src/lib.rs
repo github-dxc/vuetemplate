@@ -606,21 +606,26 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
         return Ok(());
     };
 
+    let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let category_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+
+    // 查询首页操作日志列表
+    // let body = my_view_page(jar.clone(), &host).await.map_err(|e|format!("my_view_page err:{}",e))?;
+    // let logs = my_view_page_details(&Html::parse_document(body.as_str())).map_err(|e|format!("my_view_page_details err:{}",e))?;
+
     // 循环查询所有订阅的数据并且去重
     let mut bugs = Vec::new();
     let params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     for sub_param in params {
         let sub_param = sub_param.clone();
-        let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-        let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-        let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-        let catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
         // 查询列表
         let param = serde_html_form::from_str::<FindBugListParams>(&sub_param)
             .map_err(|e| format!("serde_html_form err:{}", e))?;
-        let body = view_all_set(jar, param, &host).await.map_err(|e|format!("view_all_set err:{}",e))?;
+        let body = view_all_set(jar.clone(), param, &host).await.map_err(|e|format!("view_all_set err:{}",e))?;
         // 解析数据
-        let mut data = view_all_set_data(&Html::parse_document(body.as_str()),&catgory_kv,&project_kv).map_err(|e|format!("view_all_set_data err:{}",e))?;
+        let mut data = view_all_set_data(&Html::parse_document(body.as_str()),&category_kv,&project_kv).map_err(|e|format!("view_all_set_data err:{}",e))?;
         bugs.append(&mut data.bugs);
     }
     let mut seen = HashSet::new();
@@ -637,9 +642,6 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
 
     let mut notice_msgs = Vec::new();
 
-    //获取分组kv
-    let category_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
-    
     for b in bugs.clone() {
         let bgid = b.bug_id;
         let hash = get_hash(&b);

@@ -94,7 +94,7 @@ pub async fn my_view_page(
     host: &str,
 ) -> Result<String, Box<dyn std::error::Error>> {
     let origin = format!("http://{}",host);
-    let url = origin.to_string()+"/my_view_page.php";
+    let url = origin.to_string()+"/my_view_page.php?days=0&all=1";
 
     // 构建请求头
     let mut headers = HeaderMap::new();
