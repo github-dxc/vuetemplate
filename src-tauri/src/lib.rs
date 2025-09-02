@@ -611,10 +611,6 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
     let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let category_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
 
-    // 查询首页操作日志列表
-    // let body = my_view_page(jar.clone(), &host).await.map_err(|e|format!("my_view_page err:{}",e))?;
-    // let logs = my_view_page_details(&Html::parse_document(body.as_str())).map_err(|e|format!("my_view_page_details err:{}",e))?;
-
     // 循环查询所有订阅的数据并且去重
     let mut bugs = Vec::new();
     let params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?.clone();
@@ -631,6 +627,8 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
     let mut seen = HashSet::new();
     bugs = bugs.into_iter().filter(|b| seen.insert(b.bug_id)).collect();
     // info!("find bugs: {:?}", bugs);
+
+    // TODO 只查询今天更新的数据的详情，获取日志信息，通知前端
 
     // 上次的bugs、hash
     let mut old_map = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
