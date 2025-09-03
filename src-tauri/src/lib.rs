@@ -20,7 +20,7 @@ use tauri_plugin_notification::{NotificationExt, PermissionState};
 use tauri_plugin_updater::{Update, UpdaterExt};
 use tokio::time::{interval, Duration};
 use tokio::signal;
-use tokio::runtime::Runtime;
+use tokio::runtime::{Handle};
 use serde_json::{Value};
 use std::collections::HashSet;
 use utils::*;
@@ -59,7 +59,7 @@ pub fn run() {
             //初始化全局状态
             let _ = init_global_state(app.handle().clone());
             //初始化分组和项目
-            let _ = init_project_catgory(app.handle().clone());
+            let _ = sync_init_project_catgory(app.handle().clone());
             //定时更新
             update_app(app.handle().clone());
             //定时查询订阅数据
@@ -195,15 +195,17 @@ async fn api_login(app: AppHandle, username: &str, password: &str) -> Result<Str
     let result = login(jar.clone(), username, password, &host).await.map_err(|e|format!("login err:{}",e))?;
 
     // 保存cookie到全局状态
-    let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
-    *logined = true;
-    let mut username_ = state.username.lock().map_err(|e|format!("lock err:{}",e))?;
-    *username_ = username.to_string();
-    let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
-    *jar_ = jar;
+    {
+        let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
+        *logined = true;
+        let mut username_ = state.username.lock().map_err(|e|format!("lock err:{}",e))?;
+        *username_ = username.to_string();
+        let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
+        *jar_ = jar;
+    }
 
     // 初始化分组和项目
-    let _ = init_project_catgory(app.clone());
+    init_project_catgory(app).await?;
     return Ok(result);
 }
 
@@ -212,7 +214,8 @@ async fn api_login(app: AppHandle, username: &str, password: &str) -> Result<Str
 async fn api_logout(app: AppHandle) -> Result<(), String> {
     clear_global_state(app.clone())?;
     init_global_state(app.clone())?;
-    init_project_catgory(app)
+    init_project_catgory(app).await?;
+    Ok(())
 }
 
 // bug列表
@@ -457,60 +460,64 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
     Ok(())
 }
 
-// 初始化分组和项目
-fn init_project_catgory(app: AppHandle) -> Result<(),String> {
+fn sync_init_project_catgory(app: AppHandle) -> Result<(),String> {
     // 开启线程执行异步函数
-    let rt = Runtime::new().unwrap();
-    rt.block_on(async move {
-        let state = app.state::<MyState>().clone();
-        
-        let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    if let Ok(rt) = Handle::try_current() {
+        return rt.block_on(init_project_catgory(app));
+    }
+    Err("not tokio runtime".to_string())
+}
 
-        let mut projects = vec![];
-        let mut category = vec![];
-        let mut users = vec![];
-        // 如果当前是已登录，则获取分组和项目
-        if logined {
-            // 查询项目列表
-            {
-                let jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-                let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-                let body = my_view_page(jar_, &host).await.map_err(|e|format!("my_view_page err:{}",e))?;
-                projects = project_data(&Html::parse_document(body.as_str()))?;
-                let mut project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?;
-                *project_kv = projects.clone();
-            }
+// 初始化分组和项目
+async fn init_project_catgory(app: AppHandle) -> Result<(),String> {
+    let state = app.state::<MyState>().clone();
+    
+    let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
 
-            // 查询分组列表
-            {
-                let jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-                let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-                let project_id = projects.last().ok_or("projects error".to_owned())?.key.clone();
-                let body = bug_report_page(jar_, &host, &project_id).await.map_err(|e|format!("filters_params err:{}",e))?;
-                let dc = Html::parse_document(body.as_str());
-                category = category_data(&dc)?;
-                let mut catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
-                *catgory_kv = category.clone();
-
-                // 查询用户列表
-                users = users_data(&dc)?;
-                let mut users_kv = state.users_kv.lock().map_err(|e|format!("lock err:{}",e))?;
-                *users_kv = users.clone();
-
-            }
-            if category.len() == 0|| projects.len() == 0 || users.len() == 0 {
-                return Err("".to_string());
-            }
-        } else {
+    let mut projects = vec![];
+    let mut category = vec![];
+    let mut users = vec![];
+    // 如果当前是已登录，则获取分组和项目
+    if logined {
+        // 查询项目列表
+        {
+            let jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+            let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+            let body = my_view_page(jar_, &host).await.map_err(|e|format!("my_view_page err:{}",e))?;
+            projects = project_data(&Html::parse_document(body.as_str()))?;
             let mut project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?;
-            *project_kv = projects;
+            *project_kv = projects.clone();
+        }
+
+        // 查询分组列表
+        {
+            let jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+            let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+            let project_id = projects.last().ok_or("projects error".to_owned())?.key.clone();
+            let body = bug_report_page(jar_, &host, &project_id).await.map_err(|e|format!("filters_params err:{}",e))?;
+            let dc = Html::parse_document(body.as_str());
+            category = category_data(&dc)?;
             let mut catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
-            *catgory_kv = category;
+            *catgory_kv = category.clone();
+
+            // 查询用户列表
+            users = users_data(&dc)?;
             let mut users_kv = state.users_kv.lock().map_err(|e|format!("lock err:{}",e))?;
-            *users_kv = users;
-        };
-        Ok(())
-    })
+            *users_kv = users.clone();
+
+        }
+        if category.len() == 0|| projects.len() == 0 || users.len() == 0 {
+            return Err("".to_string());
+        }
+    } else {
+        let mut project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+        *project_kv = projects;
+        let mut catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+        *catgory_kv = category;
+        let mut users_kv = state.users_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+        *users_kv = users;
+    };
+    Ok(())
 }
 
 //保存全局状态
@@ -632,7 +639,7 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
     // info!("find bugs: {:?}", bugs);
 
     // 只查询大于缓存时间的数据的详情，获取新增的日志信息
-    let mut change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?;
+    let change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let last_history_time = change_historys.last().map_or(0,|c|c.updated_at);
     let last_history_begin = Utc.timestamp_opt(last_history_time, 0).single().map(|t|{
         t.with_timezone(&Shanghai).with_time(NaiveTime::MIN).unwrap().timestamp()
@@ -664,33 +671,34 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
     }
 
     // change_historys有数据则推送增量
+    let mut change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?;
     if add_historys.len() > 0 {
         let _ = app.emit("sub_msgs", &add_historys);
         let mut key = String::new();
         let mut title = String::new();
         let mut content = String::new();
-        add_historys.iter_mut().for_each(|c|{
+        for c in add_historys.iter_mut() {
             change_historys.push(c.clone());
             let new_key = format!("{}-{}-{}",c.updated_at,c.bug_id,c.handler_id).to_string();
-            if &key == "" {
-                let bug = old_bugs.iter().find(|b|b.bug_id == c.bug_id).map_or("有bug更新".to_string(),|b|format!("bug#{} {}",b.bug_id,b.summary.as_str())).as_str();
-                key = new_key.clone();
-                title = format!("bug#{} {}",c.bug_id,c.summary.as_str());
-                content = "".to_string();
-            }
+            let note = format!("\n- {} {}", c.field, c.change);
             if &key != &new_key {
-            // 发送通知
-                let _ = send_notify(
-                    app.clone(),
-                    ,
-                    content.as_str(),
-                );
+                if &key != "" {
+                    // 发送通知
+                    let _ = send_notify(
+                        app.clone(),
+                        title.as_str(),
+                        content.as_str(),
+                    );
+                }
+                let bug = old_bugs.iter().find(|b|b.bug_id == c.bug_id).ok_or(String::from("not found bug"))?;
                 key = new_key;
-                content = "".to_string();
+                let t = Utc.timestamp_opt(c.updated_at, 0).single().unwrap_or_default().with_timezone(&Shanghai).format("%Y-%m-%d %H:%M");
+                title = format!("{} #{} ({})",c.handler, c.bug_id, t);
+                content = format!("{} {}", bug.summary, note);
             }else {
-                content.push_str("");
+                content.push_str(note.as_str());
             }
-        });
+        };
     }
 
     // 如何数据量过大，则只保留最近200条
