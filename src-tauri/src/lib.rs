@@ -2,6 +2,8 @@ mod enums;
 mod model;
 mod utils;
 
+use chrono::{NaiveTime, TimeZone, Utc};
+use chrono_tz::Asia::Shanghai;
 use enums::*;
 use env_logger;
 use log::{debug, info, warn};
@@ -101,9 +103,9 @@ struct MyState {
     jar: Mutex<Arc<Jar>>,
     host: Arc<Mutex<String>>,
     sub_params: Arc<Mutex<Vec<String>>>,//订阅列表
-    sub_bugs: Arc<Mutex<HashMap<i64, Bug>>>, //bugs列表
-    sub_bugs_hash: Arc<Mutex<HashMap<i64, u64>>>,
+    sub_bugs: Arc<Mutex<Vec<Bug>>>, //bugs列表
     last_version: Arc<Mutex<Option<Update>>>,//系统版本
+    change_historys: Arc<Mutex<Vec<ChangeHistory>>>,//操作日志(保存100条)
 
     catgory_kv: Arc<Mutex<Vec<KV>>>,//分组的kv信息
     project_kv: Arc<Mutex<Vec<KV>>>,//项目的kv信息
@@ -172,9 +174,7 @@ async fn api_init_bugs(app: AppHandle) -> Result<Vec<Bug>, String> {
     
     // 查询缓存的bug列表
     let sub_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let mut bugs:Vec<Bug> = sub_bugs.into_iter().map(|(_,bug)|bug).collect();
-    bugs.sort_by_key(|b|std::cmp::Reverse(b.bug_id));
-    Ok(bugs)
+    Ok(sub_bugs)
 }
 
 // 获取登录信息
@@ -421,7 +421,7 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
         r"type=1&view_type=simple&reporter_id[]=-1&handler_id[]=0&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=last_updated&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=12&search=&filter_submit=应用过滤器",
     ]));
     let sub_bugs_value = store.get("sub_bugs").unwrap_or(Value::from(""));
-    let sub_bugs_hash_value = store.get("sub_bugs_hash").unwrap_or(Value::from(""));
+    let change_historys_value = store.get("change_historys").unwrap_or(Value::from(""));
 
     let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
     *logined = logined_value.as_bool().unwrap_or(false);
@@ -451,8 +451,9 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
     let mut sub_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
     *sub_bugs = serde_json::from_str(sub_bugs_value.as_str().unwrap_or("")).map_err(|e|format!("lock err:{}",e))?;
 
-    let mut sub_bugs_hash = state.sub_bugs_hash.lock().map_err(|e|format!("lock err:{}",e))?;
-    *sub_bugs_hash = serde_json::from_str(sub_bugs_hash_value.as_str().unwrap_or("")).map_err(|e|format!("lock err:{}",e))?;
+    let mut change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?;
+    *change_historys = serde_json::from_str(change_historys_value.as_str().unwrap_or("")).map_err(|e|format!("lock err:{}",e))?;
+    
     Ok(())
 }
 
@@ -539,9 +540,10 @@ fn save_global_state(app: AppHandle) -> Result<(),String> {
     let json = serde_json::to_string_pretty(&sub_bugs.clone()).map_err(|e|format!("to json err:{}",e))?;
     store.set("sub_bugs", json);
 
-    let sub_bugs_hash = state.sub_bugs_hash.lock().map_err(|e|format!("lock err:{}",e))?;
-    let json = serde_json::to_string_pretty(&sub_bugs_hash.clone()).map_err(|e|format!("to json err:{}",e))?;
-    store.set("sub_bugs_hash", json);
+    let change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?;
+    let json = serde_json::to_string_pretty(&change_historys.clone()).map_err(|e|format!("to json err:{}",e))?;
+    store.set("change_historys", json);
+
     store.save().map_err(|e|format!("save err:{}",e))?;
     Ok(())
 }
@@ -572,12 +574,13 @@ fn clear_global_state(app: AppHandle) -> Result<(),String> {
     store.delete("sub_param");
 
     let mut sub_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
-    *sub_bugs = HashMap::default();
+    *sub_bugs = Vec::default();
     store.delete("sub_bugs");
 
-    let mut sub_bugs_hash = state.sub_bugs_hash.lock().map_err(|e|format!("lock err:{}",e))?;
-    *sub_bugs_hash = HashMap::default();
-    store.delete("sub_bugs_hash");
+    let mut change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?;
+    *change_historys = Vec::default();
+    store.delete("change_historys");
+
     store.save().map_err(|e|format!("store save err:{}",e))
 }
 
@@ -628,54 +631,72 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
     bugs = bugs.into_iter().filter(|b| seen.insert(b.bug_id)).collect();
     // info!("find bugs: {:?}", bugs);
 
-    // TODO 只查询今天更新的数据的详情，获取日志信息，按照时间顺序保存到今天的state中，通知前端
+    // 只查询大于缓存时间的数据的详情，获取新增的日志信息
+    let mut change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?;
+    let last_history_time = change_historys.last().map_or(0,|c|c.updated_at);
+    let last_history_begin = Utc.timestamp_opt(last_history_time, 0).single().map(|t|{
+        t.with_timezone(&Shanghai).with_time(NaiveTime::MIN).unwrap().timestamp()
+    }).unwrap_or_default();
+    let mut add_historys = Vec::new();
+    for b in bugs.iter() {
+        if b.last_updated >= last_history_begin {
+            let text = my_view_detail(jar.clone(), b.bug_id, &host).await.map_err(|e|format!("my_view_detail err:{}",e))?;
+            let document = Html::parse_document(text.as_str());
+            let bug_info = my_view_detail_data(&document, &host, &category_kv, &project_kv)?;
+            for ch in bug_info.change_history {
+                if ch.updated_at >= last_history_time {
+                    if change_historys.iter().any(|c| get_hash(&c) == get_hash(&ch)) {
+                        continue;
+                    }else {
+                        add_historys.push(ch);
+                    }
+                }
+            }
+        }
+    };
+    add_historys.sort_by_key(|c|(c.updated_at, c.bug_id, c.handler_id));
 
-    // 上次的bugs、hash
-    let mut old_map = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
-    let mut old_hash = state.sub_bugs_hash.lock().map_err(|e|format!("lock err:{}",e))?;
-    
-    // 构建新bugs、hash
-    let mut new_map = HashMap::new();
-    let mut new_hash = HashMap::new();
-
-    let mut notice_msgs = Vec::new();
-
-    for b in bugs.clone() {
-        let bgid = b.bug_id;
-        let hash = get_hash(&b);
-        let cg_kv = category_kv.find_by_key(b.category_id.to_string()).ok_or("not find kv".to_owned())?;
-        new_map.insert(bgid, b.clone());
-        new_hash.insert(bgid, hash);
-        //判断hash值是否一致，不一致则通知,没有也通知
-        if let None = old_hash.iter().find(|(&k,&v)| k == bgid && v == hash){
-            //通知
-            let notice = format!(
-                    " {} | {} - {} -> {}",
-                    b.project,
-                    cg_kv.value,
-                    Severity::from(b.severity).as_str(),
-                    b.handler
-                );
-            notice_msgs.push(notice.clone());
-            let _ = send_notify(
-                app.clone(),
-                notice.as_str(),
-                b.summary.as_str(),
-            );
-        };
+    // bugs有变更则推送
+    let mut old_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
+    if get_hash(&*old_bugs) != get_hash(&bugs) {
+        let _ = app.emit("sub_bugs", &bugs);
+        *old_bugs = bugs;
     }
-    // 向前端所有窗口广播消息
-    if notice_msgs.len() > 0 || old_map.len() != new_map.len() {
-        *old_map = new_map;
-        *old_hash = new_hash;
-        bugs.sort_by_key(|b| std::cmp::Reverse(b.bug_id));
-        let json = serde_json::to_string_pretty(&bugs).map_err(|e|format!("to json err:{}",e))?;
-        let _ = app.emit("sub_bugs", bugs);
-        let _ = app.emit("sub_msgs", notice_msgs);
-        // 保存订阅数据到本地
-        let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
-        store.set("sub_bugs", json);
-        store.save().map_err(|e|format!("store save err:{}",e))?;
+
+    // change_historys有数据则推送增量
+    if add_historys.len() > 0 {
+        let _ = app.emit("sub_msgs", &add_historys);
+        let mut key = String::new();
+        let mut title = String::new();
+        let mut content = String::new();
+        add_historys.iter_mut().for_each(|c|{
+            change_historys.push(c.clone());
+            let new_key = format!("{}-{}-{}",c.updated_at,c.bug_id,c.handler_id).to_string();
+            if &key == "" {
+                let bug = old_bugs.iter().find(|b|b.bug_id == c.bug_id).map_or("有bug更新".to_string(),|b|format!("bug#{} {}",b.bug_id,b.summary.as_str())).as_str();
+                key = new_key.clone();
+                title = format!("bug#{} {}",c.bug_id,c.summary.as_str());
+                content = "".to_string();
+            }
+            if &key != &new_key {
+            // 发送通知
+                let _ = send_notify(
+                    app.clone(),
+                    ,
+                    content.as_str(),
+                );
+                key = new_key;
+                content = "".to_string();
+            }else {
+                content.push_str("");
+            }
+        });
+    }
+
+    // 如何数据量过大，则只保留最近200条
+    if change_historys.len() > 200 {
+        let len = change_historys.len();
+        change_historys.drain(0..(len-200));
     }
     Ok(())
 }

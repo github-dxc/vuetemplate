@@ -99,7 +99,7 @@ pub struct BugNote {
     pub attachments: Vec<FileInfo>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Hash)]
 pub struct ChangeHistory {
     pub bug_id: i64,        //bug_id
     pub updated_at: i64,    //变更时间
