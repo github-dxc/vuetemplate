@@ -18,9 +18,9 @@ use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, Manager, WindowEvent};
 use tauri_plugin_notification::{NotificationExt, PermissionState};
 use tauri_plugin_updater::{Update, UpdaterExt};
+use tauri::async_runtime::block_on;
 use tokio::time::{interval, Duration};
 use tokio::signal;
-use tokio::runtime::{Handle};
 use serde_json::{Value};
 use std::collections::HashSet;
 use utils::*;
@@ -133,6 +133,11 @@ async fn api_browser_open(app: tauri::AppHandle, url: String) -> Result<(), Stri
 async fn api_init_data(app: AppHandle) -> Result<String, String> {
     let state = app.state::<MyState>().clone();
 
+    // 查询项目列表
+    let projects = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    if projects.len() == 0 {
+        init_project_catgory(app.clone()).await?;
+    }
     // 查询项目列表
     let projects = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
 
@@ -461,10 +466,8 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
 }
 
 fn sync_init_project_catgory(app: AppHandle) -> Result<(),String> {
-    // 开启线程执行异步函数
-    if let Ok(rt) = Handle::try_current() {
-        return rt.block_on(init_project_catgory(app));
-    }
+    // 开启线程同步执行异步函数
+    let _ = block_on(init_project_catgory(app));
     Err("not tokio runtime".to_string())
 }
 
@@ -509,6 +512,7 @@ async fn init_project_catgory(app: AppHandle) -> Result<(),String> {
         if category.len() == 0|| projects.len() == 0 || users.len() == 0 {
             return Err("".to_string());
         }
+        println!("len1:{} len2:{} len3:{}",projects.len(),category.len(),users.len());
     } else {
         let mut project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?;
         *project_kv = projects;
@@ -680,7 +684,7 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
         for c in add_historys.iter_mut() {
             change_historys.push(c.clone());
             let new_key = format!("{}-{}-{}",c.updated_at,c.bug_id,c.handler_id).to_string();
-            let note = format!("\n- {} {}", c.field, c.change);
+            let note = format!("\n- {} {}", c.field, c.change.replace("&gt;", ">"));
             if &key != &new_key {
                 if &key != "" {
                     // 发送通知
@@ -693,7 +697,7 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
                 let bug = old_bugs.iter().find(|b|b.bug_id == c.bug_id).ok_or(String::from("not found bug"))?;
                 key = new_key;
                 let t = Utc.timestamp_opt(c.updated_at, 0).single().unwrap_or_default().with_timezone(&Shanghai).format("%Y-%m-%d %H:%M");
-                title = format!("{} #{} ({})",c.handler, c.bug_id, t);
+                title = format!("{} #{} （{}）",c.handler, c.bug_id, t);
                 content = format!("{} {}", bug.summary, note);
             }else {
                 content.push_str(note.as_str());
