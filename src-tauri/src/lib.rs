@@ -544,11 +544,11 @@ fn save_global_state(app: AppHandle) -> Result<(),String> {
     store.set("sub_param", sub_params.clone());
 
     let sub_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
-    let json = serde_json::to_string_pretty(&sub_bugs.clone()).map_err(|e|format!("to json err:{}",e))?;
+    let json = serde_json::to_string(&sub_bugs.clone()).map_err(|e|format!("to json err:{}",e))?;
     store.set("sub_bugs", json);
 
     let change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?;
-    let json = serde_json::to_string_pretty(&change_historys.clone()).map_err(|e|format!("to json err:{}",e))?;
+    let json = serde_json::to_string(&change_historys.clone()).map_err(|e|format!("to json err:{}",e))?;
     store.set("change_historys", json);
 
     store.save().map_err(|e|format!("save err:{}",e))?;
