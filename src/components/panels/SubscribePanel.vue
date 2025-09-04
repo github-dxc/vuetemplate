@@ -146,7 +146,7 @@
       <el-pagination 
         background 
         layout="prev, pager, next, jumper, total" 
-        :total="total" 
+        :total="bugTotal" 
         :current-page="page"
         :page-size="limit"
         class="custom-pagination"
@@ -166,31 +166,44 @@
 <script setup vapor>
 import { ref, onMounted, computed } from "vue";
 import { listen, emit } from '@tauri-apps/api/event';
-import { useRouter } from 'vue-router';
 import { createNewWindow } from "../../windows";
-import { apiBugInfo, initData, initBugs, updateBug } from "../../api";
+import { apiBugInfo, updateBug } from "../../api";
 import { ElMessage } from "element-plus";
 import { useUserStore } from "../../store";
 import BugDetails from "../BugDetails.vue";
 
+const props = defineProps({
+  bugList: {
+    type: Array,
+    required: true,
+    default: []
+  },
+  bugTotal: {
+    type: Number,
+    required: true,
+    default: 0
+  },
+  enums: {
+    type: Object,
+    required: true,
+    default: {
+      Project: [],
+      Priority: [],
+      Severity: [],
+      Reproducibility: [],
+      ViewStatus: [],
+      Resolution: [],
+      Status: [],
+      Category: [],
+      Users: [],
+    }
+  }
+}); 
+
 //------------------data-------------------//
 const userStore = useUserStore();
-const router = useRouter()
-const bugList = ref([]);
-const total = ref(0);
 const limit = ref(10);
 const page = ref(1);
-const enums = ref({
-  Project: [],
-  Priority: [],
-  Severity: [],
-  Reproducibility: [],
-  ViewStatus: [],
-  Resolution: [],
-  Status: [],
-  Category: [],
-  Users: [],
-});
 const bugDetailsVisible = ref(false);
 const bugDetailsTitle = ref("Bug明细");
 const bugId = ref(0);
@@ -201,7 +214,7 @@ const host = computed(() => {
 
 const bugUsers = computed(() => {
   const myMap = new Map();
-  enums.value.Users.forEach(item => {
+  props.enums?.Users?.forEach(item => {
     if (item.key !== "0") {
       myMap.set(item.key, item.value);
     }
@@ -211,7 +224,7 @@ const bugUsers = computed(() => {
 
 const bugStatus = computed(() => {
   const myMap = new Map();
-  enums.value.Status.forEach(item => {
+  props.enums?.Status?.forEach(item => {
     myMap.set(item.key, item.value);
   });
   return myMap;
@@ -219,14 +232,14 @@ const bugStatus = computed(() => {
 
 const bugSeverity = computed(() => {
   const myMap = new Map();
-  enums.value.Severity.forEach(item => {
+  props.enums?.Severity?.forEach(item => {
     myMap.set(item.key, item.value);
   });
   return myMap;
 })
 
 // 获取Status颜色
-function getStatusColor(status) {
+const getStatusColor = (status) => {
   if (status <= 50 || status === 85) {
     return 'warning';
   } else if (status === 80 || status === 81 || status === 82) {
@@ -240,7 +253,7 @@ function getStatusColor(status) {
 }
 
 // 获取Severity颜色
-function getSeverityColor(severity) {
+const getSeverityColor = (severity) => {
   if (severity <= 30) {
     return 'success';
   } else if (severity <= 50) {
@@ -297,35 +310,7 @@ const tableRowClassName = ({
 
 //------------------api-------------------//
 
-async function api_init_data() {
-  try {
-    let data = await initData();
-    console.log("api_init_data:", data);
-    let enumsData = JSON.parse(data)
-    if (enumsData) {
-      enums.value = enumsData;
-    }
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-async function api_bug_list() {
-  try {
-    // 获取bug列表
-    let data = await initBugs();
-    console.log("api_init_bugs:", data);
-    if (data) {
-      bugList.value = data || [];
-      total.value = bugList.value.length;
-    }
-  } catch (error) {
-    console.log(error);
-    router.push("/login");
-  }
-}
-
-async function handleCommand(command) {
+const handleCommand = async (command) => {
   if (!(command.status && command.bug_id)) {
     return
   }
@@ -366,12 +351,12 @@ const changeBug = function(data) {
   });
 }
 
-function handlePageChange(currentPage) {
+const handlePageChange = (currentPage) => {
   page.value = currentPage;
 }
 
 // 复制数据到剪切板
-function copyMessage(message) {
+const copyMessage = (message) => {
   navigator.clipboard.writeText(message).then(() => {
     ElMessage({
       message: '复制成功',
@@ -383,7 +368,7 @@ function copyMessage(message) {
 }
 
 // 打开图片预览
-async function openImagePreview(bug_id) {
+const openImagePreview = async (bug_id) => {
   const DOMContentLoadedCallback = () => {
     // 发送图片信息列表给图片预览窗口
     apiBugInfo(bug_id).then(result => {
@@ -414,36 +399,16 @@ async function openImagePreview(bug_id) {
 }
 
 // 打开bug详情
-async function openBugDetails(bug_id,title) {
+const openBugDetails = async (bug_id,title) => {
   bugDetailsTitle.value = `【${bug_id}】${title}` || "Bug明细";
   bugDetailsVisible.value = true;
   bugId.value = bug_id;
 }
 
-//------------------vue/tauri-------------------//
-
 // 初始化
 onMounted(async () => {
-  // 初始化枚举数据
-  await api_init_data();
-  // 查询bug列表
-  await api_bug_list();
 });
 
-// 监听rust发送的消息
-listen('sub_bugs', (event) => {
-  console.log('收到定时消息:', event.payload)
-  try {
-    const obj = event.payload;
-    if (obj) {
-      bugList.value = obj;
-      total.value = bugList.value.length;
-    };
-  } catch (error) {
-    console.error('解析 JSON 失败:', error);
-    return;
-  }
-})
 </script>
 
 <style scoped>

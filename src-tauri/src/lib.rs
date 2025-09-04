@@ -41,6 +41,7 @@ pub fn run() {
             api_browser_open,
             api_init_data,
             api_init_bugs,
+            api_init_msgs,
             api_change_host,
             api_login_info,
             api_login,
@@ -180,6 +181,16 @@ async fn api_init_bugs(app: AppHandle) -> Result<Vec<Bug>, String> {
     // 查询缓存的bug列表
     let sub_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     Ok(sub_bugs)
+}
+
+// 初始化msgs数据
+#[tauri::command(rename_all = "snake_case")]
+async fn api_init_msgs(app: AppHandle) -> Result<Vec<ChangeHistory>, String> {
+    let state = app.state::<MyState>().clone();
+    
+    // 查询缓存的bug列表
+    let logs = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    Ok(logs)
 }
 
 // 获取登录信息
@@ -512,7 +523,6 @@ async fn init_project_catgory(app: AppHandle) -> Result<(),String> {
         if category.len() == 0|| projects.len() == 0 || users.len() == 0 {
             return Err("".to_string());
         }
-        println!("len1:{} len2:{} len3:{}",projects.len(),category.len(),users.len());
     } else {
         let mut project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?;
         *project_kv = projects;

@@ -3,9 +3,8 @@
     <div class="single-layout">
       <keep-alive>
         <component 
-          :is="singlePanelComponent" 
-          :current-menu="currentMenu"
-          :user-avatar="userAvatar"
+          :is="singlePanelComponent"
+          v-bind="props"
         />
       </keep-alive>
       
@@ -19,6 +18,10 @@ import { computed } from 'vue';
 const props = defineProps({
   currentMenu: Object,
   userAvatar: String,
+  bugList: Array,
+  bugMsgs: Array,
+  bugTotal: Number,
+  enums: Object,
 });
 
 const singlePanelComponent = computed(() => {
