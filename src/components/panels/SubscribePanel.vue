@@ -134,7 +134,7 @@
                   >
                     {{ bugStatus.get(String(s)) }}
                   </el-dropdown-item>
-                  <el-dropdown-item divided :command="{ use: 'comment' }" class="dropdown-item">
+                  <el-dropdown-item divided :command="{ type: 'comment', bug_id: scope.row.bug_id }" class="dropdown-item">
                     <el-icon><EditPen /></el-icon>
                     评论
                   </el-dropdown-item>
@@ -165,7 +165,12 @@
       </el-drawer>
     </div>
     <!-- 评论展示 -->
-     
+    <Annotation 
+      :bug-id="bugId"
+      @success="annotationDialogVisible = false" 
+      @close="annotationDialogVisible = false" 
+      :dialog-visible="annotationDialogVisible"
+    />
   </div>
 </template>
 
@@ -178,6 +183,7 @@ import { ElMessage } from "element-plus";
 import { useUserStore } from "../../store";
 import BugDetails from "../BugDetails.vue";
 import { EditPen } from "@element-plus/icons-vue";
+import Annotation from "../Annotation.vue";
 
 const props = defineProps({
   bugList: {
@@ -214,6 +220,7 @@ const page = ref(1);
 const bugDetailsVisible = ref(false);
 const bugDetailsTitle = ref("Bug明细");
 const bugId = ref(0);
+const annotationDialogVisible = ref(false);
 
 const host = computed(() => {
   return userStore.serverHost;
@@ -318,10 +325,12 @@ const tableRowClassName = ({
 //------------------api-------------------//
 
 const handleCommand = async (command) => {
-  if (command.use) {
-    switch (command.use) {
-      case 'comment'://评论
-        
+  if (command.type) {
+    switch (command.type) {
+      //评论
+      case 'comment':
+        bugId.value = command.bug_id;
+        annotationDialogVisible.value = true;
     }
     return;
   }
