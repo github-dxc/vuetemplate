@@ -69,6 +69,7 @@
 <script setup>
 import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { bugNoteAdd } from '../api'
 
 // Props 定义
 const props = defineProps({
@@ -76,11 +77,16 @@ const props = defineProps({
     type: Boolean,
     required: true,
     default: false
-  }
+  },
+  bugId: {
+    type: Number,
+    required: true,
+    default: 0
+  },
 })
 
 // Emits 定义
-const emits = defineEmits(['submit','close'])
+const emits = defineEmits(['success', 'failed', 'close'])
 
 // 响应式数据
 const dialogVisible = computed(() => props.dialogVisible)
@@ -103,6 +109,24 @@ const formData = reactive({
 })
 
 // 方法
+const uploadAnotation = async (submitData)=> {
+  let bug_id = props.bugId;
+  let bugnote_text = submitData.content;
+  let binary_file = [];
+  for (let i = 0; i < submitData.files.length; i++) {
+    let file = submitData.files[i];
+    const arrayBuffer = await file.raw.arrayBuffer();
+    binary_file.push([file.name, Array.from(new Uint8Array(arrayBuffer))]);
+  }
+  bugNoteAdd({bug_id,bugnote_text,binary_file}).then(result => {
+    ElMessage.success('反馈提交成功！');
+    emits('success');
+  }).catch(error => {
+    ElMessage.error('更新失败，请稍后重试' + error);
+    emits('failed');
+  });
+}
+
 const handleClose = () => {
   resetForm()
   emits('close')
@@ -133,10 +157,7 @@ const handleSubmit = async () => {
     }
     
     // 触发提交事件
-    emits('submit', submitData)
-  
-    ElMessage.success('反馈提交成功！')
-    handleClose()
+    await uploadAnotation(submitData)
     
   } catch (error) {
     console.error('表单验证失败:', error)

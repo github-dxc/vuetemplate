@@ -187,7 +187,12 @@
       <span class="feedback-text">反馈</span>
     </div>
   </div>
-  <Annotation @submit="uploadAnotation" @close="annotationDialogVisible = false" :dialog-visible="annotationDialogVisible"/>
+  <Annotation 
+    :bug-id="bugId"
+    @success="uploadAnotationSuccess" 
+    @close="annotationDialogVisible = false" 
+    :dialog-visible="annotationDialogVisible"
+  />
 </template>
 
 <script setup>
@@ -372,25 +377,9 @@ const bugUsers = computed(() => {
   return myMap;
 })
 
-const uploadAnotation = async (submitData)=> {
-  let bug_id = props.bugId;
-  let bugnote_text = submitData.content;
-  let binary_file = [];
-  for (let i = 0; i < submitData.files.length; i++) {
-    let file = submitData.files[i];
-    const arrayBuffer = await file.raw.arrayBuffer();
-    binary_file.push([file.name, Array.from(new Uint8Array(arrayBuffer))]);
-  }
-  bugNoteAdd({bug_id,bugnote_text,binary_file}).then(result => {
-    console.log("成功:", result);
-    getBugInfo();
-  }).catch(error => {
-    ElMessage({
-      message: '更新失败，请稍后重试',
-      type: 'error',
-    });
-    console.error("错误:", error);
-  });
+const uploadAnotationSuccess = ()=> {
+  getBugInfo();
+  annotationDialogVisible.value = false;
 }
 
 const changeBug = function(data) {
