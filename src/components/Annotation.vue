@@ -1,17 +1,5 @@
 <template>
   <div>
-    <!-- 反馈按钮 -->
-    <div 
-      class="feedback-button"
-      @click="openDialog"
-      style="width: 50px; height: 60px;"
-    >
-      <el-icon :size="16">
-        <ChatRound />
-      </el-icon>
-      <span class="feedback-text">反馈</span>
-    </div>
-
     <!-- 反馈对话框 -->
     <el-dialog
       v-model="dialogVisible"
@@ -79,19 +67,23 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { ChatRound } from '@element-plus/icons-vue'
 
 // Props 定义
 const props = defineProps({
+  dialogVisible: {
+    type: Boolean,
+    required: true,
+    default: false
+  }
 })
 
 // Emits 定义
-const emits = defineEmits(['submit', 'close', 'open'])
+const emits = defineEmits(['submit','close'])
 
 // 响应式数据
-const dialogVisible = ref(false)
+const dialogVisible = computed(() => props.dialogVisible)
 const dialogVisiblePreview = ref(false)
 const dialogImageUrlPreview = ref('')
 const submitLoading = ref(false)
@@ -111,13 +103,7 @@ const formData = reactive({
 })
 
 // 方法
-const openDialog = () => {
-  dialogVisible.value = true
-  emits('open')
-}
-
 const handleClose = () => {
-  dialogVisible.value = false
   resetForm()
   emits('close')
 }
@@ -219,38 +205,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.feedback-button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 80px;
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  font-size: 12px;
-  color: #666;
-  user-select: none;
-}
-
-.feedback-button:hover {
-  background: #f5f5f5;
-  border-color: #409eff;
-  color: #409eff;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
-  transform: translateY(-1px);
-}
-
-.feedback-text {
-  margin-top: 4px;
-  font-size: 12px;
-  line-height: 1;
-}
-
 .el-button.is-circle {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;

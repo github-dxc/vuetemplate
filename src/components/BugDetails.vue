@@ -155,7 +155,7 @@
             <div class="text-wrapper-name">{{ bugNote.handler }}</div>
             <div class="text-wrapper-time">{{ formatDate(bugNote.time) }}</div>
           </div>
-          <div class="text-wrapper-content">
+          <div class="text-wrapper-content" v-if="bugNote.text">
             <div v-html="bugNote.text"></div>
           </div>
           
@@ -175,8 +175,19 @@
     </div>
   </div>
   <div class="overlap-comment-button">
-    <Annotation @submit="uploadAnotation"/>
+    
+    <!-- 反馈按钮 -->
+    <div 
+      class="feedback-button"
+      @click="annotationDialogVisible = true"
+    >
+      <el-icon :size="16">
+        <ChatRound />
+      </el-icon>
+      <span class="feedback-text">反馈</span>
+    </div>
   </div>
+  <Annotation @submit="uploadAnotation" @close="annotationDialogVisible = false" :dialog-visible="annotationDialogVisible"/>
 </template>
 
 <script setup>
@@ -190,6 +201,7 @@ import { createNewWindow } from '../windows';
 import { emit } from '@tauri-apps/api/event';
 import Annotation from './Annotation.vue';
 import OperationCard from './OperationCard.vue';
+import { ChatRound } from '@element-plus/icons-vue'
 
 const props = defineProps({
   bugId: {
@@ -218,6 +230,8 @@ const descriptionEditor = ref(null);
 const stepsEditor = ref(null);
 const showDescriptionEdit = ref(false);
 const showStepsEdit = ref(false);
+const annotationDialogVisible = ref(false);
+
 const focusDescriptionEditor = (e) => {
   if (e.target.tagName.toLowerCase() === 'a') {
     return;
@@ -1035,23 +1049,24 @@ onMounted(() => {
   letter-spacing: 0;
   line-height: 22.8px;
   position: relative;
-  margin-top: 15px;
-  margin-bottom: 20px;
+  margin-top: 5px;
+  margin-bottom: 5px;
   white-space: nowrap;
 }
 
 .demo-image__error {
   position: relative;
+  display: inline-block;
   height: 200px;
   margin-top: -20px;
   margin-left: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .demo-image__error .block {
   text-align: center;
   display: inline-block;
-  width: 49%;
+  width: 90%;
   box-sizing: border-box;
   vertical-align: top;
 }
@@ -1077,9 +1092,7 @@ onMounted(() => {
 }
 .demo-image__error .el-image:hover {
   transform: translateY(-2px);
-  box-shadow: 
-    0 8px 25px rgba(0, 0, 0, 0.15),0
-    0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 5px 10px 10px rgba(0, 0, 0, 0.15);
   border-color: #ddd;
 }
 
@@ -1088,4 +1101,37 @@ onMounted(() => {
   bottom: 30px;
   right: 45px;
 }
+
+.feedback-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 60px;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 12px;
+  color: #666;
+  user-select: none;
+}
+
+.feedback-button:hover {
+  background: #f5f5f5;
+  border-color: #409eff;
+  color: #409eff;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.feedback-text {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1;
+}
+
 </style>
