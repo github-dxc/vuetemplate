@@ -176,7 +176,7 @@
   </div>
   <div class="overlap-comment-button">
     
-    <!-- 反馈按钮 -->
+    <!-- 评论按钮 -->
     <div 
       class="feedback-button"
       @click="annotationDialogVisible = true"
@@ -184,7 +184,7 @@
       <el-icon :size="16">
         <ChatRound />
       </el-icon>
-      <span class="feedback-text">反馈</span>
+      <span class="feedback-text">评论</span>
     </div>
   </div>
   <Annotation 

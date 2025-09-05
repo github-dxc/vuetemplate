@@ -1,9 +1,9 @@
 <template>
   <div>
-    <!-- 反馈对话框 -->
+    <!-- 评论对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      title="反馈"
+      title="评论"
       width="750px"
       :before-close="handleClose"
       append-to-body
@@ -58,7 +58,7 @@
             @click="handleSubmit"
             :loading="submitLoading"
           >
-            提交反馈
+            提交评论
           </el-button>
         </div>
       </template>
@@ -98,7 +98,7 @@ const uploadRef = ref()
 const fileList = ref([])
 const formRules = {
   content: [
-    { required: true, message: '反馈内容不能为空', trigger: 'blur' },
+    { required: true, message: '评论内容不能为空', trigger: 'blur' },
     { min: 1, max: 500, message: '内容长度应在1到500字符之间', trigger: 'blur' }
   ]
 }
@@ -119,7 +119,7 @@ const uploadAnotation = async (submitData)=> {
     binary_file.push([file.name, Array.from(new Uint8Array(arrayBuffer))]);
   }
   bugNoteAdd({bug_id,bugnote_text,binary_file}).then(result => {
-    ElMessage.success('反馈提交成功！');
+    ElMessage.success('评论提交成功！');
     emits('success');
   }).catch(error => {
     ElMessage.error('更新失败，请稍后重试' + error);

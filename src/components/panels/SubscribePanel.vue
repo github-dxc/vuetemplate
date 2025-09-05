@@ -134,6 +134,10 @@
                   >
                     {{ bugStatus.get(String(s)) }}
                   </el-dropdown-item>
+                  <el-dropdown-item divided :command="{ use: 'comment' }" class="dropdown-item">
+                    <el-icon><EditPen /></el-icon>
+                    评论
+                  </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -160,6 +164,8 @@
         <BugDetails :bug-id="bugId" :enums="enums"/>
       </el-drawer>
     </div>
+    <!-- 评论展示 -->
+     
   </div>
 </template>
 
@@ -171,6 +177,7 @@ import { apiBugInfo, updateBug } from "../../api";
 import { ElMessage } from "element-plus";
 import { useUserStore } from "../../store";
 import BugDetails from "../BugDetails.vue";
+import { EditPen } from "@element-plus/icons-vue";
 
 const props = defineProps({
   bugList: {
@@ -311,8 +318,15 @@ const tableRowClassName = ({
 //------------------api-------------------//
 
 const handleCommand = async (command) => {
+  if (command.use) {
+    switch (command.use) {
+      case 'comment'://评论
+        
+    }
+    return;
+  }
   if (!(command.status && command.bug_id)) {
-    return
+    return;
   }
   console.log("处理命令:", command);
   let status = command.status;
