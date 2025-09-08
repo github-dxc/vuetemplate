@@ -169,7 +169,7 @@
 
         <!--时间线-->
         <div v-show="activeTab === 'operation'" class="operation-history-list">
-          <OperationCard v-for="(history, index) in historys" :key="index" :username="history.username" :timestamp="history.timestamp" :operations="history.operations"></OperationCard>
+          <OperationCard v-for="(history, index) in historys" :key="index" :username="history.username" :timestamp="history.timestr" :operations="history.operations"></OperationCard>
         </div>
       </div>
     </div>
@@ -466,13 +466,15 @@ const getBugInfo = function() {
     let change_history = result.change_history || [];
     for (let i = 0; i < change_history.length; i++) {
       const e = change_history[i];
-      let item = historys.value.find(h => h.username === e.handler && h.timestamp === formatDate(e.updated_at))
+      let item = historys.value.find(h => h.username === e.handler && h.timestamp === e.updated_at)
       if (item) {
         item.operations.push(`${e.field} ${e.change}`);
       }else {
         historys.value.push({
+          user_id: e.handler_id,
           username: e.handler,
-          timestamp: formatDate(e.updated_at),
+          timestamp: e.updated_at,
+          timestr: formatDate(e.updated_at),
           operations: [`${e.field} ${e.change}`]
         });
       }

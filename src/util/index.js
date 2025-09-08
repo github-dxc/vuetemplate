@@ -47,6 +47,15 @@ export const formatDate = (timestamp) => {
   });
 };
 
+export const formatDateDay = (timestamp) => {
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+};
+
 export const getFirstChar = function(name) {
   if (!name || typeof name !== 'string') {
     return '';

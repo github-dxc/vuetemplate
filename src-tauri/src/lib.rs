@@ -199,6 +199,8 @@ async fn api_login_info(app: AppHandle) -> Result<LoginInfo, String> {
     let state = app.state::<MyState>().clone();
     let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let username = state.username.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    // 获取当前用户信息
+    
     Ok(LoginInfo{ logined, username})
 }
 
@@ -686,7 +688,7 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
 
     // change_historys有数据则推送增量
     let mut change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?;
-    if add_historys.len() > 0 {
+    if add_historys.len() > 0 { 
         let _ = app.emit("sub_msgs", &add_historys);
         let mut key = String::new();
         let mut title = String::new();
