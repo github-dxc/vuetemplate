@@ -1027,7 +1027,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                 .find_map(|e| e.text().find_map(|s|Some(s.trim_ascii())))
                 .unwrap_or_default();
             // attachments
-            let attachments_selector = Selector::parse("td.bugnote-note>a , td.bugnote-note>.collapse-open>a , td.bugnote-note>.well.well-xs>a").unwrap();
+            let attachments_selector = Selector::parse("td.bugnote-note>a , td.bugnote-note>.well.well-xs>.collapse-open>a , td.bugnote-note>.well.well-xs>a").unwrap();
             let attachments = e
                 .select(&attachments_selector)
                 .filter_map(|e| {

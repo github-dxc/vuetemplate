@@ -37,10 +37,12 @@ import SubscribePanel from '../components/panels/SubscribePanel.vue';
 import ChatPanel from '../components/panels/ChatPanel.vue';
 import Update from '../components/Update.vue';
 import { useRouter } from 'vue-router';
+import { useUserStore } from "../store";
 import { listen, emit } from '@tauri-apps/api/event';
 import { initBugs, initData, initMsgs } from '../api';
 
 const router = useRouter()
+const userStore = useUserStore();
 
 // 变量
 const userAvatar = ref('https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png');
@@ -146,6 +148,7 @@ listen('sub_msgs', (event) => {
 // ------------------初始化------------------
 
 onMounted(async () => {
+  userStore.changeGetHost("");
   // 初始化枚举数据
   await api_init_data();
   // 查询bug列表
