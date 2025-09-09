@@ -215,9 +215,7 @@ async fn api_login(app: AppHandle, username: &str, password: &str) -> Result<Str
         let mut user = state.user.lock().map_err(|e|format!("lock err:{}",e))?;
         user.logined = true;
         user.username = username.to_string();
-    println!("000");
         user.user_id = get_user_id(&Html::parse_document(body.as_str()))?;
-    println!("111");
         let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
         *jar_ = jar;
     }
@@ -424,14 +422,12 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
     let state = app.state::<MyState>().clone();
     let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
 
-    let logined_value = store.get("logined").unwrap_or(Value::from(false));
-    let username_value = store.get("username").unwrap_or(Value::from(""));
-    let userid_value = store.get("user_id").unwrap_or(Value::from(0));
-    let cookie_value = store.get("cookies").unwrap_or(Value::from(""));
+    let user_value = store.get("user").unwrap_or_default();
+    let cookie_value = store.get("cookies").unwrap_or_default();
     let default_host: &'static str = "localhost:8989";
     // let default_host: &'static str = "bug.test.com";
     let host_value = store.get("host").unwrap_or(Value::from(default_host));
-    println!("logined:{};username:{};cookie:{};host:{}",logined_value,username_value,cookie_value,host_value);
+    println!("user:{};cookie:{};host:{}",user_value,cookie_value,host_value);
     let hv = host_value.as_str().and_then(|v|{
         if v == "" {
             return Some(default_host);
@@ -445,10 +441,9 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
     let sub_bugs_value = store.get("sub_bugs").unwrap_or(Value::from(""));
     let change_historys_value = store.get("change_historys").unwrap_or(Value::from(""));
 
+    let user_info:LoginInfo = serde_json::from_value(user_value).map_err(|e|format!("serde_json err:{}",e))?;
     let mut user = state.user.lock().map_err(|e|format!("lock err:{}",e))?;
-    user.logined = logined_value.as_bool().unwrap_or(false);
-    user.username = username_value.as_str().unwrap_or_default().to_string();
-    user.user_id = userid_value.as_i64().unwrap_or_default();
+    *user = user_info;
 
     let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
     let jar = Jar::default();

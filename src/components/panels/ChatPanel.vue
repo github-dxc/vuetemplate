@@ -43,7 +43,14 @@
         <!-- 消息项 -->
         <div class="message-group">
           <div class="operation-history-list">
-            <OperationCard v-for="(history, index) in group" :key="index" :username="history.username" :timestamp="history.timestr" :operations="history.operations"></OperationCard>
+            <OperationCard 
+              v-for="(history, index) in group" 
+              :key="index" 
+              :username="history.username" 
+              :timestamp="history.timestr" 
+              :operations="history.operations"
+              :class="user_id === history.user_id? 'self' : 'other'"
+            ></OperationCard>
           </div>
         </div>
       </div>
@@ -73,12 +80,16 @@ import {
 import OperationCard from '../OperationCard.vue';
 import { initMsgs } from '../../api';
 import { formatDate, formatDateDay } from '../../util';
+import { useUserStore } from "../../store";
+
+const userStore = useUserStore();
 
 // 响应式数据
 const showScrollToBottom = ref(false)
 const unreadCount = ref(0)
 const messageListRef = ref(null)
 const historys = ref([])
+const user_id = userStore?.userInfo.user_id || 0
 
 // 按日期分组消息
 const groupedMessages = computed(() => {
