@@ -99,8 +99,7 @@ pub fn run() {
 // 全局状态
 #[derive(Default)]
 struct MyState {
-    logined: Arc<Mutex<bool>>, // 是否登录
-    username: Arc<Mutex<String>>, // 用户名
+    user: Arc<Mutex<LoginInfo>>, //登录信息
     jar: Mutex<Arc<Jar>>,
     host: Arc<Mutex<String>>,
     sub_params: Arc<Mutex<Vec<String>>>,//订阅列表
@@ -197,11 +196,9 @@ async fn api_init_msgs(app: AppHandle) -> Result<Vec<ChangeHistory>, String> {
 #[tauri::command(rename_all = "snake_case")]
 async fn api_login_info(app: AppHandle) -> Result<LoginInfo, String> {
     let state = app.state::<MyState>().clone();
-    let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let username = state.username.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    // 获取当前用户信息
-    
-    Ok(LoginInfo{ logined, username})
+
+    let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    Ok(user)
 }
 
 // 登录
@@ -211,13 +208,16 @@ async fn api_login(app: AppHandle, username: &str, password: &str) -> Result<Str
     let state = app.state::<MyState>().clone();
     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let result = login(jar.clone(), username, password, &host).await.map_err(|e|format!("login err:{}",e))?;
+    let body = my_view_page(jar.clone(), &host).await.map_err(|e|format!("my_view_page err:{}",e))?;
 
     // 保存cookie到全局状态
     {
-        let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
-        *logined = true;
-        let mut username_ = state.username.lock().map_err(|e|format!("lock err:{}",e))?;
-        *username_ = username.to_string();
+        let mut user = state.user.lock().map_err(|e|format!("lock err:{}",e))?;
+        user.logined = true;
+        user.username = username.to_string();
+    println!("000");
+        user.user_id = get_user_id(&Html::parse_document(body.as_str()))?;
+    println!("111");
         let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
         *jar_ = jar;
     }
@@ -240,12 +240,12 @@ async fn api_logout(app: AppHandle) -> Result<(), String> {
 #[tauri::command(rename_all = "snake_case")]
 async fn api_bug_list(app: AppHandle) -> Result<BugList, String> {
     let state = app.state::<MyState>().clone();
-    let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    if !logined {
+    if !user.logined {
         return Err("未登录".to_string());
     }
     let param_str = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器";
@@ -269,12 +269,12 @@ async fn api_bug_info(
     bug_id: i64
 ) -> Result<BugInfo, String> {
     let state = app.state::<MyState>().clone();
-    let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    if !logined {
+    if !user.logined {
         return Err("未登录".to_string());
     }
     // 查询bug详情
@@ -299,12 +299,12 @@ async fn api_update_bug(
     steps_to_reproduce: String,
 ) -> Result<String, String> {
     let state = app.state::<MyState>().clone();
-    let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    if !logined {
+    if !user.logined {
         return Err("未登录".to_string());
     }
     // 查询bug详情
@@ -364,10 +364,10 @@ async fn api_update_bug(
 async fn api_bug_note_add(app: AppHandle, bug_id: i64, bugnote_text: String,
     file_path: Vec<String>,binary_file: Vec<(String, Vec<u8>)>) -> Result<(), String> {
     let state = app.state::<MyState>().clone();
-    let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    if !logined {
+    if !user.logined {
         return Err("未登录".to_string());
     }
 
@@ -426,6 +426,7 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
 
     let logined_value = store.get("logined").unwrap_or(Value::from(false));
     let username_value = store.get("username").unwrap_or(Value::from(""));
+    let userid_value = store.get("user_id").unwrap_or(Value::from(0));
     let cookie_value = store.get("cookies").unwrap_or(Value::from(""));
     let default_host: &'static str = "localhost:8989";
     // let default_host: &'static str = "bug.test.com";
@@ -444,10 +445,10 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
     let sub_bugs_value = store.get("sub_bugs").unwrap_or(Value::from(""));
     let change_historys_value = store.get("change_historys").unwrap_or(Value::from(""));
 
-    let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
-    *logined = logined_value.as_bool().unwrap_or(false);
-    let mut username_ = state.username.lock().map_err(|e|format!("lock err:{}",e))?;
-    *username_ = username_value.as_str().unwrap_or("").to_string();
+    let mut user = state.user.lock().map_err(|e|format!("lock err:{}",e))?;
+    user.logined = logined_value.as_bool().unwrap_or(false);
+    user.username = username_value.as_str().unwrap_or_default().to_string();
+    user.user_id = userid_value.as_i64().unwrap_or_default();
 
     let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
     let jar = Jar::default();
@@ -488,13 +489,13 @@ fn sync_init_project_catgory(app: AppHandle) -> Result<(),String> {
 async fn init_project_catgory(app: AppHandle) -> Result<(),String> {
     let state = app.state::<MyState>().clone();
     
-    let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?.clone();
 
     let mut projects = vec![];
     let mut category = vec![];
     let mut users = vec![];
     // 如果当前是已登录，则获取分组和项目
-    if logined {
+    if user.logined {
         // 查询项目列表
         {
             let jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
@@ -541,11 +542,9 @@ fn save_global_state(app: AppHandle) -> Result<(),String> {
     let state = app.state::<MyState>().clone();
     let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
 
-    let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
-    store.set("logined", logined.clone());
-
-    let username = state.username.lock().map_err(|e|format!("lock err:{}",e))?;
-    store.set("username", username.clone());
+    let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?;
+    let json_value = serde_json::to_value(user.clone()).map_err(|e|format!("serde err:{}",e))?;
+    store.set("user", json_value);
     
     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?;
     store.set("host", host.clone());
@@ -560,12 +559,12 @@ fn save_global_state(app: AppHandle) -> Result<(),String> {
     store.set("sub_param", sub_params.clone());
 
     let sub_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
-    let json = serde_json::to_string(&sub_bugs.clone()).map_err(|e|format!("to json err:{}",e))?;
-    store.set("sub_bugs", json);
+    let json_value = serde_json::to_value(&sub_bugs.clone()).map_err(|e|format!("to json err:{}",e))?;
+    store.set("sub_bugs", json_value);
 
     let change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?;
-    let json = serde_json::to_string(&change_historys.clone()).map_err(|e|format!("to json err:{}",e))?;
-    store.set("change_historys", json);
+    let json_value = serde_json::to_value(&change_historys.clone()).map_err(|e|format!("to json err:{}",e))?;
+    store.set("change_historys", json_value);
 
     store.save().map_err(|e|format!("save err:{}",e))?;
     Ok(())
@@ -576,14 +575,10 @@ fn clear_global_state(app: AppHandle) -> Result<(),String> {
     let state = app.state::<MyState>().clone();
     let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
 
-    let mut logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?;
-    *logined = false;
-    store.delete("logined");
+    let mut user = state.user.lock().map_err(|e|format!("lock err:{}",e))?;
+    *user = LoginInfo::default();
+    store.delete("user");
 
-    let mut username = state.username.lock().map_err(|e|format!("lock err:{}",e))?;
-    *username = "".to_string();
-    store.delete("username");
-    
     // let mut host = state.host.lock().map_err(|e|format!("lock err:{}",e))?;
     // *host = "".to_string();
     // store.delete("host");
@@ -626,8 +621,8 @@ fn find_sub_data(app: AppHandle) {
 async fn update_sub_data(app: AppHandle) -> Result<(), String> {
     let state = app.state::<MyState>().clone();
     // 判断是否登录，如果未登录，则跳过
-    let logined = state.logined.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    if !logined {
+    let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    if !user.logined {
         info!("未登录，跳过定时任务");
         return Ok(());
     };

@@ -10,7 +10,7 @@ export const useUserStore = defineStore('user', {
   state: () => ({
     // 用户信息
     user: {
-      id: null,
+      user_id: null,
       logined: false,
       username: '',
       avatar: '',
@@ -212,7 +212,7 @@ export const useUserStore = defineStore('user', {
     // 重置user到初始状态
     resetUser() {
       this.user = {
-        id: null,
+        user_id: null,
         logined: false,
         username: '',
         avatar: '',

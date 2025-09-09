@@ -99,6 +99,7 @@ const hostInputRef = ref(null);
 async function testLogin() {
   const result = await userStore.login('dengxiangcheng', 'dxc3434DXC');
   // const result = await userStore.login('administrator', 'abcd.1234');
+  console.log("login result:",result);
   if (result.success) {
     console.log("登录成功", result);
     router.push("/home");
@@ -115,6 +116,7 @@ async function testLogin() {
 
 async function login() {
   const result = await userStore.login(username.value, password.value );
+  console.log("login result:",result);
   if (result.success) {
     console.log("登录成功", result);
     router.push("/home");

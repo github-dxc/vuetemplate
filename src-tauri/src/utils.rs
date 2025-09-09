@@ -1147,7 +1147,7 @@ pub fn users_data(document: &Html) -> Result<Vec<KV>, String> {
     let r: Vec<KV> = document
         .select(&slector)
         .filter_map(|e| {
-            let value = e.inner_html().trim().split('(').next().unwrap_or_default().to_string();
+            let value = e.inner_html().trim().split('(').next().unwrap_or_default().trim().to_string();
             let key = e.value().attr("value").map(|id|id.to_owned())?;
             if key == "" {
                 return None;
@@ -1183,14 +1183,25 @@ pub fn get_page_token(document: &Html, token: &str) -> Result<String, String> {
         .ok_or("not found".to_string())
 }
 
-// 查询data-filter_id
-pub fn get_data_filter_id(document: &Html) -> Result<String, String> {
+// 查询user_id
+pub fn get_user_id(document: &Html) -> Result<i64, String> {
     // 创建选择器
-    let selector = Selector::parse(".dynamic-filter-expander")
+    let selector = Selector::parse(".widget-header>.widget-title:first-of-type>.white")
         .map_err(|e| format!("Selector 解析失败: {:?}", e))?;
     document
         .select(&selector)
-        .find_map(|e| e.value().attr("data-filter_id").map(|s| s.to_string()))
+        .find_map(|e| {
+            e.value().attr("href").and_then(|herf|{
+                let url = format!("http://{}",herf);
+                let a = Url::parse(&url).ok()?;
+                a.query_pairs().find_map(|(k,v)| {
+                    if k == "handler_id" {
+                        return v.parse::<i64>().ok();
+                    }
+                    None
+                })
+            })
+        })
         .ok_or("not found".to_string())
 }
 
