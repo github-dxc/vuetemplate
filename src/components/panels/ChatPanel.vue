@@ -20,10 +20,10 @@
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="mute">静音通知</el-dropdown-item>
-              <el-dropdown-item command="pin">置顶对话</el-dropdown-item>
-              <el-dropdown-item command="archive">归档对话</el-dropdown-item>
-              <el-dropdown-item command="delete" divided>删除对话</el-dropdown-item>
+              <el-dropdown-item command="mute">测试1</el-dropdown-item>
+              <el-dropdown-item command="pin">测试2</el-dropdown-item>
+              <el-dropdown-item command="archive">测试3</el-dropdown-item>
+              <el-dropdown-item command="delete" divided>测试4</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -54,21 +54,21 @@
           </div>
         </div>
       </div>
-
-      <!-- 滚动到底部按钮 -->
-      <transition name="fade">
-        <div 
-          v-show="showScrollToBottom" 
-          class="scroll-to-bottom"
-          @click="scrollToBottom"
-        >
-          <el-button circle type="primary" size="small">
-            <el-icon><ArrowDown /></el-icon>
-          </el-button>
-          <span v-if="unreadCount > 0" class="unread-badge">{{ unreadCount }}</span>
-        </div>
-      </transition>
     </div>
+    
+    <!-- 滚动到底部按钮 -->
+    <transition name="fade">
+      <div 
+        v-show="showScrollToBottom" 
+        class="scroll-to-bottom"
+        @click="scrollToBottom"
+      >
+        <el-button circle type="primary" size="small">
+          <el-icon><ArrowDown /></el-icon>
+        </el-button>
+        <span v-if="unreadCount > 0" class="unread-badge">{{ unreadCount }}</span>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -286,20 +286,22 @@ onMounted(() => {
 
 /* 消息列表 */
 .operation-history-list {
-  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
 }
 
 .operation-history-list .operation-card {
-  margin-top: 20px;
-  margin-bottom: 20px;
+  width: 50%;
+  margin: 20px 0;
 }
 
 .operation-history-list .other {
-  margin-left: 20px;
+  align-self: flex-start;
 }
 
 .operation-history-list .self {
-  margin-right: 20px;
+  align-self: flex-end;
 }
 
 /* 过渡效果 */

@@ -148,6 +148,7 @@ listen('sub_msgs', (event) => {
 // ------------------初始化------------------
 
 onMounted(async () => {
+  userStore.getUserInfo();
   userStore.changeGetHost("");
   // 初始化枚举数据
   await api_init_data();
