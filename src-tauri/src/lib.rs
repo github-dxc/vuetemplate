@@ -466,10 +466,10 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
     *sub_params = sub_params_value.as_array().ok_or("None".to_string())?.iter().map(|v|v.as_str().unwrap_or("").to_owned()).collect();
 
     let mut sub_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
-    *sub_bugs = serde_json::from_str(sub_bugs_value.as_str().unwrap_or("")).map_err(|e|format!("lock err:{}",e))?;
+    *sub_bugs = serde_json::from_value(sub_bugs_value).map_err(|e|format!("lock err:{}",e))?;
 
     let mut change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?;
-    *change_historys = serde_json::from_str(change_historys_value.as_str().unwrap_or("")).map_err(|e|format!("lock err:{}",e))?;
+    *change_historys = serde_json::from_value(change_historys_value).map_err(|e|format!("lock err:{}",e))?;
     
     Ok(())
 }
