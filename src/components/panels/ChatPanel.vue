@@ -52,13 +52,20 @@
               :timestamp="history.timestr" 
               :operations="history.operations"
               :class="user_id === history.user_id? 'self' : 'other'"
-              @click="console.log(11111222)"
+              @click="openBugDetails(history.bug_id)"
             ></OperationCard>
           </div>
         </div>
       </div>
     </div>
-    
+
+    <!-- 明细展示 -->
+    <div v-if="bugDetailsVisible">
+      <el-drawer v-model="bugDetailsVisible" :title="bugDetailsTitle" :show-close="false" direction="rtl" size="71%">
+        <BugDetails :bug-id="bugId" :enums="enums" @set-title="setTitle"/>
+      </el-drawer>
+    </div>
+
     <!-- 滚动到底部按钮 -->
     <transition name="fade">
       <div 
@@ -84,6 +91,15 @@ import OperationCard from '../OperationCard.vue';
 import { initMsgs } from '../../api';
 import { formatDate, formatDateDay } from '../../util';
 import { useUserStore } from "../../store";
+import BugDetails from '../BugDetails.vue';
+
+const props = defineProps({
+  enums: {
+    type: Object,
+    required: true,
+    default: {}
+  }
+}); 
 
 const userStore = useUserStore();
 
@@ -94,6 +110,9 @@ const messageListRef = ref(null)
 const historys = ref([])
 const user_id = userStore?.userInfo.user_id || 0
 const host = userStore?.serverHost || '';
+const bugDetailsVisible = ref(false);
+const bugDetailsTitle = ref("Bug明细");
+const bugId = ref(0);
 
 // 按日期分组消息
 const groupedMessages = computed(() => {
@@ -143,6 +162,15 @@ const scrollToBottom = () => {
   }
   showScrollToBottom.value = false
   unreadCount.value = 0
+}
+
+// 打开bug详情
+const openBugDetails = async (bug_id) => {
+  bugDetailsVisible.value = true;
+  bugId.value = bug_id;
+}
+const setTitle = (title) => {
+  bugDetailsTitle.value = title;
 }
 
 // 获取历史记录

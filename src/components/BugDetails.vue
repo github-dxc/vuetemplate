@@ -221,7 +221,7 @@ const props = defineProps({
   }
 }); 
 
-const emits = defineEmits();
+const emits = defineEmits(['set-title']);
 
 const contentRef = ref(null);
 const toolbarOptions = [
@@ -439,6 +439,7 @@ const openImagePreview = async function(note_index,show_index) {
 const getBugInfo = function() {
   apiBugInfo(props.bugId).then(result => {
     console.log("成功:", result);
+    emits('set-title',`【${props.bugId}】${result.summary}` || "Bug明细");
     bugInfo.value = result;
     oldBugInfo.value = {...result};
     let allNotes = result.bugnote_notes || [];

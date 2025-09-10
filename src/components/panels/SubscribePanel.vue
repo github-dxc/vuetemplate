@@ -86,9 +86,9 @@
           <template #default="scope">
             <div class="attachment-info">
               <el-badge v-if="scope.row.issue_notes_count" :value="scope.row.issue_notes_count" type="primary" class="attachment-badge" :max="9">
-                <el-link class="attachment-icon" icon="Memo" @click="openBugDetails(scope.row.bug_id,scope.row.summary)" ></el-link>
+                <el-link class="attachment-icon" icon="Memo" @click="openBugDetails(scope.row.bug_id)" ></el-link>
               </el-badge>
-              <el-link v-else class="attachment-icon" icon="Memo" @click="openBugDetails(scope.row.bug_id,scope.row.summary)" ></el-link>
+              <el-link v-else class="attachment-icon" icon="Memo" @click="openBugDetails(scope.row.bug_id)" ></el-link>
             </div>
           </template>
         </el-table-column>
@@ -160,7 +160,7 @@
     <!-- 明细展示 -->
     <div v-if="bugDetailsVisible">
       <el-drawer v-model="bugDetailsVisible" :title="bugDetailsTitle" :show-close="false" direction="rtl" size="71%">
-        <BugDetails :bug-id="bugId" :enums="enums"/>
+        <BugDetails :bug-id="bugId" :enums="enums" @set-title="setTitle"/>
       </el-drawer>
     </div>
     <!-- 评论展示 -->
@@ -199,17 +199,7 @@ const props = defineProps({
   enums: {
     type: Object,
     required: true,
-    default: {
-      Project: [],
-      Priority: [],
-      Severity: [],
-      Reproducibility: [],
-      ViewStatus: [],
-      Resolution: [],
-      Status: [],
-      Category: [],
-      Users: [],
-    }
+    default: {}
   }
 }); 
 
@@ -410,10 +400,12 @@ const openImagePreview = async (bug_id) => {
 }
 
 // 打开bug详情
-const openBugDetails = async (bug_id,title) => {
-  bugDetailsTitle.value = `【${bug_id}】${title}` || "Bug明细";
+const openBugDetails = async (bug_id) => {
   bugDetailsVisible.value = true;
   bugId.value = bug_id;
+}
+const setTitle = (title) => {
+  bugDetailsTitle.value = title;
 }
 
 // 初始化
