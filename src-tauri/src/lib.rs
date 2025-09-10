@@ -43,6 +43,7 @@ pub fn run() {
             api_init_bugs,
             api_init_msgs,
             api_change_host,
+            api_read_msg,
             api_login_info,
             api_login,
             api_logout,
@@ -170,6 +171,16 @@ async fn api_change_host(app: AppHandle, host: &str) -> Result<String, String> {
         *state_host = host.to_string();
     }
     Ok(state_host.clone())
+}
+
+// 设置已读
+#[tauri::command(rename_all = "snake_case")]
+async fn api_read_msg(app: AppHandle, read_msg: &str) -> Result<(), String> {
+    let state = app.state::<MyState>().clone();
+
+    let mut user = state.user.lock().map_err(|e|format!("lock err:{}",e))?;
+    user.read_msg = read_msg.to_owned();
+    Ok(())
 }
 
 // 初始化bugs数据
@@ -688,7 +699,8 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
             let new_key = format!("{}-{}-{}",c.updated_at,c.bug_id,c.handler_id).to_string();
             let note = format!("\n- {} {}", c.field, c.change.replace("&gt;", ">"));
             if &key != &new_key {
-                if &key != "" {
+                // 如果是自己操作的记录，则不通知
+                if &key != "" && c.handler_id != user.user_id {
                     // 发送通知
                     let _ = send_notify(
                         app.clone(),

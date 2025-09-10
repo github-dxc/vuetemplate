@@ -13,6 +13,7 @@
       :user-avatar="userAvatar"
       :bug-list="bugList"
       :bug-msgs="bugMsgs"
+      :group-msgs="groupMsgs"
       :bug-total="bugTotal"
       :enums="enums"
     />
@@ -40,6 +41,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from "../store";
 import { listen, emit } from '@tauri-apps/api/event';
 import { initBugs, initData, initMsgs } from '../api';
+import { formatDate } from '../util';
 
 const router = useRouter()
 const userStore = useUserStore();
@@ -63,6 +65,31 @@ const enums = ref({});
 // 计算属性
 const currentMenu = computed(() => {
   return menuList.value.find(menu => menu.id === activeMenu.value);
+});
+
+const readMsg = computed(() => userStore.userInfo.read_msg);
+
+const groupMsgs = computed(() => {
+  let msgs = [];
+  let unreadCount = 0;
+  for (let i = 0; i < bugMsgs.value.length; i++) {
+    const e = bugMsgs.value[i];
+    let item = msgs.find(h => h.user_id === e.handler_id && h.timestamp === e.updated_at && h.bug_id === e.bug_id)
+    if (item) {
+      item.operations.push(`${e.field} ${e.change}`);
+    }else {
+      msgs.push({
+        bug_id: e.bug_id,
+        user_id: e.handler_id,
+        username: e.handler,
+        timestamp: e.updated_at,
+        timestr: formatDate(e.updated_at),
+        operations: [`${e.field} ${e.change}`]
+      });
+    }
+  }
+  menuList.value[1].badge = 10;
+  return msgs;
 });
 
 // 方法

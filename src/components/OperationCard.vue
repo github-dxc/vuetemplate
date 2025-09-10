@@ -94,7 +94,6 @@ const getRandomPosition = (index) => {
 onMounted(() => {
     // 监听内容区域的a标签点击事件，传递到外面用外部浏览器打开
     const clickHandler = (e) => {
-        console.log(e);
         const a = e.target.closest('a');
         //如果a标签是editor-container的子元素且不是.ql-preview，则不处理
         if (a && e.target.closest('.editor-container') && !e.target.closest('.ql-preview')) {

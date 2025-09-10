@@ -20,6 +20,7 @@ const props = defineProps({
   userAvatar: String,
   bugList: Array,
   bugMsgs: Array,
+  groupMsgs: Array,
   bugTotal: Number,
   enums: Object,
 });

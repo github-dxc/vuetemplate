@@ -1,6 +1,6 @@
 import { createPinia, defineStore } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
-import { login, logout, loginInfo, changeHost } from '../api/index'
+import { login, logout, loginInfo, changeHost, readMsg } from '../api/index'
 
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)//持久化
@@ -13,6 +13,7 @@ export const useUserStore = defineStore('user', {
       user_id: null,
       logined: false,
       username: '',
+      read_msg: '',
       avatar: '',
       role: '',
       createdAt: null
@@ -185,6 +186,30 @@ export const useUserStore = defineStore('user', {
           createdAt: new Date().toISOString()
         }
         this.setUser(userInfo)
+        return { success: true, data: userInfo }
+      } catch (error) {
+        // token可能已过期，清除登录状态
+        this.resetUser()
+        return { success: false, error: error.message }
+      } finally {
+        this.setLoading(false)
+      }
+    },
+
+    // 设置读取消息
+    async readMsg(updated_at,bug_id,handler_id) {
+      let read_msg = `${updated_at}-${bug_id}-${handler_id}`
+      console.log(read_msg);
+      this.setLoading(true)
+      try {
+        await readMsg(read_msg)
+        const user = await loginInfo()
+        const userInfo = {
+          ...user,
+          createdAt: new Date().toISOString()
+        }
+        this.setUser(userInfo)
+        console.log('user:',this.userInfo);
         return { success: true, data: userInfo }
       } catch (error) {
         // token可能已过期，清除登录状态

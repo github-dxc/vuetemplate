@@ -52,7 +52,7 @@
               :timestamp="history.timestr" 
               :operations="history.operations"
               :class="user_id === history.user_id? 'self' : 'other'"
-              @click="openBugDetails(history.bug_id)"
+              @click="openBugDetails(history.bug_id,history.timestamp,history.user_id)"
             ></OperationCard>
           </div>
         </div>
@@ -76,7 +76,6 @@
         <el-button circle type="primary" size="small">
           <el-icon><ArrowDown /></el-icon>
         </el-button>
-        <span v-if="unreadCount > 0" class="unread-badge">{{ unreadCount }}</span>
       </div>
     </transition>
   </div>
@@ -88,8 +87,7 @@ import {
   Search, InfoFilled, MoreFilled, ArrowDown,
 } from '@element-plus/icons-vue'
 import OperationCard from '../OperationCard.vue';
-import { initMsgs } from '../../api';
-import { formatDate, formatDateDay } from '../../util';
+import { formatDateDay } from '../../util';
 import { useUserStore } from "../../store";
 import BugDetails from '../BugDetails.vue';
 
@@ -98,6 +96,11 @@ const props = defineProps({
     type: Object,
     required: true,
     default: {}
+  },
+  groupMsgs: {
+    type: Array,
+    required: true,
+    default: []
   }
 }); 
 
@@ -105,19 +108,20 @@ const userStore = useUserStore();
 
 // 响应式数据
 const showScrollToBottom = ref(false)
-const unreadCount = ref(0)
+const unreadCount = ref(10)
 const messageListRef = ref(null)
-const historys = ref([])
-const user_id = userStore?.userInfo.user_id || 0
-const host = userStore?.serverHost || '';
 const bugDetailsVisible = ref(false);
 const bugDetailsTitle = ref("Bug明细");
 const bugId = ref(0);
 
+const user_id = computed(() => userStore.userInfo.user_id || 0);
+
+const host = computed(() => userStore.serverHost || '');
+
 // 按日期分组消息
 const groupedMessages = computed(() => {
   const groups = {}
-  historys.value.forEach(message => {
+  props.groupMsgs.forEach(message => {
     let day_str = formatDateDay(message.timestamp);
     const date = new Date(day_str).getTime()/1000;
     if (!groups[date]) {
@@ -161,38 +165,18 @@ const scrollToBottom = () => {
     messageListRef.value.scrollTop = messageListRef.value.scrollHeight
   }
   showScrollToBottom.value = false
-  unreadCount.value = 0
+  unreadCount.value = 10
 }
 
 // 打开bug详情
-const openBugDetails = async (bug_id) => {
+const openBugDetails = async (bug_id,timestamp,user_id) => {
   bugDetailsVisible.value = true;
   bugId.value = bug_id;
+  //设置已读
+  userStore.readMsg(timestamp,bug_id,user_id);
 }
 const setTitle = (title) => {
   bugDetailsTitle.value = title;
-}
-
-// 获取历史记录
-const getMsgs = async () => {
-  let result = await initMsgs();
-  let change_history = result || [];
-  for (let i = 0; i < change_history.length; i++) {
-    const e = change_history[i];
-    let item = historys.value.find(h => h.username === e.handler && h.timestamp === e.updated_at)
-    if (item) {
-      item.operations.push(`${e.field} ${e.change}`);
-    }else {
-      historys.value.push({
-        bug_id: e.bug_id,
-        user_id: e.handler_id,
-        username: e.handler,
-        timestamp: e.updated_at,
-        timestr: formatDate(e.updated_at),
-        operations: [`${e.field} ${e.change}`]
-      });
-    }
-  }
 }
 
 // 监听滚动事件
@@ -210,8 +194,6 @@ onMounted(() => {
     messageListRef.value.addEventListener('scroll', handleScroll)
     scrollToBottom()
   }
-  // 获取历史消息
-  getMsgs();
 })
 </script>
 

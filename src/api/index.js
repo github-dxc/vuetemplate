@@ -28,6 +28,10 @@ export const changeHost = async (host) => {
   return await invoke("api_change_host",{host});
 };
 
+export const readMsg = async (read_msg) => {
+  return await invoke("api_read_msg",{read_msg});
+};
+
 export const checkUpdate = async () => {
   return await invoke("api_check_update");
 };
