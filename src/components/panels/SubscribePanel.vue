@@ -16,17 +16,16 @@
         size="default"
         :header-cell-style="{ background: '#f8fafc', color: '#374151', fontWeight: '600' }"
       >
-        <el-table-column label="BugID" width="80" header-align="center">
+        <el-table-column label="BugID" width="85" header-align="center">
           <template #default="scope">
-            <el-link class="summary-icon" @click="copyMessage(`http://${host}/view.php?id=${scope.row.bug_id}`)" icon="Document"></el-link>
             <el-link 
-              type="primary" 
-              :href="`http://${host}/view.php?id=${scope.row.bug_id}`" 
-              target="_blank"
+              type="primary"
               class="bug-id-link"
+              @click="browserOpen(`/view.php?id=${scope.row.bug_id}`)"
             >
-              {{ scope.row.bug_id }}
+              #{{ scope.row.bug_id }}
             </el-link>
+            <el-link class="summary-icon" @click="copyMessage(`http://${host}/view.php?id=${scope.row.bug_id}`)" icon="Document"></el-link>
           </template>
         </el-table-column>
 
@@ -178,12 +177,13 @@
 import { ref, onMounted, computed } from "vue";
 import { listen, emit } from '@tauri-apps/api/event';
 import { createNewWindow } from "../../windows";
-import { apiBugInfo, updateBug } from "../../api";
+import { apiBugInfo, browserOpen, updateBug } from "../../api";
 import { ElMessage } from "element-plus";
 import { useUserStore } from "../../store";
 import BugDetails from "../BugDetails.vue";
 import { EditPen } from "@element-plus/icons-vue";
 import Annotation from "../Annotation.vue";
+import { copyMessage } from "../../util";
 
 const props = defineProps({
   bugList: {
@@ -378,18 +378,6 @@ const handlePageChange = (currentPage) => {
   page.value = currentPage;
 }
 
-// 复制数据到剪切板
-const copyMessage = (message) => {
-  navigator.clipboard.writeText(message).then(() => {
-    ElMessage({
-      message: '复制成功',
-      type: 'success',
-    })
-  }).catch(err => {
-    console.error("复制失败:", err);
-  });
-}
-
 // 打开图片预览
 const openImagePreview = async (bug_id) => {
   const DOMContentLoadedCallback = () => {
@@ -508,7 +496,7 @@ onMounted(async () => {
   font-weight: 600;
   font-family: 'Monaco', 'Menlo', monospace;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  margin-left: 2px;
+  margin: 0 2px;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

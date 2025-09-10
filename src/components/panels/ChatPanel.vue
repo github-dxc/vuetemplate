@@ -46,10 +46,13 @@
             <OperationCard 
               v-for="(history, index) in group" 
               :key="index" 
+              :bug_id="history.bug_id"
+              :host="host"
               :username="history.username" 
               :timestamp="history.timestr" 
               :operations="history.operations"
               :class="user_id === history.user_id? 'self' : 'other'"
+              @click="console.log(11111222)"
             ></OperationCard>
           </div>
         </div>
@@ -90,6 +93,7 @@ const unreadCount = ref(0)
 const messageListRef = ref(null)
 const historys = ref([])
 const user_id = userStore?.userInfo.user_id || 0
+const host = userStore?.serverHost || '';
 
 // 按日期分组消息
 const groupedMessages = computed(() => {
@@ -102,7 +106,6 @@ const groupedMessages = computed(() => {
     }
     groups[date].push(message)
   })
-  console.log("groups:",groups);
   return groups
 })
 
@@ -145,7 +148,6 @@ const scrollToBottom = () => {
 // 获取历史记录
 const getMsgs = async () => {
   let result = await initMsgs();
-  console.log(result);
   let change_history = result || [];
   for (let i = 0; i < change_history.length; i++) {
     const e = change_history[i];
@@ -154,6 +156,7 @@ const getMsgs = async () => {
       item.operations.push(`${e.field} ${e.change}`);
     }else {
       historys.value.push({
+        bug_id: e.bug_id,
         user_id: e.handler_id,
         username: e.handler,
         timestamp: e.updated_at,

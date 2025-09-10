@@ -1,4 +1,4 @@
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from "element-plus";
 
 export const byteArrayToBase64Image = function(byteArray, fileName) {
   // A simple mapping of file extensions to MIME types.
@@ -110,4 +110,17 @@ export const getColorByUnicPalette = function(unic) {
     textColor,
     backgroundColor
   };
+}
+
+
+// 复制数据到剪切板
+export const copyMessage = (message) => {
+  navigator.clipboard.writeText(message).then(() => {
+    ElMessage({
+      message: '复制成功',
+      type: 'success',
+    })
+  }).catch(err => {
+    console.error("复制失败:", err);
+  });
 }

@@ -12,6 +12,16 @@
                         <div :style="{color: getColorByUnicPalette(getFirstChar(username)).textColor}">{{ getFirstChar(username) }}</div>
                     </div>
                     <h3 class="user-name">{{ username }}</h3>
+                    <div v-if="bug_id" class="bug-link" @click.stop>
+                        <el-link 
+                            type="primary"
+                            class="bug-id-link"
+                            @click="browserOpen(`/view.php?id=${bug_id}`)"
+                        >
+                            #{{ bug_id }}
+                        </el-link>
+                        <el-link class="summary-icon" @click="copyMessage(`http://${host}/view.php?id=${bug_id}`)" icon="Document"></el-link>
+                    </div>
                 </div>
 
                 <div class="timestamp">
@@ -38,10 +48,19 @@
 
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue';
-import { getColorByUnicPalette, getFirstChar } from '../util';
+import { getColorByUnicPalette, getFirstChar, copyMessage } from '../util';
 import { browserOpen } from '../api';
 
 const props = defineProps({
+    bug_id: {
+        type: Number,
+        required: false
+    },
+    host: {
+        type: String,
+        required: false,
+        default: ''
+    },
     username: {
         type: String,
         required: true
@@ -75,6 +94,7 @@ const getRandomPosition = (index) => {
 onMounted(() => {
     // 监听内容区域的a标签点击事件，传递到外面用外部浏览器打开
     const clickHandler = (e) => {
+        console.log(e);
         const a = e.target.closest('a');
         //如果a标签是editor-container的子元素且不是.ql-preview，则不处理
         if (a && e.target.closest('.editor-container') && !e.target.closest('.ql-preview')) {
@@ -95,6 +115,22 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.summary-icon {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.bug-id-link {
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', monospace;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  margin: 0 2px;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-decoration: none;
+}
+
 .operation-card {
     width: 680px;
     background: rgba(255, 255, 255, 0.95);
