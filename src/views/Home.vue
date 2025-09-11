@@ -47,11 +47,11 @@ const router = useRouter()
 const userStore = useUserStore();
 
 // 变量
-const userAvatar = ref('https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png');
+const userAvatar = computed(() => userStore.userInfo.avatar);
 const activeMenu = ref('subscribe');
 const menuList = ref([  
   { id: 'subscribe', title: '订阅', icon: markRaw(Bell), component: markRaw(SubscribePanel) },
-  { id: 'chat', title: '聊天', icon: markRaw(ChatDotRound), badge: 3, component: markRaw(ChatPanel) },
+  { id: 'chat', title: '聊天', icon: markRaw(ChatDotRound), badge: 0, component: markRaw(ChatPanel) },
   { id: 'contacts', title: '通讯录', icon: markRaw(User) },
   { id: 'files', title: '文件传输', icon: markRaw(Document) },
   { id: 'favorites', title: '收藏', icon: markRaw(Star) }
@@ -72,23 +72,36 @@ const readMsg = computed(() => userStore.userInfo.read_msg);
 const groupMsgs = computed(() => {
   let msgs = [];
   let unreadCount = 0;
+  let is_last_msg = false;
   for (let i = 0; i < bugMsgs.value.length; i++) {
     const e = bugMsgs.value[i];
     let item = msgs.find(h => h.user_id === e.handler_id && h.timestamp === e.updated_at && h.bug_id === e.bug_id)
     if (item) {
       item.operations.push(`${e.field} ${e.change}`);
     }else {
-      msgs.push({
+      let msg = {
         bug_id: e.bug_id,
         user_id: e.handler_id,
         username: e.handler,
         timestamp: e.updated_at,
         timestr: formatDate(e.updated_at),
         operations: [`${e.field} ${e.change}`]
-      });
+      };
+      if (is_last_msg) {
+        msg.is_new = true;
+        unreadCount++;
+      }
+      if (readMsg.value === `${e.updated_at}-${e.bug_id}-${e.handler_id}`) {
+        is_last_msg = true;
+        msg.is_last_msg = true;
+      };
+      msgs.push(msg);
     }
   }
-  menuList.value[1].badge = 10;
+  // console.log("asdasdasd:",msgs);
+  // console.log("asdasdasd2:",readMsg.value);
+  // console.log("asdasdasd3:",unreadCount);
+  menuList.value[1].badge = unreadCount;
   return msgs;
 });
 

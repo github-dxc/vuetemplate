@@ -42,18 +42,24 @@
 
         <!-- 消息项 -->
         <div class="message-group">
-          <div class="operation-history-list">
+          <div class="operation-history-list" v-for="(history, index) in group" :key="index" >
             <OperationCard 
-              v-for="(history, index) in group" 
-              :key="index" 
               :bug_id="history.bug_id"
               :host="host"
               :username="history.username" 
-              :timestamp="history.timestr" 
+              :timestr="history.timestr" 
+              :timestamp="history.timestamp"
               :operations="history.operations"
-              :class="user_id === history.user_id? 'self' : 'other'"
-              @click="openBugDetails(history.bug_id,history.timestamp,history.user_id)"
+              :class="getMsgClass(history)"
+              @click="openBugDetails(history.timestamp,history.bug_id,history.user_id)"
             ></OperationCard>
+            
+            <!-- 上次阅读分隔符 -->
+            <div v-if="!!history.is_last_msg" class="date-divider" id="last-read-line">
+              <div class="date-line"></div>
+              <span class="date-text">上次阅读</span>
+              <div class="date-line"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -67,14 +73,19 @@
     </div>
 
     <!-- 滚动到底部按钮 -->
+    <div class="scroll-to-last-read" @click="scrollToLastRead">
+      <el-button circle plain type="primary" size="small">
+        <el-icon><CaretTop /></el-icon>
+      </el-button>
+    </div>
     <transition name="fade">
       <div 
         v-show="showScrollToBottom" 
         class="scroll-to-bottom"
         @click="scrollToBottom"
       >
-        <el-button circle type="primary" size="small">
-          <el-icon><ArrowDown /></el-icon>
+        <el-button circle plain type="primary" size="small">
+          <el-icon><CaretBottom /></el-icon>
         </el-button>
       </div>
     </transition>
@@ -82,9 +93,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onActivated } from 'vue'
 import { 
-  Search, InfoFilled, MoreFilled, ArrowDown,
+  Search, InfoFilled, MoreFilled, CaretBottom, CaretTop
 } from '@element-plus/icons-vue'
 import OperationCard from '../OperationCard.vue';
 import { formatDateDay } from '../../util';
@@ -108,7 +119,6 @@ const userStore = useUserStore();
 
 // 响应式数据
 const showScrollToBottom = ref(false)
-const unreadCount = ref(10)
 const messageListRef = ref(null)
 const bugDetailsVisible = ref(false);
 const bugDetailsTitle = ref("Bug明细");
@@ -117,6 +127,8 @@ const bugId = ref(0);
 const user_id = computed(() => userStore.userInfo.user_id || 0);
 
 const host = computed(() => userStore.serverHost || '');
+
+const last_read_msg = computed(() => userStore.userInfo.read_msg);
 
 // 按日期分组消息
 const groupedMessages = computed(() => {
@@ -147,6 +159,14 @@ const formatTimelineDate = (timestamp) => {
   }
 }
 
+// 获取消息的class
+const getMsgClass = (history) => {
+  let class_arr = [];
+  class_arr.push(user_id.value === history.user_id? 'self' : 'other')
+  class_arr.push(history.is_new? 'new' : 'old')
+  return class_arr.join(' ');
+}
+
 // 事件处理函数
 const searchMessages = () => {
   console.log('搜索消息')
@@ -156,23 +176,49 @@ const showInfo = () => {
   console.log('显示会话信息')
 }
 
+// 处理菜单事件
 const handleMenuCommand = (command) => {
   console.log('菜单命令:', command)
 }
 
+// 滚动到底部
 const scrollToBottom = () => {
   if (messageListRef.value) {
     messageListRef.value.scrollTop = messageListRef.value.scrollHeight
   }
   showScrollToBottom.value = false
-  unreadCount.value = 10
+}
+
+// 滚动到上次阅读
+const scrollToLastRead = () => {
+  const lastReadElement = document.querySelector('#last-read-line')
+  if (lastReadElement) {
+    lastReadElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'nearest'
+    })
+  } else {
+    console.log('没有找到上次阅读位置')
+  }
 }
 
 // 打开bug详情
-const openBugDetails = async (bug_id,timestamp,user_id) => {
+const openBugDetails = async (timestamp,bug_id,user_id) => {
   bugDetailsVisible.value = true;
   bugId.value = bug_id;
   //设置已读
+  let arr = last_read_msg.value.split('-');
+  console.log("cest:",arr,timestamp,bug_id,user_id);
+  console.log(parseInt(arr[0])<parseInt(timestamp));
+  console.log((parseInt(arr[0])===parseInt(timestamp)&&parseInt(arr[1])<parseInt(bug_id)));
+  console.log((parseInt(arr[0])===parseInt(timestamp)&&parseInt(arr[1])===parseInt(bug_id)&&parseInt(arr[2])<parseInt(user_id)));
+  if (parseInt(arr[0])<parseInt(timestamp) 
+  || (parseInt(arr[0])===parseInt(timestamp)&&parseInt(arr[1])<parseInt(bug_id)) 
+  || (parseInt(arr[0])===parseInt(timestamp)&&parseInt(arr[1])===parseInt(bug_id)&&parseInt(arr[2])<parseInt(user_id))) {
+    console.log("忽略设置已读");
+    return;
+  }
   userStore.readMsg(timestamp,bug_id,user_id);
 }
 const setTitle = (title) => {
@@ -192,8 +238,11 @@ const handleScroll = () => {
 onMounted(() => {
   if (messageListRef.value) {
     messageListRef.value.addEventListener('scroll', handleScroll)
-    scrollToBottom()
   }
+})
+
+onActivated(() => {
+  scrollToBottom()
 })
 </script>
 
@@ -276,6 +325,13 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+.scroll-to-last-read {
+  position: absolute;
+  bottom: 60px;
+  right: 20px;
+  z-index: 100;
+}
+
 /* 滚动到底部按钮 */
 .scroll-to-bottom {
   position: absolute;
@@ -284,29 +340,15 @@ onMounted(() => {
   z-index: 100;
 }
 
-.unread-badge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background-color: #f56c6c;
-  color: white;
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 10px;
-  min-width: 16px;
-  text-align: center;
-}
-
 /* 消息列表 */
 .operation-history-list {
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 10px;
 }
 
 .operation-history-list .operation-card {
   width: 50%;
-  margin: 20px 0;
 }
 
 .operation-history-list .other {
@@ -315,6 +357,41 @@ onMounted(() => {
 
 .operation-history-list .self {
   align-self: flex-end;
+}
+
+.new {
+  position: relative; /* 为了让伪元素绝对定位相对于这个元素 */
+}
+
+.new::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 10px;
+  height: 10px;
+  background-color: #ff4757; /* 红色小圆点 */
+  border-radius: 50%; /* 圆形 */
+  z-index: 999; /* 确保在最上层 */
+}
+
+.new::after {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* 过渡效果 */

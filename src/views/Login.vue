@@ -64,6 +64,7 @@
             placeholder="Enter HOST URL..."
             class="host-input"
             @keyup.enter="saveHostConfig"
+            @change="hostChange"
           />
         </div>
         <div class="settings-buttons">
@@ -191,6 +192,13 @@ async function saveHostConfig() {
     type: 'success',
   });
   closeSettings();
+}
+
+const hostChange = () => {
+  // 去掉host前面的http://或者https:// 以及后缀的/
+  hostConfig.value = hostConfig.value
+    .replace(/^https?:\/\//, '')  // 去掉前面的 http:// 或 https://
+    .replace(/\/$/, '');
 }
 
 onMounted(async () => {

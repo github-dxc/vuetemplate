@@ -169,7 +169,7 @@
 
         <!--时间线-->
         <div v-show="activeTab === 'operation'" class="operation-history-list">
-          <OperationCard v-for="(history, index) in historys" :key="index" :username="history.username" :timestamp="history.timestr" :operations="history.operations"></OperationCard>
+          <OperationCard v-for="(history, index) in historys" :key="index" :username="history.username" :timestr="history.timestr" :timestamp="history.timestamp" :operations="history.operations"></OperationCard>
         </div>
       </div>
     </div>

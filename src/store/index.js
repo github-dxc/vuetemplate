@@ -14,7 +14,7 @@ export const useUserStore = defineStore('user', {
       logined: false,
       username: '',
       read_msg: '',
-      avatar: '',
+      avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
       role: '',
       createdAt: null
     },
@@ -199,7 +199,6 @@ export const useUserStore = defineStore('user', {
     // 设置读取消息
     async readMsg(updated_at,bug_id,handler_id) {
       let read_msg = `${updated_at}-${bug_id}-${handler_id}`
-      console.log(read_msg);
       this.setLoading(true)
       try {
         await readMsg(read_msg)
@@ -209,7 +208,6 @@ export const useUserStore = defineStore('user', {
           createdAt: new Date().toISOString()
         }
         this.setUser(userInfo)
-        console.log('user:',this.userInfo);
         return { success: true, data: userInfo }
       } catch (error) {
         // token可能已过期，清除登录状态
