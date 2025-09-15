@@ -6,7 +6,7 @@
   </div> -->
   <div class="setting-group">
     <h3>更新设置</h3>
-    <el-checkbox v-model="localSettings.autoUpdate" @change="userStore.updateSetting({update: {autoUpdate: autoUpdate}})">自动更新</el-checkbox>
+    <el-checkbox v-model="updateSettings.autoUpdate" @change="userStore.updateSetting({update: updateSettings})">自动更新</el-checkbox>
   </div>
   <!-- <div class="setting-group">
     <h3>消息设置</h3>
@@ -34,7 +34,7 @@ import { useUserStore } from '../../store';
 
 const userStore = useUserStore()
 
-const localSettings = ref({
+const updateSettings = ref({
   autoUpdate: userStore.updateInfo.autoUpdate || false,
 
   // autoStart: true,

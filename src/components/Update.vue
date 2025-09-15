@@ -205,12 +205,13 @@ const handleDownloadFinished = () => {
 
 // 处理无更新
 const handleNoUpdate = () => {
-  ElNotification({
-    title: '无可用更新',
-    message: '当前已是最新版本',
-    type: 'info',
-    duration: 3000
-  })
+  console.log('当前已是最新版本');
+  // ElNotification({
+  //   title: '无可用更新',
+  //   message: '当前已是最新版本',
+  //   type: 'info',
+  //   duration: 3000
+  // })
 }
 
 // 生命周期钩子

@@ -1,7 +1,7 @@
 use crate::enums::*;
 use crate::model::*;
 
-use chrono::{Utc, NaiveDateTime, TimeZone};
+use chrono::{Utc, NaiveDate, NaiveTime, NaiveDateTime, TimeZone};
 use chrono_tz::Asia::Shanghai;
 use log::info;
 use reqwest::cookie::{CookieStore, Jar};
@@ -686,10 +686,10 @@ pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<
                 .find_map(|e| {
                     let date_str = e.inner_html();
                     // 解析为 NaiveDate
-                    let date = NaiveDateTime::parse_from_str(date_str.as_str(), "%Y-%m-%d").ok()?;
+                    let date = NaiveDate::parse_from_str(date_str.as_str(), "%Y-%m-%d").ok()?;
                     // 设为上海时区的0点
                     let datetime = Shanghai
-                        .from_local_datetime(&date)
+                        .from_local_datetime(&date.and_time(NaiveTime::from_hms_opt(0, 0, 0)?))
                         .unwrap();
                     // 转为时间戳（秒）
                     Some(datetime.timestamp())
@@ -697,17 +697,17 @@ pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<
                 .unwrap_or(0);
 
             // last_updated
-            let last_modified_selector = Selector::parse(".column-last-modified").unwrap();
+            let last_modified_selector = Selector::parse(".column-last-modified , .column-last-modified>span").unwrap();
             // <td class="column-last-modified">2025-06-18</td>
             bug.last_updated = element
                 .select(&last_modified_selector)
                 .find_map(|e| {
                     let date_str = e.inner_html();
                     // 解析为 NaiveDate
-                    let date = NaiveDateTime::parse_from_str(date_str.as_str(), "%Y-%m-%d").ok()?;
+                    let date = NaiveDate::parse_from_str(date_str.as_str(), "%Y-%m-%d").ok()?;
                     // 设为上海时区的0点
                     let datetime = Shanghai
-                        .from_local_datetime(&date)
+                        .from_local_datetime(&date.and_time(NaiveTime::from_hms_opt(0, 0, 0)?))
                         .unwrap();
                     // 转为时间戳（秒）
                     Some(datetime.timestamp())

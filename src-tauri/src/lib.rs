@@ -418,7 +418,7 @@ async fn api_image_bytes(app: AppHandle, uri: String) -> Result<Vec<u8>, String>
 
 // 检查更新
 #[tauri::command(rename_all = "snake_case")]
-async fn api_check_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
+async fn api_check_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<Option<VersionInfo>> {
     check_update(app.clone()).await
 }
 
@@ -446,8 +446,8 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
         Some(v)
     }).ok_or("host err".to_string())?;
     let sub_params_value = store.get("sub_param").unwrap_or(Value::from(vec![
-        r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=last_updated&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=12&search=&filter_submit=应用过滤器",
-        r"type=1&view_type=simple&reporter_id[]=-1&handler_id[]=0&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=last_updated&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=12&search=&filter_submit=应用过滤器",
+        r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=last_updated&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=0&search=&filter_submit=应用过滤器",
+        r"type=1&view_type=simple&reporter_id[]=-1&handler_id[]=0&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=last_updated&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=0&search=&filter_submit=应用过滤器",
     ]));
     let sub_bugs_value = store.get("sub_bugs").unwrap_or(Value::from(""));
     let change_historys_value = store.get("change_historys").unwrap_or(Value::from(""));
@@ -740,7 +740,7 @@ fn update_app(app: tauri::AppHandle) {
 }
 
 // 检查更新
-async fn check_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
+async fn check_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<Option<VersionInfo>> {
     if let Some(update) = app.updater()?.check().await? {
         info!(
             "version_info: old:{} new:{} target:{}",
@@ -761,12 +761,12 @@ async fn check_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()>
         *last_version = Some(update);
 
         // 通知前端
-        app.emit("app-update", version_info)?;
-        Ok(())
+        app.emit("app-update", &version_info)?;
+        Ok(Some(version_info))
     } else {
         // 通知前端
         app.emit("app-update-none", "")?;
-        Ok(())
+        Ok(None)
     }
 }
 

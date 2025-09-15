@@ -42,7 +42,15 @@ const checkForUpdate = async () => {
   if (isChecking.value) return
 
   try {
-    await checkUpdate();
+    const version = await checkUpdate();
+    if (!version) {
+      ElNotification({
+        title: '无可用更新',
+        message: '当前已是最新版本',
+        type: 'info',
+        duration: 3000
+      })
+    }
   } catch (error) {
     console.error('api_check_update error:', error)
     ElNotification({

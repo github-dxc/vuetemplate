@@ -209,13 +209,9 @@ const openBugDetails = async (timestamp,bug_id,user_id) => {
   bugId.value = bug_id;
   //设置已读
   let arr = last_read_msg.value.split('-');
-  console.log("cest:",arr,timestamp,bug_id,user_id);
-  console.log(parseInt(arr[0])<parseInt(timestamp));
-  console.log((parseInt(arr[0])===parseInt(timestamp)&&parseInt(arr[1])<parseInt(bug_id)));
-  console.log((parseInt(arr[0])===parseInt(timestamp)&&parseInt(arr[1])===parseInt(bug_id)&&parseInt(arr[2])<parseInt(user_id)));
-  if (parseInt(arr[0])<parseInt(timestamp) 
-  || (parseInt(arr[0])===parseInt(timestamp)&&parseInt(arr[1])<parseInt(bug_id)) 
-  || (parseInt(arr[0])===parseInt(timestamp)&&parseInt(arr[1])===parseInt(bug_id)&&parseInt(arr[2])<parseInt(user_id))) {
+  if (parseInt(timestamp)<parseInt(arr[0]) 
+  || (parseInt(timestamp)===parseInt(arr[0])&&parseInt(bug_id)<parseInt(arr[1])) 
+  || (parseInt(timestamp)===parseInt(arr[0])&&parseInt(bug_id)===parseInt(arr[1])&&parseInt(user_id)<parseInt(arr[2]))) {
     console.log("忽略设置已读");
     return;
   }
