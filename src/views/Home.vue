@@ -176,7 +176,7 @@ listen('sub_msgs', (event) => {
   try {
     const obj = event.payload;
     if (obj) {
-      bugMsgs.value = bugMsgs.value.push(...obj);
+      bugMsgs.value.push(...obj);
     };
   } catch (error) {
     console.error('解析 JSON 失败:', error);
