@@ -691,32 +691,36 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
     let mut change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?;
     if add_historys.len() > 0 { 
         let _ = app.emit("sub_msgs", &add_historys);
-        let mut key = String::new();
-        let mut title = String::new();
-        let mut content = String::new();
+        let mut notify: HashMap<String, (i64, String, String)> = HashMap::new();
         for c in add_historys.iter_mut() {
             change_historys.push(c.clone());
+
             let new_key = format!("{}-{}-{}",c.updated_at,c.bug_id,c.handler_id).to_string();
-            let note = format!("\n- {} {}", c.field, c.change.replace("&gt;", ">"));
-            if &key != &new_key {
-                // 如果是自己操作的记录，则不通知
-                if &key != "" && c.handler_id != user.user_id {
-                    // 发送通知
-                    let _ = send_notify(
-                        app.clone(),
-                        title.as_str(),
-                        content.as_str(),
-                    );
-                }
+            if let Some((_handler_id, _title, content)) = notify.get_mut(&new_key) {
+                let note = format!("\n- {} {}", c.field, c.change.replace("&gt;", ">"));
+                content.push_str(&note);
+            }else{
                 let bug = old_bugs.iter().find(|b|b.bug_id == c.bug_id).ok_or(String::from("not found bug"))?;
-                key = new_key;
                 let t = Utc.timestamp_opt(c.updated_at, 0).single().unwrap_or_default().with_timezone(&Shanghai).format("%Y-%m-%d %H:%M");
-                title = format!("{} #{} （{}）",c.handler, c.bug_id, t);
-                content = format!("{} {}", bug.summary, note);
-            }else {
-                content.push_str(note.as_str());
+                let note = format!("\n- {} {}", c.field, c.change.replace("&gt;", ">"));
+                let title = format!("{} #{} （{}）",c.handler, c.bug_id, t);
+                let content = format!("{} {}", bug.summary, note);
+                notify.insert(new_key, (c.handler_id,title,content));
             }
         };
+        
+        // 通知
+        notify.iter().for_each(|(_title,t)|{
+            // 如果是自己操作的记录，则不通知
+            if t.0 != user.user_id {
+                // 发送通知
+                let _ = send_notify(
+                    app.clone(),
+                    t.1.as_str(),
+                    t.2.as_str(),
+                );
+            }
+        });
     }
 
     // 如何数据量过大，则只保留最近200条
