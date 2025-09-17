@@ -78,6 +78,57 @@ const menuData = reactive([
         tag: 'Hot', 
         tagType: 'danger',
         checked: false
+      },
+      { 
+        id: 'article-edit', 
+        label: '编辑文章',
+        checked: true // 默认选中
+      },
+      { 
+        id: 'article-delete', 
+        label: '删除文章',
+        checked: false
+      },
+      { 
+        id: 'article-share', 
+        label: '分享文章',
+        tag: 'Hot', 
+        tagType: 'danger',
+        checked: false
+      },
+      { 
+        id: 'article-edit', 
+        label: '编辑文章',
+        checked: true // 默认选中
+      },
+      { 
+        id: 'article-delete', 
+        label: '删除文章',
+        checked: false
+      },
+      { 
+        id: 'article-share', 
+        label: '分享文章',
+        tag: 'Hot', 
+        tagType: 'danger',
+        checked: false
+      },
+      { 
+        id: 'article-edit', 
+        label: '编辑文章',
+        checked: true // 默认选中
+      },
+      { 
+        id: 'article-delete', 
+        label: '删除文章',
+        checked: false
+      },
+      { 
+        id: 'article-share', 
+        label: '分享文章',
+        tag: 'Hot', 
+        tagType: 'danger',
+        checked: false
       }
     ]
   },

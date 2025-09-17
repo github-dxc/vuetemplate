@@ -32,6 +32,7 @@
             class="submenu"
             :class="`submenu-${mode}`"
             :key="`submenu-${item.id}`"
+            @wheel="handleWheelScroll"
           >
             <div
               v-for="child in item.children"
@@ -124,7 +125,6 @@ const onEnter = (el) => {
   if (props.mode === 'horizontal') {
     // 横向模式动画
     el.style.width = '0px'
-    el.style.overflow = 'hidden'
     el.style.transform = 'scaleX(0)'
     el.style.transformOrigin = 'left center'
     
@@ -146,7 +146,6 @@ const onEnter = (el) => {
   } else {
     // 纵向模式动画
     el.style.height = '0px'
-    el.style.overflow = 'hidden'
     el.style.transform = 'scaleY(0)'
     el.style.transformOrigin = 'top center'
     
@@ -188,6 +187,16 @@ const onLeave = (el) => {
     }
   }, buttons.length * 80 + 100)
 }
+
+const handleWheelScroll = (event) => {
+  const target = event.currentTarget
+  
+  if (target.classList.contains('submenu-horizontal')) {
+    event.preventDefault() // 阻止默认垂直滚动
+    const delta = event.deltaY || event.deltaX
+    target.scrollLeft += delta // 转换为水平滚动
+  }
+}
 </script>
 
 <style scoped>
@@ -195,7 +204,6 @@ const onLeave = (el) => {
 .menu-container {
   background: #f5f7fa;
   min-height: 100vh;
-  padding: 20px;
 }
 
 .horizontal-container {
@@ -315,6 +323,8 @@ const onLeave = (el) => {
   border-right: 3px solid #409eff;
   height: 60px;
   transform-origin: left center;
+  max-width: 400px;    /* 限制最大宽度 */
+  overflow-x: auto;    /* 水平方向溢出时显示滚动条 */
 }
 
 .submenu-vertical {
@@ -325,6 +335,8 @@ const onLeave = (el) => {
   background: linear-gradient(180deg, #f0f9ff, #e0f2fe);
   border-left: 3px solid #409eff;
   transform-origin: top center;
+  max-height: 420px;   /* 限制最大高度 */
+  overflow-y: auto;    /* 垂直方向溢出时显示滚动条 */
 }
 
 /* 子菜单项样式 */
@@ -398,6 +410,11 @@ const onLeave = (el) => {
 .submenu-tag {
   margin-left: 4px;
   transform: scale(0.85);
+}
+
+.submenu-horizontal::-webkit-scrollbar,
+.submenu-vertical::-webkit-scrollbar {
+  display: none; /* Webkit内核浏览器隐藏滚动条 */
 }
 
 /* 横向子菜单过渡动画 */
