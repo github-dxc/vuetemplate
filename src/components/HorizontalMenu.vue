@@ -60,16 +60,6 @@
         </transition>
       </template>
     </nav>
-
-    <!-- 选中的菜单项显示 -->
-    <div v-if="selectedItem" class="selected-info">
-      <el-alert
-        :title="`你选择了: ${selectedItem.label}`"
-        type="success"
-        :closable="false"
-        show-icon
-      />
-    </div>
   </div>
 </template>
 
@@ -88,7 +78,6 @@ const props = defineProps({
 
 // 响应式数据
 const activeMenu = ref(null)
-const selectedItem = ref(null)
 
 // 事件定义
 const emit = defineEmits(['menu-click', 'submenu-click'])
@@ -100,7 +89,6 @@ const handleMenuClick = (item) => {
     activeMenu.value = activeMenu.value === item.id ? null : item.id
   } else {
     // 没有子菜单的项目直接选中
-    selectedItem.value = item
     activeMenu.value = null
     emit('menu-click', item)
   }
@@ -116,7 +104,6 @@ const handleSubmenuClick = (parentItem, childItem) => {
   
   // 设置当前点击的子菜单为选中状态
   childItem.checked = true
-  selectedItem.value = childItem
   
   emit('submenu-click', {
     parent: parentItem,
@@ -176,6 +163,7 @@ const onLeave = (el) => {
 
 .horizontal-menu {
   display: flex;
+  width: fit-content;
   align-items: center;
   background: white;
   border-radius: 8px;
@@ -332,10 +320,6 @@ const onLeave = (el) => {
 /* 离场状态的按钮样式 */
 .submenu-leaving .submenu-button {
   transition: all 0.3s cubic-bezier(0.55, 0.085, 0.68, 0.53);
-}
-
-.selected-info {
-  margin-top: 20px;
 }
 
 /* 增强的视觉效果 */
