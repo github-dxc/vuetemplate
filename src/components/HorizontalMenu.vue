@@ -122,7 +122,7 @@ const onEnter = (el) => {
     el.style.transform = 'scaleX(1)'
     
     const buttons = el.querySelectorAll('.submenu-button')
-    let totalWidth = 32 // 左右 padding
+    let totalWidth = 0
     
     buttons.forEach((button, index) => {
       totalWidth += button.offsetWidth
@@ -131,7 +131,7 @@ const onEnter = (el) => {
       }
     })
     
-    el.style.width = (totalWidth + 10) + 'px'
+    el.style.width = totalWidth + 'px'
   })
 }
 
