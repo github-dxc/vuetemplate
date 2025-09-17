@@ -7,15 +7,6 @@
       @menu-click="handleMenuClick"
       @submenu-click="handleSubmenuClick"
     />
-    
-    <!-- 显示当前选中状态 -->
-    <div v-if="currentSelection" class="selection-display">
-      <el-card>
-        <h3>当前选中状态</h3>
-        <p><strong>父菜单:</strong> {{ currentSelection.parent }}</p>
-        <p><strong>子菜单:</strong> {{ currentSelection.child }}</p>
-      </el-card>
-    </div>
   </div>
 </template>
 
@@ -139,23 +130,13 @@ const menuData = reactive([
   }
 ])
 
-const currentSelection = ref(null)
-
 // 事件处理
 const handleMenuClick = (menuItem) => {
   console.log('点击了菜单:', menuItem)
-  currentSelection.value = {
-    parent: menuItem.label,
-    child: null
-  }
 }
 
 const handleSubmenuClick = (data) => {
   console.log('点击了子菜单:', data)
-  currentSelection.value = {
-    parent: data.parent.label,
-    child: data.child.label
-  }
 }
 </script>
 

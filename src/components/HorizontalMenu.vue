@@ -174,11 +174,6 @@ const onLeave = (el) => {
   const buttons = el.querySelectorAll('.submenu-button')
   buttons.forEach((button, index) => {
     setTimeout(() => {
-      if (props.mode === 'horizontal') {
-        button.style.transform = 'translateX(20px)'
-      } else {
-        button.style.transform = 'translateY(-10px)'
-      }
       button.style.opacity = '0'
     }, index * 80)
   })
