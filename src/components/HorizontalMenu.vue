@@ -1,46 +1,49 @@
 <template>
-  <div class="horizontal-menu-container">
-    <nav class="horizontal-menu">
+  <div class="menu-container" :class="`${mode}-container`">
+    <nav class="menu" :class="`${mode}-menu`">
       <template v-for="(item, index) in menuItems" :key="item.id">
         <!-- 一级菜单项 -->
         <div
           class="menu-item"
-          :class="{ active: activeMenu === item.id }"
+          :class="{ active: activeMenu === item.id, [`${mode}-menu-item`]: true }"
           @click="handleMenuClick(item)"
         >
           <el-button
             :type="activeMenu === item.id ? 'primary' : 'default'"
             class="menu-button"
+            :class="`${mode}-menu-button`"
           >
             <el-icon><component :is="item.icon" /></el-icon>
             {{ item.label }}
-            <el-icon v-if="item.children" class="arrow-icon">
+            <el-icon v-if="item.children" class="arrow-icon" :class="`${mode}-arrow-icon`">
               <ArrowRight />
             </el-icon>
           </el-button>
         </div>
 
-        <!-- 子菜单 - 插入到当前菜单项后面 -->
+        <!-- 子菜单 - 横向模式插入到当前菜单项后面，纵向模式插入到下方 -->
         <transition
-          name="submenu-slide"
+          :name="`submenu-${mode}`"
           @enter="onEnter"
           @leave="onLeave"
         >
           <div
             v-if="item.children && activeMenu === item.id"
-            class="submenu-horizontal"
+            class="submenu"
+            :class="`submenu-${mode}`"
             :key="`submenu-${item.id}`"
           >
             <div
               v-for="child in item.children"
               :key="child.id"
               class="submenu-item"
+              :class="`submenu-item-${mode}`"
               @click="handleSubmenuClick(item, child)"
             >
               <el-button
                 type="info"
                 class="submenu-button"
-                :class="{ selected: child.checked }"
+                :class="[`submenu-button-${mode}`, { selected: child.checked }]"
               >
                 <el-icon v-if="child.icon">
                   <component :is="child.icon" />
@@ -73,6 +76,11 @@ const props = defineProps({
     type: Array,
     required: true,
     default: () => []
+  },
+  mode: {
+    type: String,
+    default: 'horizontal',
+    validator: (value) => ['horizontal', 'vertical'].includes(value)
   }
 })
 
@@ -113,26 +121,51 @@ const handleSubmenuClick = (parentItem, childItem) => {
 
 // 动画钩子
 const onEnter = (el) => {
-  el.style.width = '0px'
-  el.style.overflow = 'hidden'
-  el.style.transform = 'scaleX(0)'
-  el.style.transformOrigin = 'left center'
-  
-  nextTick(() => {
-    el.style.transform = 'scaleX(1)'
+  if (props.mode === 'horizontal') {
+    // 横向模式动画
+    el.style.width = '0px'
+    el.style.overflow = 'hidden'
+    el.style.transform = 'scaleX(0)'
+    el.style.transformOrigin = 'left center'
     
-    const buttons = el.querySelectorAll('.submenu-button')
-    let totalWidth = 0
-    
-    buttons.forEach((button, index) => {
-      totalWidth += button.offsetWidth
-      if (index < buttons.length - 1) {
-        totalWidth += 8 // gap 间距
-      }
+    nextTick(() => {
+      el.style.transform = 'scaleX(1)'
+      
+      const buttons = el.querySelectorAll('.submenu-button')
+      let totalWidth = 0
+      
+      buttons.forEach((button, index) => {
+        totalWidth += button.offsetWidth
+        if (index < buttons.length - 1) {
+          totalWidth += 8 // gap 间距
+        }
+      })
+      
+      el.style.width = totalWidth + 'px'
     })
+  } else {
+    // 纵向模式动画
+    el.style.height = '0px'
+    el.style.overflow = 'hidden'
+    el.style.transform = 'scaleY(0)'
+    el.style.transformOrigin = 'top center'
     
-    el.style.width = totalWidth + 'px'
-  })
+    nextTick(() => {
+      el.style.transform = 'scaleY(1)'
+      
+      const buttons = el.querySelectorAll('.submenu-button')
+      let totalHeight = 0
+      
+      buttons.forEach((button, index) => {
+        totalHeight += button.offsetHeight
+        if (index < buttons.length - 1) {
+          totalHeight += 8 // gap 间距
+        }
+      })
+      
+      el.style.height = totalHeight + 'px'
+    })
+  }
 }
 
 const onLeave = (el) => {
@@ -141,30 +174,45 @@ const onLeave = (el) => {
   const buttons = el.querySelectorAll('.submenu-button')
   buttons.forEach((button, index) => {
     setTimeout(() => {
-      button.style.transform = 'translateX(20px)'
+      if (props.mode === 'horizontal') {
+        button.style.transform = 'translateX(20px)'
+      } else {
+        button.style.transform = 'translateY(-10px)'
+      }
       button.style.opacity = '0'
     }, index * 80)
   })
   
   setTimeout(() => {
-    el.style.width = '0px'
-    el.style.transform = 'scaleX(0)'
+    if (props.mode === 'horizontal') {
+      el.style.width = '0px'
+      el.style.transform = 'scaleX(0)'
+    } else {
+      el.style.height = '0px'
+      el.style.transform = 'scaleY(0)'
+    }
   }, buttons.length * 80 + 100)
 }
 </script>
 
 <style scoped>
-.horizontal-menu-container {
-  width: 100%;
+/* 基础容器样式 */
+.menu-container {
   background: #f5f7fa;
   min-height: 100vh;
   padding: 20px;
 }
 
-.horizontal-menu {
-  display: flex;
-  width: fit-content;
-  align-items: center;
+.horizontal-container {
+  width: 100%;
+}
+
+.vertical-container {
+  width: 300px;
+}
+
+/* 菜单基础样式 */
+.menu {
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
@@ -173,9 +221,31 @@ const onLeave = (el) => {
   overflow: hidden;
 }
 
+.horizontal-menu {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+}
+
+.vertical-menu {
+  display: flex;
+  flex-direction: column;
+  width: 50%;
+  align-items: stretch;
+}
+
+/* 菜单项样式 */
 .menu-item {
   position: relative;
   flex-shrink: 0;
+}
+
+.horizontal-menu-item {
+  /* 横向菜单项特定样式 */
+}
+
+.vertical-menu-item {
+  width: 100%;
 }
 
 .menu-item.active .menu-button {
@@ -184,6 +254,7 @@ const onLeave = (el) => {
   border-color: #409eff;
 }
 
+/* 菜单按钮样式 */
 .menu-button {
   border: none;
   border-radius: 0;
@@ -197,18 +268,47 @@ const onLeave = (el) => {
   cursor: pointer;
 }
 
+.horizontal-menu-button {
+  /* 横向按钮样式保持原有样式 */
+}
+
+.vertical-menu-button {
+  width: 100%;
+  justify-content: flex-start;
+  border-radius: 0;
+}
+
 .menu-button:hover {
   background-color: #ecf5ff;
   color: #409eff;
 }
 
+/* 箭头图标样式 */
 .arrow-icon {
-  margin-left: 4px;
+  margin-left: auto;
   transition: transform 0.3s ease;
 }
 
-.menu-item.active .arrow-icon {
+.horizontal-arrow-icon {
+  margin-left: 4px;
+}
+
+.vertical-arrow-icon {
+  margin-left: auto;
+}
+
+.menu-item.active .horizontal-arrow-icon {
   transform: rotate(90deg);
+}
+
+.menu-item.active .vertical-arrow-icon {
+  transform: rotate(90deg);
+}
+
+/* 子菜单容器样式 */
+.submenu {
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: hidden;
 }
 
 .submenu-horizontal {
@@ -219,15 +319,29 @@ const onLeave = (el) => {
   background: linear-gradient(90deg, #f0f9ff, #e0f2fe);
   border-right: 3px solid #409eff;
   height: 60px;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  overflow: hidden;
   transform-origin: left center;
 }
 
+.submenu-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: linear-gradient(180deg, #f0f9ff, #e0f2fe);
+  border-left: 3px solid #409eff;
+  transform-origin: top center;
+}
+
+/* 子菜单项样式 */
 .submenu-item {
   flex-shrink: 0;
 }
 
+.submenu-item-vertical {
+  width: 100%;
+}
+
+/* 子菜单按钮样式 */
 .submenu-button {
   height: 40px;
   padding: 0 16px;
@@ -247,6 +361,13 @@ const onLeave = (el) => {
   opacity: 0;
   animation: slideInRight 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   animation-delay: calc(var(--index) * 0.1s);
+}
+
+.submenu-button-vertical {
+  width: 100%;
+  justify-content: flex-start;
+  transform: translateY(-10px);
+  animation: slideInDown 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 .submenu-button::before {
@@ -284,28 +405,49 @@ const onLeave = (el) => {
   transform: scale(0.85);
 }
 
-/* 子菜单滑入动画 */
-.submenu-slide-enter-active {
+/* 横向子菜单过渡动画 */
+.submenu-horizontal-enter-active {
   transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.submenu-slide-leave-active {
+.submenu-horizontal-leave-active {
   transition: all 0.4s cubic-bezier(0, 0.25, 0.75, 1);
 }
 
-.submenu-slide-enter-from {
+.submenu-horizontal-enter-from {
   width: 0px !important;
   opacity: 0;
   transform: scaleX(0);
 }
 
-.submenu-slide-leave-to {
+.submenu-horizontal-leave-to {
   width: 0px !important;
   opacity: 0;
   transform: scaleX(0);
 }
 
-/* 子菜单按钮的渐次出现动画 */
+/* 纵向子菜单过渡动画 */
+.submenu-vertical-enter-active {
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.submenu-vertical-leave-active {
+  transition: all 0.4s cubic-bezier(0, 0.25, 0.75, 1);
+}
+
+.submenu-vertical-enter-from {
+  height: 0px !important;
+  opacity: 0;
+  transform: scaleY(0);
+}
+
+.submenu-vertical-leave-to {
+  height: 0px !important;
+  opacity: 0;
+  transform: scaleY(0);
+}
+
+/* 子菜单按钮动画 */
 @keyframes slideInRight {
   0% {
     transform: translateX(-20px);
@@ -317,13 +459,24 @@ const onLeave = (el) => {
   }
 }
 
+@keyframes slideInDown {
+  0% {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 /* 离场状态的按钮样式 */
 .submenu-leaving .submenu-button {
   transition: all 0.3s cubic-bezier(0.55, 0.085, 0.68, 0.53);
 }
 
-/* 增强的视觉效果 */
-.menu-item:not(:last-child)::after {
+/* 横向模式的分隔线 */
+.horizontal-menu .menu-item:not(:last-child)::after {
   content: '';
   position: absolute;
   right: 0;
@@ -333,7 +486,22 @@ const onLeave = (el) => {
   background: linear-gradient(to bottom, transparent, #e4e7ed, transparent);
 }
 
-.menu-item.active::after {
+.horizontal-menu .menu-item.active::after {
+  display: none;
+}
+
+/* 纵向模式的分隔线 */
+.vertical-menu .menu-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  width: 80%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #e4e7ed, transparent);
+}
+
+.vertical-menu .menu-item.active::after {
   display: none;
 }
 
@@ -364,11 +532,11 @@ const onLeave = (el) => {
     align-items: stretch;
   }
   
-  .menu-item {
+  .horizontal-menu .menu-item {
     width: 100%;
   }
   
-  .menu-button {
+  .horizontal-menu .menu-button {
     justify-content: space-between;
     width: 100%;
     border-radius: 0;
@@ -384,10 +552,14 @@ const onLeave = (el) => {
     gap: 8px;
   }
   
-  .submenu-button {
+  .submenu-horizontal .submenu-button {
     width: 100%;
     justify-content: flex-start;
     border-radius: 6px;
+  }
+  
+  .vertical-container {
+    width: 100%;
   }
 }
 </style>

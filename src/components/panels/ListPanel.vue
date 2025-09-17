@@ -2,6 +2,7 @@
   <div class="demo-container">
     <!-- 使用横向菜单组件 -->
     <HorizontalMenu 
+      mode="vertical"
       :menu-items="menuData"
       @menu-click="handleMenuClick"
       @submenu-click="handleSubmenuClick"
