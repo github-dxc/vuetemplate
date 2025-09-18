@@ -97,10 +97,10 @@ import { ref, computed, onMounted, onActivated } from 'vue'
 import { 
   Search, InfoFilled, MoreFilled, CaretBottom, CaretTop
 } from '@element-plus/icons-vue'
-import OperationCard from '../OperationCard.vue';
+import OperationCard from '../../components/OperationCard.vue';
 import { formatDateDay } from '../../util';
 import { useUserStore } from "../../store";
-import BugDetails from '../BugDetails.vue';
+import BugDetails from '../../components/BugDetails.vue';
 
 const props = defineProps({
   enums: {

@@ -31,13 +31,13 @@ import { ref, computed, markRaw, onMounted } from 'vue';
 import { 
   ChatDotRound, User, Document, Star, Bell
 } from '@element-plus/icons-vue';
-import Sidebar from '../components/Sidebar.vue';
-import ContentArea from '../components/ContentArea.vue';
-import SettingsDialog from '../components/SettingsDialog.vue';
-import SubscribePanel from '../components/panels/SubscribePanel.vue';
-import ChatPanel from '../components/panels/ChatPanel.vue';
+import Sidebar from './Sidebar.vue';
+import ContentArea from './ContentArea.vue';
+import SettingsDialog from './SettingsDialog.vue';
+import SubscribePanel from './panels/SubscribePanel.vue';
+import ChatPanel from './panels/ChatPanel.vue';
 import Update from '../components/Update.vue';
-import ListPanel from '../components/panels/ListPanel.vue';
+import ListPanel from './panels/ListPanel.vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from "../store";
 import { listen, emit } from '@tauri-apps/api/event';

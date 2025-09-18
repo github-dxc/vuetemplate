@@ -12,7 +12,7 @@
 
 <script setup>
 import { ref, reactive, markRaw } from 'vue'
-import HorizontalMenu from '../HorizontalMenu.vue' // 引入上面的组件
+import HorizontalMenu from '../../components/HorizontalMenu.vue' // 引入上面的组件
 import {
   User,
   Setting,

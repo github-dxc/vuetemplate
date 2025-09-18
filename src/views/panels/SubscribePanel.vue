@@ -180,9 +180,9 @@ import { createNewWindow } from "../../windows";
 import { apiBugInfo, browserOpen, updateBug } from "../../api";
 import { ElMessage } from "element-plus";
 import { useUserStore } from "../../store";
-import BugDetails from "../BugDetails.vue";
+import BugDetails from "../../components/BugDetails.vue";
 import { EditPen } from "@element-plus/icons-vue";
-import Annotation from "../Annotation.vue";
+import Annotation from "../../components/Annotation.vue";
 import { copyMessage } from "../../util";
 
 const props = defineProps({
