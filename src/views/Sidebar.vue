@@ -29,7 +29,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup vapor>
 import { Setting } from '@element-plus/icons-vue';
 
 defineProps({

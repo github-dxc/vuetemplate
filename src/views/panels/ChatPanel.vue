@@ -92,7 +92,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup vapor>
 import { ref, computed, onMounted, onActivated } from 'vue'
 import { 
   Search, InfoFilled, MoreFilled, CaretBottom, CaretTop

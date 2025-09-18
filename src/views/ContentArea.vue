@@ -12,7 +12,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup vapor>
 import { computed } from 'vue';
 
 const props = defineProps({

@@ -66,7 +66,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup vapor>
 import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { bugNoteAdd } from '../api'

@@ -46,7 +46,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup vapor>
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { getColorByUnicPalette, getFirstChar, copyMessage } from '../util';
 import { browserOpen } from '../api';

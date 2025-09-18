@@ -27,7 +27,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup vapor>
 import { ref } from 'vue';
 
 const settings = ref({filePath: 'C:\\Users\\Username\\Documents\\WeChat Files', autoDownloadLimit: '10'});

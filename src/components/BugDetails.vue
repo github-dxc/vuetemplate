@@ -195,7 +195,7 @@
   />
 </template>
 
-<script setup>
+<script setup vapor>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { QuillEditor,Quill } from '@vueup/vue-quill';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';

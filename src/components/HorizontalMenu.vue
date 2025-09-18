@@ -67,7 +67,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup vapor>
 import { ref, nextTick, computed } from 'vue'
 import { ArrowRight } from '@element-plus/icons-vue'
 

@@ -13,7 +13,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup vapor>
 import { ref } from 'vue';
 
 const shortcuts = ref([

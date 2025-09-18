@@ -10,7 +10,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup vapor>
 import { ref, reactive, markRaw } from 'vue'
 import HorizontalMenu from '../../components/HorizontalMenu.vue' // 引入上面的组件
 import {

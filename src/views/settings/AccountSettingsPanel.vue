@@ -19,7 +19,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup vapor>
 import { ref } from 'vue';
 import { useUserStore } from '../../store'
 import { useRouter } from 'vue-router';

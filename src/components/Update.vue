@@ -10,7 +10,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup vapor>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElNotification } from 'element-plus'
 import { listen } from '@tauri-apps/api/event';

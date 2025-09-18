@@ -19,7 +19,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup vapor>
 import { ref, computed } from 'vue'
 import { ChatDotRound } from '@element-plus/icons-vue';
 import { ElNotification } from 'element-plus'

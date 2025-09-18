@@ -26,7 +26,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup vapor>
 import { ref, computed, markRaw, onMounted } from 'vue';
 import { 
   ChatDotRound, User, Document, Star, Bell
@@ -43,6 +43,7 @@ import { useUserStore } from "../store";
 import { listen, emit } from '@tauri-apps/api/event';
 import { initBugs, initData, initMsgs } from '../api';
 import { formatDate } from '../util';
+import BugList from '../components/BugList.vue';
 
 const router = useRouter()
 const userStore = useUserStore();
@@ -55,7 +56,7 @@ const menuList = ref([
   { id: 'chat', title: '聊天', icon: markRaw(ChatDotRound), badge: 0, component: markRaw(ChatPanel) },
   { id: 'contacts', title: '通讯录', icon: markRaw(User) },
   { id: 'files', title: '文件传输', icon: markRaw(Document), component: markRaw(ListPanel) },
-  { id: 'favorites', title: '收藏', icon: markRaw(Star) }
+  { id: 'favorites', title: '收藏', icon: markRaw(Star), component: markRaw(BugList) }
 ]);
 const settingsVisible = ref(false);
 const bugList = ref([]);

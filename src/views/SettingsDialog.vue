@@ -58,7 +58,7 @@
   </el-dialog>
 </template>
 
-<script setup>
+<script setup vapor>
 import { ref, markRaw } from 'vue';
 import { 
   UserFilled, Tools, FolderOpened, School, InfoFilled, Close, Minus 
