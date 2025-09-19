@@ -409,18 +409,18 @@ onMounted(async () => {
     overflow: auto;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    background: transparent;
 }
 
 .table-container {
     flex: 1;
     height: 60%;
     background: transparent;
-    border-radius: 12px;
 }
 
 .table-container .el-table {
     height: 90%;
+    border-radius: 14px 14px 0 0;
 }
 
 .custom-table {
@@ -577,7 +577,7 @@ onMounted(async () => {
     text-align: center;
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
-    /* border-top: 1px solid rgba(0, 0, 0, 0.06); */
+    border-radius: 0 0 14px 14px;
 }
 
 .custom-pagination :deep(.el-pager li) {

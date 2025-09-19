@@ -54,19 +54,19 @@ onMounted(async () => {
 }
 
 .panel-header {
-  height: 10%;
+  height: auto;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border: none;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-  padding: 20px 24px;
 }
 
 .header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin: 20px 24px;
 }
 
 .panel-header h3 {
@@ -80,7 +80,7 @@ onMounted(async () => {
 }
 
 .panel-bug-list {
-  height: 90%;
-  /* padding: 20px; */
+  height: 100%;
+  padding: 25px 20px;
 }
 </style>
