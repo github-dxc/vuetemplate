@@ -60,6 +60,7 @@ defineEmits(['switch-menu', 'open-settings']);
   align-items: center;
   padding: 20px 0;
   position: relative;
+  flex-shrink: 0;
 }
 .avatar-section { margin-bottom: 20px; }
 .menu-section { flex: 1; display: flex; flex-direction: column; gap: 16px; }

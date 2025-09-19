@@ -34,6 +34,17 @@ const singlePanelComponent = computed(() => {
 
 <style scoped>
 /* Content area styles from original file */
-.content-area { flex: 1; display: flex; flex-direction: column; }
-.single-layout { height: 100%; display: flex; flex-direction: column; }
+.content-area { 
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.single-layout {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
 </style>

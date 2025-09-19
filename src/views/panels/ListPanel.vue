@@ -1,12 +1,30 @@
 <template>
   <div class="demo-container">
     <!-- 使用横向菜单组件 -->
-    <HorizontalMenu 
-      mode="vertical"
-      :menu-items="menuData"
-      @menu-click="handleMenuClick"
-      @submenu-click="handleSubmenuClick"
-    />
+    <el-container>
+      <el-header>
+        <HorizontalMenu 
+          mode="horizontal"
+          :menu-items="menuData"
+          @menu-click="handleMenuClick"
+          @submenu-click="handleSubmenuClick"
+        />
+      </el-header>
+
+      <el-container>
+        <el-aside width="auto">
+          <HorizontalMenu 
+            mode="vertical"
+            :menu-items="menuData"
+            @menu-click="handleMenuClick"
+            @submenu-click="handleSubmenuClick"
+          />
+        </el-aside>
+        <el-main>
+          <div class="panel-bug-list"></div>
+        </el-main>
+      </el-container>
+    </el-container>
   </div>
 </template>
 
@@ -193,23 +211,21 @@ const handleSubmenuClick = (data) => {
 
 <style scoped>
 .demo-container {
-  min-height: 100vh;
+  width: 100%;
+  height: 100%;
   background: #f5f7fa;
 }
 
-.selection-display {
-  padding: 20px;
-  max-width: 400px;
-  margin: 0 auto;
+.panel-bug-list {
+  width: 100%;
+  height: 100px;
+  background-color: red;
 }
 
-.selection-display h3 {
-  margin-bottom: 16px;
-  color: #303133;
+:deep(.el-header) {
+  margin-top: 20px;
 }
-
-.selection-display p {
-  margin: 8px 0;
-  color: #606266;
+:deep(.el-aside) {
+  padding: 20px 20px;
 }
 </style>

@@ -203,15 +203,16 @@ const handleWheelScroll = (event) => {
 /* 基础容器样式 */
 .menu-container {
   background: #f5f7fa;
-  min-height: 100vh;
+  width: 100%;
+  height: 100%;
 }
 
 .horizontal-container {
-  width: 100%;
+  max-width: 100%;
 }
 
 .vertical-container {
-  width: 300px;
+  max-height: 100%;
 }
 
 /* 菜单基础样式 */
@@ -233,7 +234,7 @@ const handleWheelScroll = (event) => {
 .vertical-menu {
   display: flex;
   flex-direction: column;
-  width: 50%;
+  width: fit-content;
   align-items: stretch;
 }
 
