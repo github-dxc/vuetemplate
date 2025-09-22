@@ -124,11 +124,16 @@ pub async fn my_view_page(
 pub async fn view_all_set(
     jar: Arc<Jar>,
     params: FindBugListParams,
+    project_id: &str,
+    page: i64,
     host: &str,
 ) -> Result<String, Box<dyn std::error::Error>> {
     // 地址
     let origin = format!("http://{}",host);
-    let url = origin.to_string()+"/view_all_set.php";
+    let mut url = origin.to_string()+"/view_all_set.php";
+
+    // 设置项目id cookie
+    let _ = set_project_cookie(jar.clone(), project_id, host);
 
     // body
     let body = serde_html_form::to_string(&params).unwrap();
@@ -150,7 +155,7 @@ pub async fn view_all_set(
     // 创建 reqwest 客户端
     let client = Client::builder()
         .timeout(Duration::from_secs(2))
-        .cookie_provider(jar)
+        .cookie_provider(jar.clone())
         .danger_accept_invalid_certs(true) // --insecure
         .default_headers(headers)
         .redirect(Policy::custom(|attempt| {
@@ -160,13 +165,25 @@ pub async fn view_all_set(
         .build()
         .map_err(|e| e.to_string())?;
 
-    // 发送 POST 请求
-    let resp = client
-        .post(url)
-        .body(body)
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
+    // 如果page大于1， 则单独查询
+    let resp;
+    if page > 1 {
+        //发起get请求
+        url = format!("{}?page_number={}", url, page);
+        resp = client.get(url).send().await.map_err(|e| e.to_string())?;
+    }else{
+        // 发送 POST 请求
+        resp = client
+            .post(url)
+            .body(body)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+    }
+
+    // 清空项目id cookie
+    let _ = set_project_cookie(jar.clone(), "0", host);
 
     let text = resp.text().await.unwrap();
     Ok(text)
@@ -1150,10 +1167,13 @@ pub fn users_data(document: &Html) -> Result<Vec<KV>, String> {
     let r: Vec<KV> = document
         .select(&slector)
         .filter_map(|e| {
-            let value = e.inner_html().trim().split('(').next().unwrap_or_default().trim().to_string();
+            let mut value = e.inner_html().trim().split('(').next().unwrap_or_default().trim().to_string();
             let key = e.value().attr("value").map(|id|id.to_owned())?;
             if key == "" {
                 return None;
+            }
+            if key == "0" {
+                value = "[任意]".to_string();
             }
             Some(KV{key,value})
         })

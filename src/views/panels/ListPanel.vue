@@ -3,22 +3,14 @@
     <!-- 使用横向菜单组件 -->
     <el-container>
       <el-header>
-        <HorizontalMenu 
-          mode="horizontal"
-          :menu-items="menuData"
-          @menu-click="handleMenuClick"
-          @submenu-click="handleSubmenuClick"
-        />
+        <HorizontalMenu mode="horizontal" :menu-items="horizontalMenu" @menu-click="handleMenuClick"
+          @submenu-click="handleSubmenuClick" />
       </el-header>
 
       <el-container>
         <el-aside width="auto">
-          <HorizontalMenu 
-            mode="vertical"
-            :menu-items="menuData"
-            @menu-click="handleMenuClick"
-            @submenu-click="handleSubmenuClick"
-          />
+          <HorizontalMenu mode="vertical" :menu-items="verticalMenu" @menu-click="handleMenuClick"
+            @submenu-click="handleSubmenuClick" />
         </el-aside>
         <el-main>
           <div class="panel-bug-list"></div>
@@ -29,175 +21,145 @@
 </template>
 
 <script setup vapor>
-import { ref, reactive, markRaw } from 'vue'
+import { ref, reactive, markRaw, computed } from 'vue'
 import HorizontalMenu from '../../components/HorizontalMenu.vue' // 引入上面的组件
 import {
   User,
-  Setting,
+  Sort,
   Document,
-  Monitor,
+  Odometer,
   View,
+  SetUp,
+  VideoPause,
+  Star,
+  Notebook,
 } from '@element-plus/icons-vue'
+import { bugList } from '../../api';
 
-// 菜单数据 - 作为 prop 传入
-const menuData = reactive([
-  {
-    id: 'user',
-    label: '用户管理',
-    icon: markRaw(User),
-    children: [
-      { 
-        id: 'user-list', 
-        label: '用户列表',
-        checked: true // 默认选中第一个
-      },
-      { 
-        id: 'user-add', 
-        label: '添加用户',
-        tag: 'New', 
-        tagType: 'success',
-        checked: false
-      },
-      { 
-        id: 'user-import', 
-        label: '批量导入',
-        checked: false
-      },
-      { 
-        id: 'user-export', 
-        label: '导出数据',
-        checked: false
-      }
-    ]
-  },
-  {
-    id: 'content',
-    label: '内容管理',
-    icon: markRaw(Document),
-    children: [
-      { 
-        id: 'article-list', 
-        label: '文章列表',
-        checked: false
-      },
-      { 
-        id: 'article-edit', 
-        label: '编辑文章',
-        checked: true // 默认选中
-      },
-      { 
-        id: 'article-delete', 
-        label: '删除文章',
-        checked: false
-      },
-      { 
-        id: 'article-share', 
-        label: '分享文章',
-        tag: 'Hot', 
-        tagType: 'danger',
-        checked: false
-      },
-      { 
-        id: 'article-edit', 
-        label: '编辑文章',
-        checked: true // 默认选中
-      },
-      { 
-        id: 'article-delete', 
-        label: '删除文章',
-        checked: false
-      },
-      { 
-        id: 'article-share', 
-        label: '分享文章',
-        tag: 'Hot', 
-        tagType: 'danger',
-        checked: false
-      },
-      { 
-        id: 'article-edit', 
-        label: '编辑文章',
-        checked: true // 默认选中
-      },
-      { 
-        id: 'article-delete', 
-        label: '删除文章',
-        checked: false
-      },
-      { 
-        id: 'article-share', 
-        label: '分享文章',
-        tag: 'Hot', 
-        tagType: 'danger',
-        checked: false
-      },
-      { 
-        id: 'article-edit', 
-        label: '编辑文章',
-        checked: true // 默认选中
-      },
-      { 
-        id: 'article-delete', 
-        label: '删除文章',
-        checked: false
-      },
-      { 
-        id: 'article-share', 
-        label: '分享文章',
-        tag: 'Hot', 
-        tagType: 'danger',
-        checked: false
-      }
-    ]
-  },
-  {
-    id: 'system',
-    label: '系统设置',
-    icon: markRaw(Setting),
-    children: [
-      { 
-        id: 'general', 
-        label: '常规设置',
-        checked: false
-      },
-      { 
-        id: 'security', 
-        label: '安全设置',
-        tag: '重要', 
-        tagType: 'warning',
-        checked: false
-      }
-    ]
-  },
-  {
-    id: 'monitor',
-    label: '系统监控',
-    icon: markRaw(Monitor),
-    children: [
-      { 
-        id: 'cpu', 
-        label: 'CPU监控',
-        checked: false
-      },
-      { 
-        id: 'memory', 
-        label: '内存监控',
-        checked: false
-      },
-      { 
-        id: 'disk', 
-        label: '磁盘监控',
-        checked: false
-      }
-    ]
-  },
-  {
-    id: 'single',
-    label: '单独菜单',
-    icon: markRaw(View)
-    // 没有子菜单
+const props = defineProps({
+  enums: {
+    type: Object,
+    required: true,
+    default: {}
   }
+});
+
+const params = reactive({
+  page: 1,
+  limit: 10,
+  view_state: 0,
+  priority: [],
+  severity: [],
+  status: [],
+  resolution: [],
+  project_id: [],
+  reporter_id: [],
+  handler_id: [],
+  category_id: []
+});
+
+const bugTotal = ref(0);
+const bugPage = ref(0);
+const bugLimit = ref(0);
+const bugs = ref([]);
+
+const horizontalMenu = reactive([
+  {
+    id: 'view_state',
+    label: '查看权限',
+    icon: markRaw(View),
+    children: props.enums.ViewStatus.map(ver => ({
+      id: ver.key,
+      label: ver.value,
+      checked: false
+    }))
+  }, {
+    id: 'priority',
+    label: '优先级',
+    icon: markRaw(Sort),
+    children: props.enums.Priority.map(ver => ({
+      id: ver.key,
+      label: ver.value,
+      checked: false
+    }))
+  }, {
+    id: 'severity',
+    label: '严重性',
+    icon: markRaw(Odometer),
+    children: props.enums.Severity.map(ver => ({
+      id: ver.key,
+      label: ver.value,
+      checked: false
+    }))
+  }, {
+    id: 'status',
+    label: '状态',
+    icon: markRaw(SetUp),
+    children: props.enums.Status.map(ver => ({
+      id: ver.key,
+      label: ver.value,
+      checked: false
+    }))
+  }, {
+    id: 'resolution',
+    label: '处理情况',
+    icon: markRaw(VideoPause),
+    children: props.enums.Resolution.map(ver => ({
+      id: ver.key,
+      label: ver.value,
+      checked: false
+    }))
+  },
+]);
+
+const verticalMenu = reactive([
+  {
+    id: 'project_id',
+    label: '项目',
+    icon: markRaw(Document),
+    children: props.enums.Project.map(ver => ({
+      id: ver.key,
+      label: ver.value,
+      checked: false
+    }))
+  }, {
+    id: 'reporter_id',
+    label: '上报人',
+    icon: markRaw(User),
+    children: props.enums.Users.map(ver => ({
+      id: ver.key,
+      label: ver.value,
+      checked: false
+    }))
+  }, {
+    id: 'handler_id',
+    label: '处理人',
+    icon: markRaw(Star),
+    children: props.enums.Users.map(ver => ({
+      id: ver.key,
+      label: ver.value,
+      checked: false
+    }))
+  }, {
+    id: 'category_id',
+    label: '分类',
+    icon: markRaw(Notebook),
+    children: props.enums.Category.map(ver => ({
+      id: ver.key,
+      label: ver.value,
+      checked: false
+    }))
+  }, 
 ])
+
+const fetchBugList = async () => {
+  const res = await bugList(params);
+  console.log('获取的bug列表:', res);
+  bugs.value = res.bugs;
+  bugTotal.value = res.total;
+  bugPage.value = res.page;
+  bugLimit.value = res.limit;
+}
 
 // 事件处理
 const handleMenuClick = (menuItem) => {
@@ -206,6 +168,8 @@ const handleMenuClick = (menuItem) => {
 
 const handleSubmenuClick = (data) => {
   console.log('点击了子菜单:', data)
+  params.value[data.parent.id] = data.child.id;
+  fetchBugList();
 }
 </script>
 
@@ -225,6 +189,7 @@ const handleSubmenuClick = (data) => {
 :deep(.el-header) {
   margin-top: 20px;
 }
+
 :deep(.el-aside) {
   padding: 20px 20px;
 }

@@ -247,7 +247,20 @@ async fn api_logout(app: AppHandle) -> Result<(), String> {
 
 // bug列表
 #[tauri::command(rename_all = "snake_case")]
-async fn api_bug_list(app: AppHandle) -> Result<BugList, String> {
+async fn api_bug_list(
+    app: AppHandle, 
+    page: i64,
+    limit: i64,
+    view_state: i64,
+    priority: Vec<i64>,
+    severity: Vec<i64>,
+    status: Vec<i64>,
+    resolution: Vec<i64>,
+    project_id: &str,
+    reporter_id: Vec<i64>,
+    handler_id: Vec<i64>,
+    category_id: Vec<String>,
+) -> Result<BugList, String> {
     let state = app.state::<MyState>().clone();
     let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?.clone();
     let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
@@ -257,14 +270,25 @@ async fn api_bug_list(app: AppHandle) -> Result<BugList, String> {
     if !user.logined {
         return Err("未登录".to_string());
     }
+
     let param_str = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器";
-    let param = serde_html_form::from_str::<FindBugListParams>(param_str)
+    let mut param = serde_html_form::from_str::<FindBugListParams>(param_str)
         .map_err(|e| format!("serde_html_form err:{}", e))?;
+    param.per_page = limit;
+    param.view_state = view_state;
+    param.priority = priority;
+    param.severity = severity;
+    param.status = status;
+    param.resolution = resolution;
+    param.reporter_id = reporter_id;
+    param.handler_id = handler_id;
+    param.category_id = category_id;
+
     // 查询列表
-    let body = view_all_set(jar, param, &host)
+    let body = view_all_set(jar, param, project_id, page, &host)
         .await
         .map_err(|e| format!("view_all_set err:{}", e))?;
-    // 解析数据s
+    // 解析数据
     let data = view_all_set_data(&Html::parse_document(body.as_str()),&catgory_kv,&project_kv)
         .map_err(|e| format!("view_all_set_data err:{}", e))?;
 
@@ -646,7 +670,7 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
         // 查询列表
         let param = serde_html_form::from_str::<FindBugListParams>(&sub_param)
             .map_err(|e| format!("serde_html_form err:{}", e))?;
-        let body = view_all_set(jar.clone(), param, &host).await.map_err(|e|format!("view_all_set err:{}",e))?;
+        let body = view_all_set(jar.clone(), param, "0", 1, &host).await.map_err(|e|format!("view_all_set err:{}",e))?;
         // 解析数据
         let mut data = view_all_set_data(&Html::parse_document(body.as_str()),&category_kv,&project_kv).map_err(|e|format!("view_all_set_data err:{}",e))?;
         bugs.append(&mut data.bugs);

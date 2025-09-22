@@ -24,6 +24,10 @@ export const initMsgs = async () => {
   return await invoke("api_init_msgs");
 };
 
+export const bugList = async ({page=1,limit=10,view_state=0,priority=[],severity=[],status=[],resolution=[],project_id='',reporter_id=[],handler_id=[],category_id=[]}) => {
+  return await invoke("api_bug_list",{page,limit,view_state,priority,severity,status,resolution,project_id,reporter_id,handler_id,category_id});
+};
+
 export const changeHost = async (host) => {
   return await invoke("api_change_host",{host});
 };
