@@ -1,7 +1,7 @@
 <template>
-  <div class="generated-design">
+  <div class="generated-design" ref="contentRef">
     <div class="overlap-group">
-      <div class="overlap" ref="contentRef">
+      <div class="overlap">
         <!--展示提交员信息-->
         <div class="option_reporter">
           <div class="rectangle" :style="{backgroundColor: getColorByUnicPalette(getFirstChar(bugInfo.reporter)).textColor}"/>
@@ -1037,13 +1037,15 @@ onMounted(() => {
   font-family: "Inter-Regular", Helvetica;
   font-size: 14px;
   font-weight: 400;
+  width: 700px;
+  overflow-wrap: break-word;
   left: 67px;
   letter-spacing: 0;
   line-height: 22.8px;
   position: relative;
   margin-top: 5px;
   margin-bottom: 5px;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .demo-image__error {

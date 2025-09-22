@@ -1024,7 +1024,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
                 .unwrap_or(0);
             let text = e
                 .select(&Selector::parse(".bugnote-note.bugnote-public").unwrap())
-                .find_map(|e| e.text().find_map(|s|Some(s.trim_ascii())))
+                .find_map(|e| Some(e.inner_html()))
                 .unwrap_or_default();
             // attachments
             let attachments_selector = Selector::parse("td.bugnote-note>a , td.bugnote-note>.well.well-xs>.collapse-open>a , td.bugnote-note>.well.well-xs>a").unwrap();
