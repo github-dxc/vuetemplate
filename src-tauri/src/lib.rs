@@ -21,7 +21,7 @@ use tauri_plugin_updater::{Update, UpdaterExt};
 use tauri::async_runtime::block_on;
 use tokio::time::{interval, Duration};
 use tokio::signal;
-use serde_json::{Value};
+use serde_json::{json, Value};
 use std::collections::HashSet;
 use utils::*;
 
@@ -59,9 +59,9 @@ pub fn run() {
             //清空所有状态
             // let _ = clear_global_state(app.handle().clone());
             //初始化全局状态
-            let _ = init_global_state(app.handle().clone());
+            let _ = init_global_state(app.handle().clone()).map_err(|e|println!("init_global_state err:{}",e));
             //初始化分组和项目
-            let _ = sync_init_project_catgory(app.handle().clone());
+            let _ = sync_init_project_catgory(app.handle().clone()).map_err(|e|println!("sync_init_project_catgory err:{}",e));
             //定时更新
             update_app(app.handle().clone());
             //定时查询订阅数据
@@ -459,30 +459,26 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
 
     let user_value = store.get("user").unwrap_or_default();
     let cookie_value = store.get("cookies").unwrap_or_default();
-    let default_host: &'static str = "localhost:8989";
-    // let default_host: &'static str = "bug.test.com";
-    let host_value = store.get("host").unwrap_or(Value::from(default_host));
+    let default_host = Value::from("127.0.0.1:8989");
+    let host_value = store.get("host").map(|e|{
+        if e.as_str().unwrap_or_default() == "" { return default_host.clone(); }
+        e
+    }).unwrap_or(default_host);
     println!("user:{};cookie:{};host:{}",user_value,cookie_value,host_value);
-    let hv = host_value.as_str().and_then(|v|{
-        if v == "" {
-            return Some(default_host);
-        }
-        Some(v)
-    }).ok_or("host err".to_string())?;
+
     let sub_params_value = store.get("sub_param").unwrap_or(Value::from(vec![
         r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=last_updated&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=0&search=&filter_submit=应用过滤器",
         r"type=1&view_type=simple&reporter_id[]=-1&handler_id[]=0&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=last_updated&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=0&search=&filter_submit=应用过滤器",
     ]));
-    let sub_bugs_value = store.get("sub_bugs").unwrap_or(Value::from(""));
-    let change_historys_value = store.get("change_historys").unwrap_or(Value::from(""));
+    let sub_bugs_value = store.get("sub_bugs").unwrap_or_default();
+    let change_historys_value = store.get("change_historys").unwrap_or_default();
 
-    let user_info:LoginInfo = serde_json::from_value(user_value).map_err(|e|format!("serde_json err:{}",e))?;
     let mut user = state.user.lock().map_err(|e|format!("lock err:{}",e))?;
-    *user = user_info;
+    *user = serde_json::from_value(user_value).map_err(|e|println!("serde_json err:{}",e)).unwrap_or_default();
 
     let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
     let jar = Jar::default();
-    let url = ("http://".to_string()+hv).parse::<Url>().map_err(|e|format!("url parse err:{}",e))?;
+    let url = format!("http://{}",host_value.as_str().unwrap_or_default()).parse::<Url>().map_err(|e|format!("url parse err:{}",e))?;
     cookie_value.as_str().and_then(|s|{
         s.split(';').for_each(|c| {
             if !c.is_empty() {
@@ -495,24 +491,24 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
     *jar_ = Arc::new(jar);
 
     let mut host = state.host.lock().map_err(|e|format!("lock err:{}",e))?;
-    *host = hv.to_string();
+    *host = host_value.as_str().unwrap_or_default().to_string();
 
     let mut sub_params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?;
-    *sub_params = sub_params_value.as_array().ok_or("None".to_string())?.iter().map(|v|v.as_str().unwrap_or("").to_owned()).collect();
+    *sub_params = serde_json::from_value(sub_params_value).map_err(|e|println!("serde_json err:{}",e)).unwrap_or_default();
 
     let mut sub_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
-    *sub_bugs = serde_json::from_value(sub_bugs_value).map_err(|e|format!("lock err:{}",e))?;
+    *sub_bugs = serde_json::from_value(sub_bugs_value).map_err(|e|println!("serde_json err:{}",e)).unwrap_or_default();
 
     let mut change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?;
-    *change_historys = serde_json::from_value(change_historys_value).map_err(|e|format!("lock err:{}",e))?;
-    
+    *change_historys = serde_json::from_value(change_historys_value).map_err(|e|println!("serde_json err:{}",e)).unwrap_or_default();
+
+    info!("init_global_state success!");
     Ok(())
 }
 
 fn sync_init_project_catgory(app: AppHandle) -> Result<(),String> {
     // 开启线程同步执行异步函数
-    let _ = block_on(init_project_catgory(app));
-    Err("not tokio runtime".to_string())
+    block_on(init_project_catgory(app))
 }
 
 // 初始化分组和项目
@@ -577,13 +573,12 @@ fn save_global_state(app: AppHandle) -> Result<(),String> {
     store.set("user", json_value);
     
     let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?;
-    store.set("host", host.clone());
+    store.set("host", Value::from(host.clone()));
 
     let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
-    let url = format!("http://{}",host).parse::<Url>().map_err(|e|format!("parse err:{}",e))?;
-    let hv = jar.cookies(&url).ok_or("cookies err".to_string())?;
-    let cookies = hv.to_str().map_err(|e|format!("cookies err:{}",e))?;
-    store.set("cookies", cookies);
+    let url = format!("http://{}",host.clone()).parse::<Url>().map_err(|e|format!("parse err:{}",e))?;
+    let cookies = jar.cookies(&url).map(|h| h.to_str().unwrap_or("").to_string()).unwrap_or_default();
+    store.set("cookies", Value::from(cookies));
 
     let sub_params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?;
     store.set("sub_param", sub_params.clone());
