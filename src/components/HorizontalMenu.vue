@@ -107,12 +107,13 @@ const handleSubmenuClick = (parentItem, childItem) => {
   // 清除该父菜单下所有子菜单的选中状态
   if (parentItem.children) {
     parentItem.children.forEach(child => {
-      child.checked = false
+      if (child.id !== childItem.id){
+        child.checked = false
+      }else{
+        childItem.checked = !childItem.checked
+      }
     })
   }
-  
-  // 设置当前点击的子菜单为选中状态
-  childItem.checked = true
   
   emit('submenu-click', {
     parent: parentItem,
@@ -234,7 +235,7 @@ const handleWheelScroll = (event) => {
 .vertical-menu {
   display: flex;
   flex-direction: column;
-  width: fit-content;
+  width: 132px;
   align-items: stretch;
 }
 
@@ -373,7 +374,7 @@ const handleWheelScroll = (event) => {
 
 .submenu-button-vertical {
   width: 100%;
-  justify-content: flex-start;
+  /* justify-content: flex-start; */
   transform: translateY(-10px);
   animation: slideInDown 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }

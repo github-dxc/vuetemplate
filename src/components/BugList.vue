@@ -50,7 +50,7 @@
                     </template>
                 </el-table-column>
 
-                <el-table-column label="摘要" width="250" show-overflow-tooltip header-align="center">
+                <el-table-column label="摘要" width="auto" show-overflow-tooltip header-align="center">
                     <template #default="scope">
                         <div class="summary-content">
                             <el-link class="summary-icon" @click="copyMessage(scope.row.summary)"
@@ -60,7 +60,7 @@
                     </template>
                 </el-table-column>
 
-                <el-table-column label="附件" width="auto" align="center" header-align="center">
+                <el-table-column label="附件" width="60" align="center" header-align="center">
                     <template #default="scope">
                         <div v-if="scope.row.attachments > 0" class="attachment-info">
                             <el-badge :value="scope.row.attachments" type="primary" class="attachment-badge" :max="9">
@@ -72,7 +72,7 @@
                     </template>
                 </el-table-column>
 
-                <el-table-column label="明细" width="80" align="center" header-align="center">
+                <el-table-column label="明细" width="60" align="center" header-align="center">
                     <template #default="scope">
                         <div class="attachment-info">
                             <el-badge v-if="scope.row.issue_notes_count" :value="scope.row.issue_notes_count"
@@ -100,7 +100,7 @@
                     </template>
                 </el-table-column>
 
-                <el-table-column label="快捷操作" width="160" align="center" header-align="center">
+                <el-table-column label="快捷操作" width="130" align="center" header-align="center">
                     <template #default="scope">
                         <el-dropdown split-button type="primary" size="default" class="action-dropdown"
                             @click="handleCommand({ status: workableStatus[scope.row.status][0], bug_id: scope.row.bug_id })"
@@ -402,8 +402,6 @@ onMounted(async () => {
 <style scoped>
 .table-panel {
     flex: 1;
-    max-width: 100%;
-    max-height: 100%;
     width: 100%;
     height: 100%;
     overflow: auto;
@@ -570,7 +568,6 @@ onMounted(async () => {
 
 .pagination-container {
     display: flex;
-    /* justify-content: center; */
     align-items: center;
     /* 垂直居中 */
     height: 10%;
@@ -578,6 +575,10 @@ onMounted(async () => {
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
     border-radius: 0 0 14px 14px;
+}
+
+.el-pagination {
+    margin: 0 5px;
 }
 
 .custom-pagination :deep(.el-pager li) {

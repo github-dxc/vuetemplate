@@ -143,7 +143,7 @@ pub async fn view_all_set(
     headers.insert(ACCEPT,HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
     headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
     headers.insert(CACHE_CONTROL, HeaderValue::from_static("max-age=0"));
-    headers.insert(CONTENT_TYPE,HeaderValue::from_static("application/x-www-form-urlencoded"));
+    // headers.insert(CONTENT_TYPE,HeaderValue::from_static("application/x-www-form-urlencoded"));
     headers.insert(CONTENT_LENGTH,HeaderValue::from_str(&body.len().to_string())?);
     headers.insert(ORIGIN, HeaderValue::from_str(&origin)?);
     headers.insert(REFERER,HeaderValue::from_str(&(origin.to_string()+"/view_all_bug_page.php"))?);
@@ -169,7 +169,8 @@ pub async fn view_all_set(
     let resp;
     if page > 1 {
         //发起get请求
-        url = format!("{}?page_number={}", url, page);
+        url = format!("{}/view_all_bug_page.php?page_number={}", origin, page);
+        println!("url:{}",url);
         resp = client.get(url).send().await.map_err(|e| e.to_string())?;
     }else{
         // 发送 POST 请求
@@ -186,6 +187,9 @@ pub async fn view_all_set(
     let _ = set_project_cookie(jar.clone(), "0", host);
 
     let text = resp.text().await.unwrap();
+    if page>1 {
+        println!("resp:{}",text);
+    }
     Ok(text)
 }
 

@@ -42,15 +42,13 @@ onMounted(async () => {
 <style scoped>
 .content-panel {
   flex: 1;
-  max-width: 100%;
-  max-height: 100%;
   width: 100%; 
   height: 100%;
   overflow: auto;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  max-height: 100vh;
 }
 
 .panel-header {
@@ -80,7 +78,7 @@ onMounted(async () => {
 }
 
 .panel-bug-list {
-  height: 100%;
+  height: 85%;
   padding: 25px 20px;
 }
 </style>

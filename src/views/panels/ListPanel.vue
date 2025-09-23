@@ -2,18 +2,21 @@
   <div class="demo-container">
     <!-- 使用横向菜单组件 -->
     <el-container>
-      <el-header>
-        <HorizontalMenu mode="horizontal" :menu-items="horizontalMenu" @menu-click="handleMenuClick"
+      <el-aside width="auto">
+        <HorizontalMenu mode="vertical" :menu-items="verticalMenu" @menu-click="handleMenuClick"
           @submenu-click="handleSubmenuClick" />
-      </el-header>
+      </el-aside>
 
       <el-container>
-        <el-aside width="auto">
-          <HorizontalMenu mode="vertical" :menu-items="verticalMenu" @menu-click="handleMenuClick"
+        <el-header>
+          <HorizontalMenu mode="horizontal" :menu-items="horizontalMenu" @menu-click="handleMenuClick"
             @submenu-click="handleSubmenuClick" />
-        </el-aside>
+        </el-header>
         <el-main>
-          <div class="panel-bug-list"></div>
+          <div class="panel-bug-list">
+            <BugList :bug-list="bugs" :bug-total="bugTotal" :enums="enums" :page="bugPage" :limit="bugLimit"
+              @change-page="changeBugPage"></BugList>
+          </div>
         </el-main>
       </el-container>
     </el-container>
@@ -21,7 +24,7 @@
 </template>
 
 <script setup vapor>
-import { ref, reactive, markRaw, computed } from 'vue'
+import { ref, reactive, markRaw, computed, onMounted } from 'vue'
 import HorizontalMenu from '../../components/HorizontalMenu.vue' // 引入上面的组件
 import {
   User,
@@ -35,6 +38,7 @@ import {
   Notebook,
 } from '@element-plus/icons-vue'
 import { bugList } from '../../api';
+import BugList from "../../components/BugList.vue"
 
 const props = defineProps({
   enums: {
@@ -46,13 +50,13 @@ const props = defineProps({
 
 const params = reactive({
   page: 1,
-  limit: 10,
+  limit: 9,
   view_state: 0,
   priority: [],
   severity: [],
   status: [],
   resolution: [],
-  project_id: [],
+  project_id: '',
   reporter_id: [],
   handler_id: [],
   category_id: []
@@ -65,55 +69,6 @@ const bugs = ref([]);
 
 const horizontalMenu = reactive([
   {
-    id: 'view_state',
-    label: '查看权限',
-    icon: markRaw(View),
-    children: props.enums.ViewStatus.map(ver => ({
-      id: ver.key,
-      label: ver.value,
-      checked: false
-    }))
-  }, {
-    id: 'priority',
-    label: '优先级',
-    icon: markRaw(Sort),
-    children: props.enums.Priority.map(ver => ({
-      id: ver.key,
-      label: ver.value,
-      checked: false
-    }))
-  }, {
-    id: 'severity',
-    label: '严重性',
-    icon: markRaw(Odometer),
-    children: props.enums.Severity.map(ver => ({
-      id: ver.key,
-      label: ver.value,
-      checked: false
-    }))
-  }, {
-    id: 'status',
-    label: '状态',
-    icon: markRaw(SetUp),
-    children: props.enums.Status.map(ver => ({
-      id: ver.key,
-      label: ver.value,
-      checked: false
-    }))
-  }, {
-    id: 'resolution',
-    label: '处理情况',
-    icon: markRaw(VideoPause),
-    children: props.enums.Resolution.map(ver => ({
-      id: ver.key,
-      label: ver.value,
-      checked: false
-    }))
-  },
-]);
-
-const verticalMenu = reactive([
-  {
     id: 'project_id',
     label: '项目',
     icon: markRaw(Document),
@@ -123,20 +78,51 @@ const verticalMenu = reactive([
       checked: false
     }))
   }, {
-    id: 'reporter_id',
-    label: '上报人',
-    icon: markRaw(User),
-    children: props.enums.Users.map(ver => ({
-      id: ver.key,
+    id: 'view_state',
+    label: '查看权限',
+    icon: markRaw(View),
+    children: props.enums.ViewStatus.map(ver => ({
+      id: parseInt(ver.key),
       label: ver.value,
       checked: false
     }))
   }, {
+    id: 'priority',
+    label: '优先级',
+    icon: markRaw(Sort),
+    children: props.enums.Priority.map(ver => ({
+      id: parseInt(ver.key),
+      label: ver.value,
+      checked: false
+    }))
+  }, {
+    id: 'severity',
+    label: '严重性',
+    icon: markRaw(Odometer),
+    children: props.enums.Severity.map(ver => ({
+      id: parseInt(ver.key),
+      label: ver.value,
+      checked: false
+    }))
+  },
+]);
+
+const verticalMenu = reactive([
+  {
     id: 'handler_id',
     label: '处理人',
     icon: markRaw(Star),
     children: props.enums.Users.map(ver => ({
-      id: ver.key,
+      id: parseInt(ver.key),
+      label: ver.value,
+      checked: false
+    }))
+  }, {
+    id: 'reporter_id',
+    label: '上报人',
+    icon: markRaw(User),
+    children: props.enums.Users.map(ver => ({
+      id: parseInt(ver.key),
       label: ver.value,
       checked: false
     }))
@@ -149,31 +135,80 @@ const verticalMenu = reactive([
       label: ver.value,
       checked: false
     }))
-  }, 
+  }, {
+    id: 'status',
+    label: '状态',
+    icon: markRaw(SetUp),
+    children: props.enums.Status.map(ver => ({
+      id: parseInt(ver.key),
+      label: ver.value,
+      checked: false
+    }))
+  }, {
+    id: 'resolution',
+    label: '处理情况',
+    icon: markRaw(VideoPause),
+    children: props.enums.Resolution.map(ver => ({
+      id: parseInt(ver.key),
+      label: ver.value,
+      checked: false
+    }))
+  },
 ])
 
 const fetchBugList = async () => {
-  const res = await bugList(params);
-  console.log('获取的bug列表:', res);
-  bugs.value = res.bugs;
-  bugTotal.value = res.total;
-  bugPage.value = res.page;
-  bugLimit.value = res.limit;
+  try {
+    const res = await bugList(params);
+    bugs.value = res.bugs;
+    bugTotal.value = res.total;
+    bugPage.value = res.page;
+    bugLimit.value = res.limit;
+  } catch (error) {
+    console.error('获取bug列表失败:', error);
+  }
 }
 
 // 事件处理
+const changeBugPage = (newPage) => {
+  params.page = newPage;
+  bugPage.value = newPage;
+  fetchBugList();
+}
+
 const handleMenuClick = (menuItem) => {
   console.log('点击了菜单:', menuItem)
 }
 
 const handleSubmenuClick = (data) => {
-  console.log('点击了子菜单:', data)
-  params.value[data.parent.id] = data.child.id;
+  console.log('点击了子菜单:', data);
+
+  // 判断是否为数组属性
+  if (Array.isArray(params[data.parent.id])) {
+    // 是数组，则添加/移除元素
+    const index = params[data.parent.id].indexOf(data.child.id);
+    if (index > -1) {
+      params[data.parent.id].splice(index, 1);
+    } else {
+      params[data.parent.id].push(data.child.id);
+    }
+  } else {
+    // 不是数组，直接赋值
+    params[data.parent.id] = data.child.id;
+  }
+
   fetchBugList();
 }
+
+onMounted(() => {
+  fetchBugList();
+});
 </script>
 
 <style scoped>
+.el-container {
+  height: 100%;
+}
+
 .demo-container {
   width: 100%;
   height: 100%;
@@ -182,8 +217,7 @@ const handleSubmenuClick = (data) => {
 
 .panel-bug-list {
   width: 100%;
-  height: 100px;
-  background-color: red;
+  height: 100%;
 }
 
 :deep(.el-header) {
@@ -191,6 +225,6 @@ const handleSubmenuClick = (data) => {
 }
 
 :deep(.el-aside) {
-  padding: 20px 20px;
+  padding: 20px 0 0 20px;
 }
 </style>
