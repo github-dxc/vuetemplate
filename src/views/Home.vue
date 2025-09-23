@@ -73,7 +73,7 @@ const readMsg = computed(() => userStore.userInfo.read_msg);
 const groupMsgs = computed(() => {
   let msgs = [];
   let unreadCount = 0;
-  let is_last_msg = false;
+  let is_last_msg = readMsg.value === '';
   for (let i = 0; i < bugMsgs.value.length; i++) {
     const e = bugMsgs.value[i];
     let item = msgs.find(h => h.user_id === e.handler_id && h.timestamp === e.updated_at && h.bug_id === e.bug_id)
@@ -190,7 +190,9 @@ listen('sub_msgs', (event) => {
 
 onMounted(async () => {
   userStore.getUserInfo();
+  console.log("userStore.userInfo:",userStore.userInfo);
   userStore.changeGetHost("");
+  console.log("userStore.host:",userStore.serverHost);
   // 初始化枚举数据
   await api_init_data();
   // 查询bug列表
