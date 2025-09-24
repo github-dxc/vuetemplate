@@ -233,10 +233,12 @@ onMounted(() => {
 }
 
 :deep(.el-header) {
+  overflow: hidden;
   margin-top: 20px;
 }
 
 :deep(.el-aside) {
+  overflow: hidden;
   padding: 20px 0 0 20px;
 }
 </style>
