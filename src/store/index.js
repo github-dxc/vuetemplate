@@ -18,20 +18,20 @@ export const useUserStore = defineStore('user', {
       role: '',
       createdAt: null
     },
-    
+
     // 认证token
     token: '',
-    
+
     // 加载状态
     loading: false,
 
     // 版本信息
     version: {
-        currentVersion: "0.1.0",
-        lastVersion: "0.1.0",
-        updateTime: Math.floor(Date.now() / 1000),
+      currentVersion: "0.1.0",
+      lastVersion: "0.1.0",
+      updateTime: Math.floor(Date.now() / 1000),
     },
-    
+
     // 系统设置
     setting: {
       theme: 'light', // light | dark
@@ -54,6 +54,9 @@ export const useUserStore = defineStore('user', {
       update: {
         skipVersion: '0.0.0',
         autoUpdate: false,
+      },
+      start: {
+        autoStart: false,
       }
     }
   }),
@@ -67,15 +70,15 @@ export const useUserStore = defineStore('user', {
 
     // host设置
     serverHost: (state) => state.setting.host,
-    
+
     // 当前主题
     currentTheme: (state) => state.setting.theme,
-    
+
     // 是否加载中
     isLoading: (state) => state.loading,
 
-    // 获取更新配置
-    updateInfo: (state) => state.setting.update,
+    // 获取配置
+    settingInfo: (state) => state.setting,
 
     // 版本信息
     versionInfo: (state) => state.version,
@@ -86,13 +89,13 @@ export const useUserStore = defineStore('user', {
     setUser(userInfo) {
       this.user = { ...this.user, ...userInfo }
     },
-    
+
     // 设置token
     setToken(token) {
       console.log('Setting token:', token)
       this.token = token
     },
-    
+
     // 设置加载状态
     setLoading(status) {
       this.loading = status
@@ -128,17 +131,17 @@ export const useUserStore = defineStore('user', {
       };
       deepUpdate(this.setting, setting);
     },
-    
+
     // 切换主题
     toggleTheme() {
       this.setting.theme = this.setting.theme === 'light' ? 'dark' : 'light'
     },
-    
+
     // 切换侧边栏
     toggleSidebar() {
       this.setting.sidebar.collapsed = !this.setting.sidebar.collapsed
     },
-    
+
     // 登录
     async login(username, password) {
       this.setLoading(true)
@@ -160,7 +163,7 @@ export const useUserStore = defineStore('user', {
         this.setLoading(false)
       }
     },
-    
+
     // 登出
     async logout() {
       this.setLoading(true)
@@ -175,7 +178,7 @@ export const useUserStore = defineStore('user', {
         this.setLoading(false)
       }
     },
-    
+
     // 同步用户信息
     async getUserInfo() {
       this.setLoading(true)
@@ -197,7 +200,7 @@ export const useUserStore = defineStore('user', {
     },
 
     // 设置读取消息
-    async readMsg(updated_at,bug_id,handler_id) {
+    async readMsg(updated_at, bug_id, handler_id) {
       let read_msg = `${updated_at}-${bug_id}-${handler_id}`
       this.setLoading(true)
       try {
@@ -223,7 +226,7 @@ export const useUserStore = defineStore('user', {
       this.setLoading(true)
       try {
         const newHost = await changeHost(host)
-        this.updateSetting({host: newHost})
+        this.updateSetting({ host: newHost })
         return { success: true, data: newHost }
       } catch (error) {
         return { success: false, error: error.message }

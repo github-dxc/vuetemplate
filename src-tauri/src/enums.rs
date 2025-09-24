@@ -39,17 +39,17 @@ pub enum Priority {
     VeryEmergency = 60,
 }
 const PRIORITY_VALUE: [(Priority, &str); 7] = [
-    (Priority::Unknown , "[任意]"),
-    (Priority::None , "无"),
-    (Priority::Low , "低"),
-    (Priority::Middle , "中"),
-    (Priority::High , "高"),
-    (Priority::Emergency , "紧急"),
-    (Priority::VeryEmergency , "非常紧急"),
+    (Priority::Unknown, "[任意]"),
+    (Priority::None, "无"),
+    (Priority::Low, "低"),
+    (Priority::Middle, "中"),
+    (Priority::High, "高"),
+    (Priority::Emergency, "紧急"),
+    (Priority::VeryEmergency, "非常紧急"),
 ];
 impl Priority {
     pub fn as_str(&self) -> &'static str {
-        if let Some((_,b)) = PRIORITY_VALUE.iter().find(|d|d.0 == *self) {
+        if let Some((_, b)) = PRIORITY_VALUE.iter().find(|d| d.0 == *self) {
             return *b;
         };
         ""
@@ -58,7 +58,13 @@ impl Priority {
         *self as i64
     }
     pub fn kv() -> Vec<KV> {
-        PRIORITY_VALUE.iter().map(|d|KV{key:(d.0 as i64).to_string(),value:d.1.into()}).collect()
+        PRIORITY_VALUE
+            .iter()
+            .map(|d| KV {
+                key: (d.0 as i64).to_string(),
+                value: d.1.into(),
+            })
+            .collect()
     }
 }
 impl std::fmt::Display for Priority {
@@ -68,7 +74,7 @@ impl std::fmt::Display for Priority {
 }
 impl From<&str> for Priority {
     fn from(s: &str) -> Self {
-        if let Some((a,_)) = PRIORITY_VALUE.iter().find(|d|d.1 == s) {
+        if let Some((a, _)) = PRIORITY_VALUE.iter().find(|d| d.1 == s) {
             return *a;
         };
         Priority::Unknown
@@ -76,7 +82,7 @@ impl From<&str> for Priority {
 }
 impl From<i64> for Priority {
     fn from(n: i64) -> Self {
-        if let Some((a,_)) = PRIORITY_VALUE.iter().find(|d|d.0.as_i64() == n) {
+        if let Some((a, _)) = PRIORITY_VALUE.iter().find(|d| d.0.as_i64() == n) {
             return *a;
         };
         Priority::Unknown
@@ -105,19 +111,19 @@ pub enum Severity {
     Downtime = 80,
 }
 const SERVERITY_VALUE: [(Severity, &str); 9] = [
-    (Severity::Unknown , "[任意]"),
-    (Severity::NewFeature , "新功能"),
-    (Severity::Detail , "细节"),
-    (Severity::Text , "文字"),
-    (Severity::SmallAdjustment , "小调整"),
-    (Severity::SmallError , "小错误"),
-    (Severity::SeriousError , "很严重"),
-    (Severity::Crash , "崩溃"),
-    (Severity::Downtime , "宕机"),
+    (Severity::Unknown, "[任意]"),
+    (Severity::NewFeature, "新功能"),
+    (Severity::Detail, "细节"),
+    (Severity::Text, "文字"),
+    (Severity::SmallAdjustment, "小调整"),
+    (Severity::SmallError, "小错误"),
+    (Severity::SeriousError, "很严重"),
+    (Severity::Crash, "崩溃"),
+    (Severity::Downtime, "宕机"),
 ];
 impl Severity {
     pub fn as_str(&self) -> &'static str {
-        if let Some((_,b)) = SERVERITY_VALUE.iter().find(|d|d.0 == *self) {
+        if let Some((_, b)) = SERVERITY_VALUE.iter().find(|d| d.0 == *self) {
             return *b;
         };
         ""
@@ -126,7 +132,13 @@ impl Severity {
         *self as i64
     }
     pub fn kv() -> Vec<KV> {
-        SERVERITY_VALUE.iter().map(|d|KV{key:(d.0 as i64).to_string(),value:d.1.into()}).collect()
+        SERVERITY_VALUE
+            .iter()
+            .map(|d| KV {
+                key: (d.0 as i64).to_string(),
+                value: d.1.into(),
+            })
+            .collect()
     }
 }
 impl std::fmt::Display for Severity {
@@ -136,7 +148,7 @@ impl std::fmt::Display for Severity {
 }
 impl From<&str> for Severity {
     fn from(s: &str) -> Self {
-        if let Some((a,_)) = SERVERITY_VALUE.iter().find(|d|d.1 == s) {
+        if let Some((a, _)) = SERVERITY_VALUE.iter().find(|d| d.1 == s) {
             return *a;
         };
         Severity::Unknown
@@ -144,10 +156,10 @@ impl From<&str> for Severity {
 }
 impl From<i64> for Severity {
     fn from(n: i64) -> Self {
-        if let Some((a,_)) = SERVERITY_VALUE.iter().find(|d|d.0.as_i64() == n) {
+        if let Some((a, _)) = SERVERITY_VALUE.iter().find(|d| d.0.as_i64() == n) {
             return *a;
         };
-        Severity::Unknown 
+        Severity::Unknown
     }
 }
 
@@ -182,23 +194,23 @@ pub enum Status {
     Closed = 90,
 }
 const STATUS_VALUE: [(Status, &str); 13] = [
-    (Status::Unknown , "[任意]"),
-    (Status::New , "新建"),
-    (Status::Feedback , "反馈"),
-    (Status::Acknowledged , "认可"),
-    (Status::Confirmed , "已确认"),
-    (Status::Assigned , "已分配"),
-    (Status::Resolved , "已解决"),
-    (Status::Released , "已发布"),
-    (Status::Verified , "已验证"),
-    (Status::NotFixed , "不予解决"),
-    (Status::DelayedFix , "延迟修复"),
-    (Status::Reopened , "重新打开"),
-    (Status::Closed , "已关闭"),
+    (Status::Unknown, "[任意]"),
+    (Status::New, "新建"),
+    (Status::Feedback, "反馈"),
+    (Status::Acknowledged, "认可"),
+    (Status::Confirmed, "已确认"),
+    (Status::Assigned, "已分配"),
+    (Status::Resolved, "已解决"),
+    (Status::Released, "已发布"),
+    (Status::Verified, "已验证"),
+    (Status::NotFixed, "不予解决"),
+    (Status::DelayedFix, "延迟修复"),
+    (Status::Reopened, "重新打开"),
+    (Status::Closed, "已关闭"),
 ];
 impl Status {
     pub fn as_str(&self) -> &'static str {
-        if let Some((_,b)) = STATUS_VALUE.iter().find(|d|d.0 == *self) {
+        if let Some((_, b)) = STATUS_VALUE.iter().find(|d| d.0 == *self) {
             return *b;
         };
         ""
@@ -207,7 +219,13 @@ impl Status {
         *self as i64
     }
     pub fn kv() -> Vec<KV> {
-        STATUS_VALUE.iter().map(|d|KV{key:(d.0 as i64).to_string(),value:d.1.into()}).collect()
+        STATUS_VALUE
+            .iter()
+            .map(|d| KV {
+                key: (d.0 as i64).to_string(),
+                value: d.1.into(),
+            })
+            .collect()
     }
 }
 impl std::fmt::Display for Status {
@@ -217,7 +235,7 @@ impl std::fmt::Display for Status {
 }
 impl From<&str> for Status {
     fn from(s: &str) -> Self {
-        if let Some((a,_)) = STATUS_VALUE.iter().find(|d|d.1 == s) {
+        if let Some((a, _)) = STATUS_VALUE.iter().find(|d| d.1 == s) {
             return *a;
         };
         Status::Unknown
@@ -225,10 +243,10 @@ impl From<&str> for Status {
 }
 impl From<i64> for Status {
     fn from(n: i64) -> Self {
-        if let Some((a,_)) = STATUS_VALUE.iter().find(|d|d.0.as_i64() == n) {
+        if let Some((a, _)) = STATUS_VALUE.iter().find(|d| d.0.as_i64() == n) {
             return *a;
         };
-        Status::Unknown 
+        Status::Unknown
     }
 }
 
@@ -257,20 +275,20 @@ pub enum Resolution {
     NoChange = 90,
 }
 const RESOLUTION_VALUE: [(Resolution, &str); 10] = [
-    (Resolution::Unknown , "[任意]"),
-    (Resolution::Unprocessed , "未处理"),
-    (Resolution::Fixed , "已修正"),
-    (Resolution::Reopened , "重新打开"),
-    (Resolution::NotReproducible , "无法重现"),
-    (Resolution::NotFixable , "无法修复"),
-    (Resolution::Duplicate , "重复问题"),
-    (Resolution::NotRequired , "不必改"),
-    (Resolution::Later , "稍后处理"),
-    (Resolution::NoChange , "不做修改"),
+    (Resolution::Unknown, "[任意]"),
+    (Resolution::Unprocessed, "未处理"),
+    (Resolution::Fixed, "已修正"),
+    (Resolution::Reopened, "重新打开"),
+    (Resolution::NotReproducible, "无法重现"),
+    (Resolution::NotFixable, "无法修复"),
+    (Resolution::Duplicate, "重复问题"),
+    (Resolution::NotRequired, "不必改"),
+    (Resolution::Later, "稍后处理"),
+    (Resolution::NoChange, "不做修改"),
 ];
 impl Resolution {
     pub fn as_str(&self) -> &'static str {
-        if let Some((_,b)) = RESOLUTION_VALUE.iter().find(|d|d.0 == *self) {
+        if let Some((_, b)) = RESOLUTION_VALUE.iter().find(|d| d.0 == *self) {
             return *b;
         };
         ""
@@ -279,7 +297,13 @@ impl Resolution {
         *self as i64
     }
     pub fn kv() -> Vec<KV> {
-        RESOLUTION_VALUE.iter().map(|d|KV{key:(d.0 as i64).to_string(),value:d.1.into()}).collect()
+        RESOLUTION_VALUE
+            .iter()
+            .map(|d| KV {
+                key: (d.0 as i64).to_string(),
+                value: d.1.into(),
+            })
+            .collect()
     }
 }
 impl std::fmt::Display for Resolution {
@@ -289,7 +313,7 @@ impl std::fmt::Display for Resolution {
 }
 impl From<&str> for Resolution {
     fn from(s: &str) -> Self {
-        if let Some((a,_)) = RESOLUTION_VALUE.iter().find(|d|d.1 == s) {
+        if let Some((a, _)) = RESOLUTION_VALUE.iter().find(|d| d.1 == s) {
             return *a;
         };
         Resolution::Unknown
@@ -297,10 +321,10 @@ impl From<&str> for Resolution {
 }
 impl From<i64> for Resolution {
     fn from(n: i64) -> Self {
-        if let Some((a,_)) = RESOLUTION_VALUE.iter().find(|d|d.0.as_i64() == n) {
+        if let Some((a, _)) = RESOLUTION_VALUE.iter().find(|d| d.0.as_i64() == n) {
             return *a;
         };
-        Resolution::Unknown 
+        Resolution::Unknown
     }
 }
 
@@ -314,13 +338,13 @@ pub enum ViewStatus {
     Privite = 50,
 }
 const VIEW_STATUS_VALUE: [(ViewStatus, &str); 3] = [
-    (ViewStatus::Unknown , "[任意]"),
-    (ViewStatus::Public , "公开"),
-    (ViewStatus::Privite , "私有"),
+    (ViewStatus::Unknown, "[任意]"),
+    (ViewStatus::Public, "公开"),
+    (ViewStatus::Privite, "私有"),
 ];
 impl ViewStatus {
     pub fn as_str(&self) -> &'static str {
-        if let Some((_,b)) = VIEW_STATUS_VALUE.iter().find(|d|d.0 == *self) {
+        if let Some((_, b)) = VIEW_STATUS_VALUE.iter().find(|d| d.0 == *self) {
             return *b;
         };
         ""
@@ -329,7 +353,13 @@ impl ViewStatus {
         *self as i64
     }
     pub fn kv() -> Vec<KV> {
-        VIEW_STATUS_VALUE.iter().map(|d|KV{key:(d.0 as i64).to_string(),value:d.1.into()}).collect()
+        VIEW_STATUS_VALUE
+            .iter()
+            .map(|d| KV {
+                key: (d.0 as i64).to_string(),
+                value: d.1.into(),
+            })
+            .collect()
     }
 }
 impl std::fmt::Display for ViewStatus {
@@ -339,7 +369,7 @@ impl std::fmt::Display for ViewStatus {
 }
 impl From<&str> for ViewStatus {
     fn from(s: &str) -> Self {
-        if let Some((a,_)) = VIEW_STATUS_VALUE.iter().find(|d|d.1 == s) {
+        if let Some((a, _)) = VIEW_STATUS_VALUE.iter().find(|d| d.1 == s) {
             return *a;
         };
         ViewStatus::Unknown
@@ -347,10 +377,10 @@ impl From<&str> for ViewStatus {
 }
 impl From<i64> for ViewStatus {
     fn from(n: i64) -> Self {
-        if let Some((a,_)) = VIEW_STATUS_VALUE.iter().find(|d|d.0.as_i64() == n) {
+        if let Some((a, _)) = VIEW_STATUS_VALUE.iter().find(|d| d.0.as_i64() == n) {
             return *a;
         };
-        ViewStatus::Unknown 
+        ViewStatus::Unknown
     }
 }
 
@@ -372,17 +402,17 @@ pub enum Reproducibility {
     NotApplicable = 100,
 }
 const REPRODUCIBILITY_VALUE: [(Reproducibility, &str); 7] = [
-    (Reproducibility::Unknown , "[任意]"),
-    (Reproducibility::Always , "总是"),
-    (Reproducibility::Sometimes , "有时"),
-    (Reproducibility::Random , "随机"),
-    (Reproducibility::NoTest , "没有试验"),
-    (Reproducibility::NotReproducible , "无法重现"),
-    (Reproducibility::NotApplicable , "不适用"),
+    (Reproducibility::Unknown, "[任意]"),
+    (Reproducibility::Always, "总是"),
+    (Reproducibility::Sometimes, "有时"),
+    (Reproducibility::Random, "随机"),
+    (Reproducibility::NoTest, "没有试验"),
+    (Reproducibility::NotReproducible, "无法重现"),
+    (Reproducibility::NotApplicable, "不适用"),
 ];
 impl Reproducibility {
     pub fn as_str(&self) -> &'static str {
-        if let Some((_,b)) = REPRODUCIBILITY_VALUE.iter().find(|d|d.0 == *self) {
+        if let Some((_, b)) = REPRODUCIBILITY_VALUE.iter().find(|d| d.0 == *self) {
             return *b;
         };
         ""
@@ -391,7 +421,13 @@ impl Reproducibility {
         *self as i64
     }
     pub fn kv() -> Vec<KV> {
-        REPRODUCIBILITY_VALUE.iter().map(|d|KV{key:(d.0 as i64).to_string(),value:d.1.into()}).collect()
+        REPRODUCIBILITY_VALUE
+            .iter()
+            .map(|d| KV {
+                key: (d.0 as i64).to_string(),
+                value: d.1.into(),
+            })
+            .collect()
     }
 }
 impl std::fmt::Display for Reproducibility {
@@ -401,7 +437,7 @@ impl std::fmt::Display for Reproducibility {
 }
 impl From<&str> for Reproducibility {
     fn from(s: &str) -> Self {
-        if let Some((a,_)) = REPRODUCIBILITY_VALUE.iter().find(|d|d.1 == s) {
+        if let Some((a, _)) = REPRODUCIBILITY_VALUE.iter().find(|d| d.1 == s) {
             return *a;
         };
         Reproducibility::Unknown
@@ -409,9 +445,9 @@ impl From<&str> for Reproducibility {
 }
 impl From<i64> for Reproducibility {
     fn from(n: i64) -> Self {
-        if let Some((a,_)) = REPRODUCIBILITY_VALUE.iter().find(|d|d.0.as_i64() == n) {
+        if let Some((a, _)) = REPRODUCIBILITY_VALUE.iter().find(|d| d.0.as_i64() == n) {
             return *a;
         };
-        Reproducibility::Unknown 
+        Reproducibility::Unknown
     }
 }

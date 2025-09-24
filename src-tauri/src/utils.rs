@@ -1,26 +1,26 @@
 use crate::enums::*;
 use crate::model::*;
 
-use chrono::{Utc, NaiveDate, NaiveTime, NaiveDateTime, TimeZone};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
 use chrono_tz::Asia::Shanghai;
+use lazy_static::lazy_static;
 use log::info;
 use reqwest::cookie::{CookieStore, Jar};
 use reqwest::header::{
     HeaderMap, HeaderValue, ACCEPT, ACCEPT_LANGUAGE, CACHE_CONTROL, CONNECTION, CONTENT_LENGTH,
-    CONTENT_TYPE, HOST, ORIGIN, REFERER, UPGRADE_INSECURE_REQUESTS, USER_AGENT, PRAGMA
+    CONTENT_TYPE, HOST, ORIGIN, PRAGMA, REFERER, UPGRADE_INSECURE_REQUESTS, USER_AGENT,
 };
+use reqwest::multipart::{Form, Part};
 use reqwest::redirect::Policy;
 use reqwest::Client;
-use reqwest::multipart::{Form, Part};
 use scraper::{Html, Selector};
 use serde_html_form;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 use std::time::Duration;
-use url::Url;
-use lazy_static::lazy_static;
 use tokio::sync::Mutex;
+use url::Url;
 
 // 定义一个全局锁
 lazy_static! {
@@ -34,10 +34,10 @@ pub async fn login(
     password: &str,
     host: &str,
 ) -> Result<String, Box<dyn std::error::Error>> {
-    println!("{},{},{}",username,password,host);
+    println!("{},{},{}", username, password, host);
     // 地址
-    let origin = format!("http://{}",host);
-    let url = origin.to_string()+"/login.php";
+    let origin = format!("http://{}", host);
+    let url = origin.to_string() + "/login.php";
 
     // 构建请求体
     let body = format!(
@@ -48,18 +48,30 @@ pub async fn login(
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT,HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
+    );
     headers.insert(CACHE_CONTROL, HeaderValue::from_static("max-age=0"));
-    headers.insert(CONTENT_TYPE,HeaderValue::from_static("application/x-www-form-urlencoded"));
-    headers.insert(CONTENT_LENGTH,HeaderValue::from_str(&body.len().to_string())?);
+    headers.insert(
+        CONTENT_TYPE,
+        HeaderValue::from_static("application/x-www-form-urlencoded"),
+    );
+    headers.insert(
+        CONTENT_LENGTH,
+        HeaderValue::from_str(&body.len().to_string())?,
+    );
     headers.insert(ORIGIN, HeaderValue::from_str(&origin)?);
-    headers.insert(REFERER,HeaderValue::from_str(&(origin.to_string()+"/login_password_page.php"))?);
+    headers.insert(
+        REFERER,
+        HeaderValue::from_str(&(origin.to_string() + "/login_password_page.php"))?,
+    );
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT,HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
     headers.insert(HOST, HeaderValue::from_str(host)?);
     let jar1 = jar.clone();
-    let dst = format!("{}/login_cookie_test.php?return=index.php",origin);
+    let dst = format!("{}/login_cookie_test.php?return=index.php", origin);
     // 创建 reqwest 客户端
     let client = Client::builder()
         .timeout(Duration::from_secs(2))
@@ -86,27 +98,27 @@ pub async fn login(
         .map_err(|e| e.to_string())?;
 
     let text = resp.text().await?;
-    info!("login resp: {}",text);
+    info!("login resp: {}", text);
     let cookie = jar1
         .cookies(&Url::parse(&origin).unwrap())
         .map(|e| format!("{}", e.to_str().unwrap()))
         .ok_or("".to_string())?;
-    info!("login cookie: {}",cookie);
+    info!("login cookie: {}", cookie);
     Ok(cookie)
 }
 
 // my_view_page 页面
-pub async fn my_view_page(
-    jar: Arc<Jar>,
-    host: &str,
-) -> Result<String, Box<dyn std::error::Error>> {
-    let origin = format!("http://{}",host);
-    let url = origin.to_string()+"/my_view_page.php?days=0&all=1";
+pub async fn my_view_page(jar: Arc<Jar>, host: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let origin = format!("http://{}", host);
+    let url = origin.to_string() + "/my_view_page.php?days=0&all=1";
 
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
+    );
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
@@ -139,8 +151,8 @@ pub async fn view_all_set(
     let l = GLOBAL_LOCK.clone();
     let _lock = l.lock().await;
     // 地址
-    let origin = format!("http://{}",host);
-    let mut url = origin.to_string()+"/view_all_set.php";
+    let origin = format!("http://{}", host);
+    let mut url = origin.to_string() + "/view_all_set.php";
 
     // 设置项目id cookie
     let _ = set_project_cookie(jar.clone(), project_id, host);
@@ -151,13 +163,25 @@ pub async fn view_all_set(
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT,HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
+    );
     headers.insert(CACHE_CONTROL, HeaderValue::from_static("max-age=0"));
-    headers.insert(CONTENT_TYPE,HeaderValue::from_static("application/x-www-form-urlencoded"));
-    headers.insert(CONTENT_LENGTH,HeaderValue::from_str(&body.len().to_string())?);
+    headers.insert(
+        CONTENT_TYPE,
+        HeaderValue::from_static("application/x-www-form-urlencoded"),
+    );
+    headers.insert(
+        CONTENT_LENGTH,
+        HeaderValue::from_str(&body.len().to_string())?,
+    );
     headers.insert(ORIGIN, HeaderValue::from_str(&origin)?);
     headers.insert(PRAGMA, HeaderValue::from_str("no-cache")?);
-    headers.insert(REFERER,HeaderValue::from_str(&(origin.to_string()+"/view_all_bug_page.php"))?);
+    headers.insert(
+        REFERER,
+        HeaderValue::from_str(&(origin.to_string() + "/view_all_bug_page.php"))?,
+    );
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT,HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
@@ -175,7 +199,7 @@ pub async fn view_all_set(
         }))
         .build()
         .map_err(|e| e.to_string())?;
-    
+
     // 发送 POST 请求
     let resp = client
         .post(url)
@@ -219,18 +243,17 @@ pub async fn view_all_set(
 }
 
 // my_view_detail 页面
-pub async fn my_view_detail(
-    jar: Arc<Jar>, 
-    id: i64,
-    host: &str,
-) -> Result<String, String> {
-    let origin = format!("http://{}",host);
-    let url = format!("{}/view.php?id={}",origin, id);
+pub async fn my_view_detail(jar: Arc<Jar>, id: i64, host: &str) -> Result<String, String> {
+    let origin = format!("http://{}", host);
+    let url = format!("{}/view.php?id={}", origin, id);
 
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
+    );
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
@@ -253,12 +276,12 @@ pub async fn my_view_detail(
 
 // bug_update_page 页面
 pub async fn bug_update_page(
-    jar: Arc<Jar>, 
+    jar: Arc<Jar>,
     bug: UpdateToken,
     host: &str,
 ) -> Result<String, String> {
-    let origin = format!("http://{}",host);
-    let url = origin.to_string()+"/bug_update_page.php";
+    let origin = format!("http://{}", host);
+    let url = origin.to_string() + "/bug_update_page.php";
 
     // body
     let body = serde_html_form::to_string(&bug).unwrap();
@@ -267,10 +290,19 @@ pub async fn bug_update_page(
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
-    headers.insert(CONTENT_TYPE,HeaderValue::from_static("application/x-www-form-urlencoded"));
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
+    );
+    headers.insert(
+        CONTENT_TYPE,
+        HeaderValue::from_static("application/x-www-form-urlencoded"),
+    );
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
-    headers.insert(REFERER,HeaderValue::from_str(referer.as_str()).map_err(|e| format!("{}", e))?);
+    headers.insert(
+        REFERER,
+        HeaderValue::from_str(referer.as_str()).map_err(|e| format!("{}", e))?,
+    );
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
 
@@ -296,13 +328,9 @@ pub async fn bug_update_page(
 }
 
 // bug_update 页面
-pub async fn bug_update(
-    jar: Arc<Jar>, 
-    bug: UpdateBug,
-    host: &str,
-) -> Result<String, String> {
-    let origin = format!("http://{}",host);
-    let url = origin.to_string()+"/bug_update.php";
+pub async fn bug_update(jar: Arc<Jar>, bug: UpdateBug, host: &str) -> Result<String, String> {
+    let origin = format!("http://{}", host);
+    let url = origin.to_string() + "/bug_update.php";
 
     // body
     let body = serde_html_form::to_string(&bug).unwrap();
@@ -310,9 +338,15 @@ pub async fn bug_update(
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
+    );
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
-    headers.insert(CONTENT_TYPE,HeaderValue::from_static("application/x-www-form-urlencoded"));
+    headers.insert(
+        CONTENT_TYPE,
+        HeaderValue::from_static("application/x-www-form-urlencoded"),
+    );
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
 
@@ -343,13 +377,9 @@ pub async fn bug_update(
 }
 
 // bugnote_add 请求
-pub async fn bug_note_add(
-    jar: Arc<Jar>, 
-    bug: BugNoteAdd,
-    host: &str,
-) -> Result<String, String> {
-    let origin = format!("http://{}",host);
-    let url = origin.to_string()+"/bugnote_add.php";
+pub async fn bug_note_add(jar: Arc<Jar>, bug: BugNoteAdd, host: &str) -> Result<String, String> {
+    let origin = format!("http://{}", host);
+    let url = origin.to_string() + "/bugnote_add.php";
 
     // 构造 multipart/form-data 表单
     let mut form = Form::new()
@@ -359,9 +389,10 @@ pub async fn bug_note_add(
         .text("bugnote_add_token", bug.bugnote_add_token.to_string());
 
     // 如果提供了文件路径，则添加文件部分
-    let mut i:usize = 0;
+    let mut i: usize = 0;
     for path in bug.file_path {
-        let file_bytes = tokio::fs::read(&path).await
+        let file_bytes = tokio::fs::read(&path)
+            .await
             .map_err(|e| format!("无法读取文件: {}", e))?;
         let file_name = std::path::Path::new(&path)
             .file_name()
@@ -374,23 +405,26 @@ pub async fn bug_note_add(
             .file_name(file_name)
             .mime_str(&mime) // 设置MIME类型
             .unwrap();
-        form = form.part(format!("ufile[{}]",i), file_part); // 这里的"attachment"是表单中文件字段的名称
-        i+=1;
+        form = form.part(format!("ufile[{}]", i), file_part); // 这里的"attachment"是表单中文件字段的名称
+        i += 1;
     }
     // 如果是二进制文件，则添加文件部分
-    for (file_name,file_bytes) in bug.binary_file {
+    for (file_name, file_bytes) in bug.binary_file {
         let mime = get_mime_type_from_filename(&file_name);
         let file_part = Part::bytes(file_bytes)
             .file_name(file_name)
             .mime_str(&mime) // 设置MIME类型
             .unwrap();
-        form = form.part(format!("ufile[{}]",i), file_part); // 这里的"attachment"是表单中文件字段的名称
-        i+=1;
+        form = form.part(format!("ufile[{}]", i), file_part); // 这里的"attachment"是表单中文件字段的名称
+        i += 1;
     }
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
+    );
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
@@ -423,12 +457,12 @@ pub async fn bug_note_add(
 
 // bug_change_status_page 页面
 pub async fn bug_change_status_page(
-    jar: Arc<Jar>, 
+    jar: Arc<Jar>,
     bug: UpdateToken,
     host: &str,
 ) -> Result<String, String> {
-    let origin = format!("http://{}",host);
-    let url = origin.to_string()+"/bug_change_status_page.php";
+    let origin = format!("http://{}", host);
+    let url = origin.to_string() + "/bug_change_status_page.php";
 
     // body
     let body = serde_html_form::to_string(&bug).unwrap();
@@ -436,7 +470,10 @@ pub async fn bug_change_status_page(
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
+    );
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
@@ -464,11 +501,11 @@ pub async fn bug_change_status_page(
 
 // bug_report_page 页面
 pub async fn bug_report_page(
-    jar: Arc<Jar>, 
+    jar: Arc<Jar>,
     host: &str,
     project_id: &str,
 ) -> Result<String, String> {
-    let origin = format!("http://{}",host);
+    let origin = format!("http://{}", host);
     let url = format!("{}/bug_report_page.php", origin);
 
     // 设置项目id cookie
@@ -477,7 +514,10 @@ pub async fn bug_report_page(
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
+    );
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
@@ -502,18 +542,22 @@ pub async fn bug_report_page(
 }
 
 // image信息
-pub async fn image_bytes(
-    jar: Arc<Jar>, 
-    host: &str,
-    uri: &str,
-) -> Result<Vec<u8>, String> {
-    let origin = format!("http://{}",host);
+pub async fn image_bytes(jar: Arc<Jar>, host: &str, uri: &str) -> Result<Vec<u8>, String> {
+    let origin = format!("http://{}", host);
     let url = format!("{}/{}", origin, uri);
 
     // 构建请求头
     let mut headers = HeaderMap::new();
-    headers.insert(ACCEPT, HeaderValue::from_static("image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"));
-    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(
+        ACCEPT,
+        HeaderValue::from_static(
+            "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        ),
+    );
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
+    );
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
 
@@ -535,18 +579,26 @@ pub async fn image_bytes(
 
 // 查询条件列表（单独获取某一项）
 pub async fn filters_params(
-    jar: Arc<Jar>, 
+    jar: Arc<Jar>,
     params: FiltersParams,
     host: &str,
 ) -> Result<String, String> {
-    let origin = format!("http://{}",host);
-    let url = format!("{}/return_dynamic_filters?view_type={}&filter_target={}&filter_id=3&_={}", 
-        origin, params.view_type, params.filter_target, Utc::now().timestamp_millis());
+    let origin = format!("http://{}", host);
+    let url = format!(
+        "{}/return_dynamic_filters?view_type={}&filter_target={}&filter_id=3&_={}",
+        origin,
+        params.view_type,
+        params.filter_target,
+        Utc::now().timestamp_millis()
+    );
 
     // 构建请求头
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
+    );
     headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
@@ -568,10 +620,12 @@ pub async fn filters_params(
 }
 
 // 查询my_view_page_details数据
-pub fn my_view_page_details(document: &Html) -> Result<Vec<OperateLogs>, Box<dyn std::error::Error>> {
+pub fn my_view_page_details(
+    document: &Html,
+) -> Result<Vec<OperateLogs>, Box<dyn std::error::Error>> {
     // 创建选择器
-    let selector =
-        Selector::parse(".profile-activity.clearfix").map_err(|e| format!("Selector 解析失败: {:?}", e))?;
+    let selector = Selector::parse(".profile-activity.clearfix")
+        .map_err(|e| format!("Selector 解析失败: {:?}", e))?;
 
     // 收集所有匹配元素的文本
     let results: Vec<OperateLogs> = document
@@ -597,20 +651,25 @@ pub fn my_view_page_details(document: &Html) -> Result<Vec<OperateLogs>, Box<dyn
                     })
                 })
                 .unwrap_or(0);
-            
+
             // last_updated
             let last_modified_selector = Selector::parse(".time").unwrap();
             // <td class="column-last-modified">2025-06-18 23:15</td>
             bug.last_updated = element
                 .select(&last_modified_selector)
                 .find_map(|e| {
-                    let date_str = e.text().last().unwrap_or_default().replace("\"", "").trim().to_string();
+                    let date_str = e
+                        .text()
+                        .last()
+                        .unwrap_or_default()
+                        .replace("\"", "")
+                        .trim()
+                        .to_string();
                     // 解析为 NaiveDate
-                    let date = NaiveDateTime::parse_from_str(date_str.as_str(), "%Y-%m-%d %H:%M").ok()?;
+                    let date =
+                        NaiveDateTime::parse_from_str(date_str.as_str(), "%Y-%m-%d %H:%M").ok()?;
                     // 设为上海时区的0点
-                    let datetime = Shanghai
-                        .from_local_datetime(&date)
-                        .unwrap();
+                    let datetime = Shanghai.from_local_datetime(&date).unwrap();
                     // 转为时间戳（秒）
                     Some(datetime.timestamp())
                 })
@@ -630,7 +689,11 @@ pub fn my_view_page_details(document: &Html) -> Result<Vec<OperateLogs>, Box<dyn
 }
 
 // 查询view_all_set数据
-pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<KV>) -> Result<BugList, Box<dyn std::error::Error>> {
+pub fn view_all_set_data(
+    document: &Html,
+    category_kv: &Vec<KV>,
+    project_kv: &Vec<KV>,
+) -> Result<BugList, Box<dyn std::error::Error>> {
     // 创建选择器
     let selector =
         Selector::parse("#buglist tbody tr").map_err(|e| format!("Selector 解析失败: {:?}", e))?;
@@ -666,15 +729,21 @@ pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<
             let priority_selector = Selector::parse(".column-priority i").unwrap();
             bug.priority = element
                 .select(&priority_selector)
-                .find_map(|e| Some(Priority::from(e.value().attr("title").unwrap_or_default()).as_i64()))
+                .find_map(|e| {
+                    Some(Priority::from(e.value().attr("title").unwrap_or_default()).as_i64())
+                })
                 .unwrap_or(0);
 
             // category_id
             let category_selector = Selector::parse(".column-category div").unwrap();
-            
+
             bug.category_id = element
                 .select(&category_selector)
-                .find_map(|e|category_kv.find_by_value(e.text().last().unwrap_or_default().trim()).and_then(|kv|kv.key.parse::<i64>().ok()))
+                .find_map(|e| {
+                    category_kv
+                        .find_by_value(e.text().last().unwrap_or_default().trim())
+                        .and_then(|kv| kv.key.parse::<i64>().ok())
+                })
                 .unwrap_or(0);
 
             // project_id
@@ -684,7 +753,9 @@ pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<
                 .find_map(|e| {
                     // project
                     bug.project = e.inner_html().trim().to_string();
-                    project_kv.find_by_value(bug.project.as_str()).map(|kv|kv.key.clone())
+                    project_kv
+                        .find_by_value(bug.project.as_str())
+                        .map(|kv| kv.key.clone())
                 })
                 .unwrap_or("".to_owned());
 
@@ -692,7 +763,9 @@ pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<
             let severity_selector = Selector::parse(".column-severity").unwrap();
             bug.severity = element
                 .select(&severity_selector)
-                .find_map(|e| Some(Severity::from(e.text().last().unwrap_or_default().trim()).as_i64()))
+                .find_map(|e| {
+                    Some(Severity::from(e.text().last().unwrap_or_default().trim()).as_i64())
+                })
                 .unwrap_or(0);
 
             // status
@@ -743,7 +816,8 @@ pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<
                 .unwrap_or(0);
 
             // last_updated
-            let last_modified_selector = Selector::parse(".column-last-modified , .column-last-modified>span").unwrap();
+            let last_modified_selector =
+                Selector::parse(".column-last-modified , .column-last-modified>span").unwrap();
             // <td class="column-last-modified">2025-06-18</td>
             bug.last_updated = element
                 .select(&last_modified_selector)
@@ -765,7 +839,10 @@ pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<
             bug.summary = element
                 .select(&summary_selector)
                 .map(|e| e.text().collect::<Vec<_>>().join(""))
-                .collect::<Vec<String>>().join("").trim().to_owned();
+                .collect::<Vec<String>>()
+                .join("")
+                .trim()
+                .to_owned();
             bug
         })
         .collect();
@@ -802,7 +879,12 @@ pub fn view_all_set_data(document: &Html,category_kv: &Vec<KV>,project_kv: &Vec<
 }
 
 // 查询my_view_detail数据
-pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,project_kv: &Vec<KV>) -> Result<BugInfo, String> {
+pub fn my_view_detail_data(
+    document: &Html,
+    host: &str,
+    category_kv: &Vec<KV>,
+    project_kv: &Vec<KV>,
+) -> Result<BugInfo, String> {
     let mut bug = BugInfo::default();
     // bug_id
     let id_slector = Selector::parse(".bug-header-data .bug-id").unwrap();
@@ -818,7 +900,9 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
         .find_map(|e| {
             // project
             bug.project = e.inner_html().trim().to_string();
-            project_kv.find_by_value(bug.project.as_str()).map(|kv| kv.key.clone())
+            project_kv
+                .find_by_value(bug.project.as_str())
+                .map(|kv| kv.key.clone())
         })
         .unwrap_or("".to_owned());
 
@@ -826,7 +910,16 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
     let category_selector = Selector::parse(".bug-header-data .bug-category").unwrap();
     bug.category_id = document
         .select(&category_selector)
-        .find_map(|e|category_kv.find_by_value(e.text().last().unwrap_or_default().replace("[所有项目] ", "")).and_then(|kv|kv.key.parse::<i64>().ok()))
+        .find_map(|e| {
+            category_kv
+                .find_by_value(
+                    e.text()
+                        .last()
+                        .unwrap_or_default()
+                        .replace("[所有项目] ", ""),
+                )
+                .and_then(|kv| kv.key.parse::<i64>().ok())
+        })
         .unwrap_or(0);
 
     // view_status
@@ -845,9 +938,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
             // 解析为 NaiveDate
             let date = NaiveDateTime::parse_from_str(date_str.as_str(), "%Y-%m-%d %H:%M").ok()?;
             // 设为上海时区的0点
-            let datetime = Shanghai
-                .from_local_datetime(&date)
-                .unwrap();
+            let datetime = Shanghai.from_local_datetime(&date).unwrap();
             // 转为时间戳（秒）
             Some(datetime.timestamp())
         })
@@ -862,9 +953,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
             // 解析为 NaiveDate
             let date = NaiveDateTime::parse_from_str(date_str.as_str(), "%Y-%m-%d %H:%M").ok()?;
             // 设为上海时区的0点
-            let datetime = Shanghai
-                .from_local_datetime(&date)
-                .unwrap();
+            let datetime = Shanghai.from_local_datetime(&date).unwrap();
             // 转为时间戳（秒）
             Some(datetime.timestamp())
         })
@@ -1012,7 +1101,7 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
             e.select(&Selector::parse("a:nth-of-type(2)").unwrap())
                 .for_each(|e| {
                     //<a href="file_download.php?file_id=2365&amp;type=bug">image.png</a>&#32;(179,667&#32;字节)&#32;&nbsp;&nbsp;
-                    url = format!("{}",e.value().attr("href").unwrap_or_default());
+                    url = format!("{}", e.value().attr("href").unwrap_or_default());
                     name = e.inner_html().trim().to_string();
                     e.next_sibling().map(|sibling| {
                         if sibling.value().is_text() {
@@ -1124,36 +1213,52 @@ pub fn my_view_detail_data(document: &Html,host: &str,category_kv: &Vec<KV>,proj
         .map(|e| {
             let hister_field = Selector::parse("td.small-caption").unwrap();
             let mut s = e.select(&hister_field);
-            let updated_at = s.next()
+            let updated_at = s
+                .next()
                 .map(|e| {
                     let date_str = e.inner_html().trim().to_string();
                     // 解析为 NaiveDate
                     let date = NaiveDateTime::parse_from_str(&date_str, "%Y-%m-%d %H:%M").ok()?;
                     // 设为上海时区的0点
-                    let datetime = Shanghai
-                        .from_local_datetime(&date)
-                        .unwrap();
+                    let datetime = Shanghai.from_local_datetime(&date).unwrap();
                     // 转为时间戳（秒）
                     Some(datetime.timestamp())
                 })
                 .unwrap_or_default()
                 .unwrap_or_default();
-            let (handler_id, handler) = s.next()
-                .map(|e|{
-                    let handler = e.select(&Selector::parse("a").unwrap())
+            let (handler_id, handler) = s
+                .next()
+                .map(|e| {
+                    let handler = e
+                        .select(&Selector::parse("a").unwrap())
                         .find_map(|e| {
-                            e.value().attr("href").and_then(|href| {
-                                href.split('=').last().and_then(|id| id.parse::<i64>().ok())
-                            })
-                            .map(|id| (id, e.inner_html()))
+                            e.value()
+                                .attr("href")
+                                .and_then(|href| {
+                                    href.split('=').last().and_then(|id| id.parse::<i64>().ok())
+                                })
+                                .map(|id| (id, e.inner_html()))
                         })
                         .unwrap_or((0, "".to_owned()));
                     handler
                 })
                 .unwrap_or_default();
-            let field = s.next().map(|e| e.inner_html().trim().to_string()).unwrap_or_default();
-            let change = s.next().map(|e| e.inner_html().trim().to_string()).unwrap_or_default();
-            ChangeHistory { bug_id: bug.bug_id, updated_at, handler_id, handler, field, change }
+            let field = s
+                .next()
+                .map(|e| e.inner_html().trim().to_string())
+                .unwrap_or_default();
+            let change = s
+                .next()
+                .map(|e| e.inner_html().trim().to_string())
+                .unwrap_or_default();
+            ChangeHistory {
+                bug_id: bug.bug_id,
+                updated_at,
+                handler_id,
+                handler,
+                field,
+                change,
+            }
         })
         .collect();
     Ok(bug)
@@ -1166,10 +1271,11 @@ pub fn project_data(document: &Html) -> Result<Vec<KV>, String> {
         .select(&slector)
         .filter_map(|e| {
             let value = e.inner_html().replace("&nbsp;", "").trim().to_string();
-            let key = e.value().attr("href").and_then(|href| {
-                href.split('=').last().and_then(|ids| Some(ids.to_owned()))
-            })?;
-            Some(KV{key,value})
+            let key = e
+                .value()
+                .attr("href")
+                .and_then(|href| href.split('=').last().and_then(|ids| Some(ids.to_owned())))?;
+            Some(KV { key, value })
         })
         .collect();
     Ok(r)
@@ -1181,11 +1287,11 @@ pub fn category_data(document: &Html) -> Result<Vec<KV>, String> {
         .select(&slector)
         .filter_map(|e| {
             let value = e.inner_html().replace("[所有项目]", "").trim().to_string();
-            let key = e.value().attr("value").map(|id|id.to_owned())?;
+            let key = e.value().attr("value").map(|id| id.to_owned())?;
             if key == "" {
                 return None;
             }
-            Some(KV{key,value})
+            Some(KV { key, value })
         })
         .collect();
     Ok(r)
@@ -1196,15 +1302,22 @@ pub fn users_data(document: &Html) -> Result<Vec<KV>, String> {
     let r: Vec<KV> = document
         .select(&slector)
         .filter_map(|e| {
-            let mut value = e.inner_html().trim().split('(').next().unwrap_or_default().trim().to_string();
-            let key = e.value().attr("value").map(|id|id.to_owned())?;
+            let mut value = e
+                .inner_html()
+                .trim()
+                .split('(')
+                .next()
+                .unwrap_or_default()
+                .trim()
+                .to_string();
+            let key = e.value().attr("value").map(|id| id.to_owned())?;
             if key == "" {
                 return None;
             }
             if key == "0" {
                 value = "[任意]".to_string();
             }
-            Some(KV{key,value})
+            Some(KV { key, value })
         })
         .collect();
     Ok(r)
@@ -1217,8 +1330,8 @@ pub fn filters_data(document: &Html) -> Result<Vec<KV>, String> {
         .select(&slector)
         .filter_map(|e| {
             let value = e.inner_html().trim().to_string();
-            let key = e.value().attr("value").and_then(|id|Some(id.to_owned()))?;
-            Some(KV{key,value})
+            let key = e.value().attr("value").and_then(|id| Some(id.to_owned()))?;
+            Some(KV { key, value })
         })
         .collect();
     Ok(r)
@@ -1243,10 +1356,10 @@ pub fn get_user_id(document: &Html) -> Result<i64, String> {
     document
         .select(&selector)
         .find_map(|e| {
-            e.value().attr("href").and_then(|herf|{
-                let url = format!("http://{}",herf);
+            e.value().attr("href").and_then(|herf| {
+                let url = format!("http://{}", herf);
                 let a = Url::parse(&url).ok()?;
-                a.query_pairs().find_map(|(k,v)| {
+                a.query_pairs().find_map(|(k, v)| {
                     if k == "handler_id" {
                         return v.parse::<i64>().ok();
                     }
@@ -1260,11 +1373,15 @@ pub fn get_user_id(document: &Html) -> Result<i64, String> {
 // 查询错误
 pub fn get_error_info(document: &Html) -> Option<String> {
     // 创建选择器
-    let selector = Selector::parse(".alert.alert-danger")
-        .ok()?;
-    document
-        .select(&selector)
-        .find_map(|e| e.text().collect::<Vec<_>>().join("").trim().to_string().into())
+    let selector = Selector::parse(".alert.alert-danger").ok()?;
+    document.select(&selector).find_map(|e| {
+        e.text()
+            .collect::<Vec<_>>()
+            .join("")
+            .trim()
+            .to_string()
+            .into()
+    })
 }
 
 pub fn get_hash<T: Hash>(t: &T) -> u64 {
@@ -1273,9 +1390,9 @@ pub fn get_hash<T: Hash>(t: &T) -> u64 {
     s.finish()
 }
 
-pub fn set_project_cookie(jar: Arc<Jar>,project_id: &str,host: &str) -> Result<(), String> {
+pub fn set_project_cookie(jar: Arc<Jar>, project_id: &str, host: &str) -> Result<(), String> {
     let cookie = format!("MANTIS_PROJECT_COOKIE={}", project_id);
-    let origin = format!("http://{}",host);
+    let origin = format!("http://{}", host);
     let url = &Url::parse(&origin).unwrap();
     jar.add_cookie_str(&cookie, url);
     Ok(())
@@ -1284,17 +1401,16 @@ pub fn set_project_cookie(jar: Arc<Jar>,project_id: &str,host: &str) -> Result<(
 pub fn println_cookies(jar: &Jar, host: &str) {
     let origin = format!("http://{}", host);
     let url = Url::parse(&origin).unwrap();
-    jar.cookies(&url).and_then(|c|{
+    jar.cookies(&url).and_then(|c| {
         let s = c.to_str().ok()?;
-        println!("cookies:{}",s);
+        println!("cookies:{}", s);
         Some(())
     });
 }
 
 fn get_mime_type_from_filename(filename: &str) -> String {
-    let mime_type = mime_guess::from_path(filename)
-        .first_or_octet_stream();
-    
+    let mime_type = mime_guess::from_path(filename).first_or_octet_stream();
+
     // Convert the Mime object to a String
     mime_type.to_string()
 }

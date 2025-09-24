@@ -10,19 +10,20 @@ use log::{debug, info, warn};
 use model::*;
 use reqwest::cookie::{CookieStore, Jar};
 use scraper::Html;
+use serde_json::Value;
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::sync::{Arc, Mutex};
+use tauri::async_runtime::block_on;
+use tauri::{AppHandle, Emitter, Manager, WindowEvent};
+use tauri_plugin_autostart::MacosLauncher;
+use tauri_plugin_notification::{NotificationExt, PermissionState};
 use tauri_plugin_opener::OpenerExt;
 use tauri_plugin_store::StoreExt;
-use url::Url;
-use std::collections::{HashMap};
-use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, Emitter, Manager, WindowEvent};
-use tauri_plugin_notification::{NotificationExt, PermissionState};
 use tauri_plugin_updater::{Update, UpdaterExt};
-use tauri::async_runtime::block_on;
-use tokio::time::{interval, Duration};
 use tokio::signal;
-use serde_json::{json, Value};
-use std::collections::HashSet;
+use tokio::time::{interval, Duration};
+use url::Url;
 use utils::*;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -32,6 +33,10 @@ pub fn run() {
         .filter_level(log::LevelFilter::Info) // 设置日志级别为 Debug
         .init();
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            Some(vec!["--flag1", "--flag2"]),
+        ))
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_notification::init())
@@ -59,9 +64,11 @@ pub fn run() {
             //清空所有状态
             // let _ = clear_global_state(app.handle().clone());
             //初始化全局状态
-            let _ = init_global_state(app.handle().clone()).map_err(|e|println!("init_global_state err:{}",e));
+            let _ = init_global_state(app.handle().clone())
+                .map_err(|e| println!("init_global_state err:{}", e));
             //初始化分组和项目
-            let _ = sync_init_project_catgory(app.handle().clone()).map_err(|e|println!("sync_init_project_catgory err:{}",e));
+            let _ = sync_init_project_catgory(app.handle().clone())
+                .map_err(|e| println!("sync_init_project_catgory err:{}", e));
             //定时更新
             update_app(app.handle().clone());
             //定时查询订阅数据
@@ -70,19 +77,19 @@ pub fn run() {
             close_app_callback(app.handle().clone());
             Ok(())
         })
-        .on_window_event(move |window,event| {
+        .on_window_event(move |window, event| {
             match event {
                 //关闭事件
                 WindowEvent::CloseRequested { api, .. } => {
                     if window.title().unwrap().as_str() == "image" {
                         println!("非main窗口关闭");
-                        return
+                        return;
                     }
                     println!("窗口即将关闭，执行清理操作...");
                     let r = save_global_state(window.app_handle().clone());
                     match r {
                         Ok(_) => println!("handle exec ok"),
-                        Err(msg) => println!("handle exec err: {}",msg)
+                        Err(msg) => println!("handle exec err: {}", msg),
                     }
                     // 如果你想阻止关闭，可以调用：
                     // api.prevent_close();
@@ -103,30 +110,40 @@ struct MyState {
     user: Arc<Mutex<LoginInfo>>, //登录信息
     jar: Mutex<Arc<Jar>>,
     host: Arc<Mutex<String>>,
-    sub_params: Arc<Mutex<Vec<String>>>,//订阅列表
-    sub_bugs: Arc<Mutex<Vec<Bug>>>, //bugs列表
-    last_version: Arc<Mutex<Option<Update>>>,//系统版本
-    change_historys: Arc<Mutex<Vec<ChangeHistory>>>,//操作日志(保存100条)
+    sub_params: Arc<Mutex<Vec<String>>>,             //订阅列表
+    sub_bugs: Arc<Mutex<Vec<Bug>>>,                  //bugs列表
+    last_version: Arc<Mutex<Option<Update>>>,        //系统版本
+    change_historys: Arc<Mutex<Vec<ChangeHistory>>>, //操作日志(保存100条)
 
-    catgory_kv: Arc<Mutex<Vec<KV>>>,//分组的kv信息
-    project_kv: Arc<Mutex<Vec<KV>>>,//项目的kv信息
-    users_kv: Arc<Mutex<Vec<KV>>>,//用户的kv信息
+    catgory_kv: Arc<Mutex<Vec<KV>>>, //分组的kv信息
+    project_kv: Arc<Mutex<Vec<KV>>>, //项目的kv信息
+    users_kv: Arc<Mutex<Vec<KV>>>,   //用户的kv信息
 }
 
 // 打开外部浏览器地址
 #[tauri::command(rename_all = "snake_case")]
 async fn api_browser_open(app: tauri::AppHandle, url: String) -> Result<(), String> {
-    println!("open url:{}",url);
+    println!("open url:{}", url);
     // 如果url只有路径，则补全
     let url = if url.starts_with("http://") || url.starts_with("https://") {
         url
     } else {
         let state = app.state::<MyState>().clone();
-        let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-        let uri = if url.starts_with("/") { url } else { format!("/{}", url) };
+        let host = state
+            .host
+            .lock()
+            .map_err(|e| format!("lock err:{}", e))?
+            .clone();
+        let uri = if url.starts_with("/") {
+            url
+        } else {
+            format!("/{}", url)
+        };
         format!("http://{}{}", host, uri)
     };
-    app.opener().open_url(url, None::<&str>).map_err(|e|format!("open_url err:{}",e))
+    app.opener()
+        .open_url(url, None::<&str>)
+        .map_err(|e| format!("open_url err:{}", e))
 }
 
 // 初始化数据
@@ -135,18 +152,34 @@ async fn api_init_data(app: AppHandle) -> Result<String, String> {
     let state = app.state::<MyState>().clone();
 
     // 查询项目列表
-    let projects = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let projects = state
+        .project_kv
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
     if projects.len() == 0 {
         init_project_catgory(app.clone()).await?;
     }
     // 查询项目列表
-    let projects = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let projects = state
+        .project_kv
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
 
     // 查询分组列表
-    let category = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    
+    let category = state
+        .catgory_kv
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+
     // 查询用户列表
-    let users = state.users_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let users = state
+        .users_kv
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
 
     let mut hm = HashMap::new();
     hm.insert("Priority", Priority::kv());
@@ -158,7 +191,7 @@ async fn api_init_data(app: AppHandle) -> Result<String, String> {
     hm.insert("Users", users);
     hm.insert("Status", Status::kv());
     hm.insert("Resolution", Resolution::kv());
-    serde_json::to_string(&hm).map_err(|e|format!("serde_json err:{}",e))
+    serde_json::to_string(&hm).map_err(|e| format!("serde_json err:{}", e))
 }
 
 // 修改host地址
@@ -166,7 +199,7 @@ async fn api_init_data(app: AppHandle) -> Result<String, String> {
 async fn api_change_host(app: AppHandle, host: &str) -> Result<String, String> {
     let state = app.state::<MyState>().clone();
 
-    let mut state_host = state.host.lock().map_err(|e|format!("lock err:{}",e))?;
+    let mut state_host = state.host.lock().map_err(|e| format!("lock err:{}", e))?;
     if host != "" {
         *state_host = host.to_string();
     }
@@ -178,7 +211,7 @@ async fn api_change_host(app: AppHandle, host: &str) -> Result<String, String> {
 async fn api_read_msg(app: AppHandle, read_msg: &str) -> Result<(), String> {
     let state = app.state::<MyState>().clone();
 
-    let mut user = state.user.lock().map_err(|e|format!("lock err:{}",e))?;
+    let mut user = state.user.lock().map_err(|e| format!("lock err:{}", e))?;
     user.read_msg = read_msg.to_owned();
     Ok(())
 }
@@ -187,9 +220,13 @@ async fn api_read_msg(app: AppHandle, read_msg: &str) -> Result<(), String> {
 #[tauri::command(rename_all = "snake_case")]
 async fn api_init_bugs(app: AppHandle) -> Result<Vec<Bug>, String> {
     let state = app.state::<MyState>().clone();
-    
+
     // 查询缓存的bug列表
-    let sub_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let sub_bugs = state
+        .sub_bugs
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
     Ok(sub_bugs)
 }
 
@@ -197,9 +234,13 @@ async fn api_init_bugs(app: AppHandle) -> Result<Vec<Bug>, String> {
 #[tauri::command(rename_all = "snake_case")]
 async fn api_init_msgs(app: AppHandle) -> Result<Vec<ChangeHistory>, String> {
     let state = app.state::<MyState>().clone();
-    
+
     // 查询缓存的bug列表
-    let logs = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let logs = state
+        .change_historys
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
     Ok(logs)
 }
 
@@ -208,7 +249,11 @@ async fn api_init_msgs(app: AppHandle) -> Result<Vec<ChangeHistory>, String> {
 async fn api_login_info(app: AppHandle) -> Result<LoginInfo, String> {
     let state = app.state::<MyState>().clone();
 
-    let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let user = state
+        .user
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
     Ok(user)
 }
 
@@ -217,17 +262,25 @@ async fn api_login_info(app: AppHandle) -> Result<LoginInfo, String> {
 async fn api_login(app: AppHandle, username: &str, password: &str) -> Result<String, String> {
     let jar = Arc::new(Jar::default());
     let state = app.state::<MyState>().clone();
-    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let result = login(jar.clone(), username, password, &host).await.map_err(|e|format!("login err:{}",e))?;
-    let body = my_view_page(jar.clone(), &host).await.map_err(|e|format!("my_view_page err:{}",e))?;
+    let host = state
+        .host
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let result = login(jar.clone(), username, password, &host)
+        .await
+        .map_err(|e| format!("login err:{}", e))?;
+    let body = my_view_page(jar.clone(), &host)
+        .await
+        .map_err(|e| format!("my_view_page err:{}", e))?;
 
     // 保存cookie到全局状态
     {
-        let mut user = state.user.lock().map_err(|e|format!("lock err:{}",e))?;
+        let mut user = state.user.lock().map_err(|e| format!("lock err:{}", e))?;
         user.logined = true;
         user.username = username.to_string();
         user.user_id = get_user_id(&Html::parse_document(body.as_str()))?;
-        let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
+        let mut jar_ = state.jar.lock().map_err(|e| format!("lock err:{}", e))?;
         *jar_ = jar;
     }
 
@@ -248,7 +301,7 @@ async fn api_logout(app: AppHandle) -> Result<(), String> {
 // bug列表
 #[tauri::command(rename_all = "snake_case")]
 async fn api_bug_list(
-    app: AppHandle, 
+    app: AppHandle,
     page: i64,
     limit: i64,
     view_state: i64,
@@ -262,11 +315,31 @@ async fn api_bug_list(
     category_id: Vec<String>,
 ) -> Result<BugList, String> {
     let state = app.state::<MyState>().clone();
-    let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let user = state
+        .user
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let jar = state
+        .jar
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let host = state
+        .host
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let project_kv = state
+        .project_kv
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let catgory_kv = state
+        .catgory_kv
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
     if !user.logined {
         return Err("未登录".to_string());
     }
@@ -289,31 +362,52 @@ async fn api_bug_list(
         .await
         .map_err(|e| format!("view_all_set err:{}", e))?;
     // 解析数据
-    let data = view_all_set_data(&Html::parse_document(body.as_str()),&catgory_kv,&project_kv)
-        .map_err(|e| format!("view_all_set_data err:{}", e))?;
+    let data = view_all_set_data(
+        &Html::parse_document(body.as_str()),
+        &catgory_kv,
+        &project_kv,
+    )
+    .map_err(|e| format!("view_all_set_data err:{}", e))?;
 
     Ok(data)
 }
 
 // 查询bug详情
 #[tauri::command(rename_all = "snake_case")]
-async fn api_bug_info(
-    app: AppHandle,
-    bug_id: i64
-) -> Result<BugInfo, String> {
+async fn api_bug_info(app: AppHandle, bug_id: i64) -> Result<BugInfo, String> {
     let state = app.state::<MyState>().clone();
-    let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let user = state
+        .user
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let jar = state
+        .jar
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let host = state
+        .host
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let project_kv = state
+        .project_kv
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let catgory_kv = state
+        .catgory_kv
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
     if !user.logined {
         return Err("未登录".to_string());
     }
     // 查询bug详情
     let body = my_view_detail(jar.clone(), bug_id, &host).await?;
     let document = Html::parse_document(body.as_str());
-    let bug_info = my_view_detail_data(&document, &host,&catgory_kv,&project_kv)?;
+    let bug_info = my_view_detail_data(&document, &host, &catgory_kv, &project_kv)?;
     Ok(bug_info)
 }
 
@@ -332,11 +426,31 @@ async fn api_update_bug(
     steps_to_reproduce: String,
 ) -> Result<String, String> {
     let state = app.state::<MyState>().clone();
-    let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let user = state
+        .user
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let jar = state
+        .jar
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let host = state
+        .host
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let project_kv = state
+        .project_kv
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let catgory_kv = state
+        .catgory_kv
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
     if !user.logined {
         return Err("未登录".to_string());
     }
@@ -347,7 +461,7 @@ async fn api_update_bug(
         let body = my_view_detail(jar.clone(), bug_id, &host).await?;
         let document = Html::parse_document(body.as_str());
         bug_update_page_token = get_page_token(&document, "bug_update_page_token")?;
-        bug_info = my_view_detail_data(&document, &host,&catgory_kv,&project_kv)?;
+        bug_info = my_view_detail_data(&document, &host, &catgory_kv, &project_kv)?;
     }
     // bug修改页面
     let body = bug_update_page(
@@ -366,23 +480,51 @@ async fn api_update_bug(
         bug_update_token,
         bug_id,
         last_updated: bug_info.last_updated_sec,
-        category_id: if category_id == 0 { bug_info.category_id } else { category_id },
+        category_id: if category_id == 0 {
+            bug_info.category_id
+        } else {
+            category_id
+        },
         view_state: bug_info.view_state,
-        handler_id: if handler_id == 0 { bug_info.handler_id } else { handler_id },
+        handler_id: if handler_id == 0 {
+            bug_info.handler_id
+        } else {
+            handler_id
+        },
         priority: bug_info.priority,
-        severity: if severity == 0 { bug_info.severity } else { severity },
+        severity: if severity == 0 {
+            bug_info.severity
+        } else {
+            severity
+        },
         reproducibility: bug_info.reproducibility,
         status: if status == 0 { bug_info.status } else { status },
-        resolution: if resolution == 0 { bug_info.resolution } else { resolution },
-        summary: if summary == "" { bug_info.summary } else { summary },
-        description: if description == "" { bug_info.description } else { description },
+        resolution: if resolution == 0 {
+            bug_info.resolution
+        } else {
+            resolution
+        },
+        summary: if summary == "" {
+            bug_info.summary
+        } else {
+            summary
+        },
+        description: if description == "" {
+            bug_info.description
+        } else {
+            description
+        },
         additional_information: bug_info.additional_information,
-        steps_to_reproduce: if steps_to_reproduce == "" { bug_info.steps_to_reproduce } else { steps_to_reproduce },
+        steps_to_reproduce: if steps_to_reproduce == "" {
+            bug_info.steps_to_reproduce
+        } else {
+            steps_to_reproduce
+        },
         bugnote_text: "".to_string(),
     };
-    println!("{:?}",bug);
+    println!("{:?}", bug);
     let resp = bug_update(jar.clone(), bug, &host).await?;
-    if let Some(s) = get_error_info(&Html::parse_document(resp.as_str())){
+    if let Some(s) = get_error_info(&Html::parse_document(resp.as_str())) {
         println_cookies(&jar, &host);
         return Err(s);
     };
@@ -394,12 +536,29 @@ async fn api_update_bug(
 
 // 保存note
 #[tauri::command(rename_all = "snake_case")]
-async fn api_bug_note_add(app: AppHandle, bug_id: i64, bugnote_text: String,
-    file_path: Vec<String>,binary_file: Vec<(String, Vec<u8>)>) -> Result<(), String> {
+async fn api_bug_note_add(
+    app: AppHandle,
+    bug_id: i64,
+    bugnote_text: String,
+    file_path: Vec<String>,
+    binary_file: Vec<(String, Vec<u8>)>,
+) -> Result<(), String> {
     let state = app.state::<MyState>().clone();
-    let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let user = state
+        .user
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let jar = state
+        .jar
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let host = state
+        .host
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
     if !user.logined {
         return Err("未登录".to_string());
     }
@@ -412,16 +571,21 @@ async fn api_bug_note_add(app: AppHandle, bug_id: i64, bugnote_text: String,
         bugnote_add_token = get_page_token(&document, "bugnote_add_token")?;
     }
     // 保存note
-    let resp = bug_note_add(jar.clone(), BugNoteAdd{
-        bug_id,
-        bugnote_add_token,
-        bugnote_text,
-        max_file_size: 2097152, // 默认值
-        file_path,
-        binary_file,
-    }, &host).await?;
+    let resp = bug_note_add(
+        jar.clone(),
+        BugNoteAdd {
+            bug_id,
+            bugnote_add_token,
+            bugnote_text,
+            max_file_size: 2097152, // 默认值
+            file_path,
+            binary_file,
+        },
+        &host,
+    )
+    .await?;
 
-    if let Some(s) = get_error_info(&Html::parse_document(resp.as_str())){
+    if let Some(s) = get_error_info(&Html::parse_document(resp.as_str())) {
         println_cookies(&jar, &host);
         return Err(s);
     };
@@ -429,20 +593,29 @@ async fn api_bug_note_add(app: AppHandle, bug_id: i64, bugnote_text: String,
     Ok(())
 }
 
-
 // 下载图片
 #[tauri::command(rename_all = "snake_case")]
 async fn api_image_bytes(app: AppHandle, uri: String) -> Result<Vec<u8>, String> {
     let state = app.state::<MyState>().clone();
-    let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let jar = state
+        .jar
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let host = state
+        .host
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
     let bts = image_bytes(jar, host.as_str(), uri.as_str()).await?;
     Ok(bts)
 }
 
 // 检查更新
 #[tauri::command(rename_all = "snake_case")]
-async fn api_check_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<Option<VersionInfo>> {
+async fn api_check_update(
+    app: tauri::AppHandle,
+) -> tauri_plugin_updater::Result<Option<VersionInfo>> {
     check_update(app.clone()).await
 }
 
@@ -453,18 +626,26 @@ async fn api_download_and_install(app: tauri::AppHandle) -> tauri_plugin_updater
 }
 
 //初始化全局状态
-fn init_global_state(app: AppHandle) -> Result<(),String> {
+fn init_global_state(app: AppHandle) -> Result<(), String> {
     let state = app.state::<MyState>().clone();
-    let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
+    let store = app.store("settings.json").map_err(|e| format!("{}", e))?;
 
     let user_value = store.get("user").unwrap_or_default();
     let cookie_value = store.get("cookies").unwrap_or_default();
     let default_host = Value::from("127.0.0.1:8989");
-    let host_value = store.get("host").map(|e|{
-        if e.as_str().unwrap_or_default() == "" { return default_host.clone(); }
-        e
-    }).unwrap_or(default_host);
-    println!("user:{};cookie:{};host:{}",user_value,cookie_value,host_value);
+    let host_value = store
+        .get("host")
+        .map(|e| {
+            if e.as_str().unwrap_or_default() == "" {
+                return default_host.clone();
+            }
+            e
+        })
+        .unwrap_or(default_host);
+    println!(
+        "user:{};cookie:{};host:{}",
+        user_value, cookie_value, host_value
+    );
 
     let sub_params_value = store.get("sub_param").unwrap_or(Value::from(vec![
         r"type=1&view_type=simple&reporter_id[]=-1&handler_id[]=0&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=last_updated&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=0&search=&filter_submit=应用过滤器",
@@ -473,13 +654,17 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
     let sub_bugs_value = store.get("sub_bugs").unwrap_or_default();
     let change_historys_value = store.get("change_historys").unwrap_or_default();
 
-    let mut user = state.user.lock().map_err(|e|format!("lock err:{}",e))?;
-    *user = serde_json::from_value(user_value).map_err(|e|println!("serde_json err:{}",e)).unwrap_or_default();
+    let mut user = state.user.lock().map_err(|e| format!("lock err:{}", e))?;
+    *user = serde_json::from_value(user_value)
+        .map_err(|e| println!("serde_json err:{}", e))
+        .unwrap_or_default();
 
-    let mut jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
+    let mut jar_ = state.jar.lock().map_err(|e| format!("lock err:{}", e))?;
     let jar = Jar::default();
-    let url = format!("http://{}",host_value.as_str().unwrap_or_default()).parse::<Url>().map_err(|e|format!("url parse err:{}",e))?;
-    cookie_value.as_str().and_then(|s|{
+    let url = format!("http://{}", host_value.as_str().unwrap_or_default())
+        .parse::<Url>()
+        .map_err(|e| format!("url parse err:{}", e))?;
+    cookie_value.as_str().and_then(|s| {
         s.split(';').for_each(|c| {
             if !c.is_empty() {
                 jar.add_cookie_str(c.trim(), &url);
@@ -487,35 +672,54 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
         });
         Some(())
     });
-    
+
     *jar_ = Arc::new(jar);
 
-    let mut host = state.host.lock().map_err(|e|format!("lock err:{}",e))?;
+    let mut host = state.host.lock().map_err(|e| format!("lock err:{}", e))?;
     *host = host_value.as_str().unwrap_or_default().to_string();
 
-    let mut sub_params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?;
-    *sub_params = serde_json::from_value(sub_params_value).map_err(|e|println!("serde_json err:{}",e)).unwrap_or_default();
+    let mut sub_params = state
+        .sub_params
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?;
+    *sub_params = serde_json::from_value(sub_params_value)
+        .map_err(|e| println!("serde_json err:{}", e))
+        .unwrap_or_default();
 
-    let mut sub_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
-    *sub_bugs = serde_json::from_value(sub_bugs_value).map_err(|e|println!("serde_json err:{}",e)).unwrap_or_default();
+    let mut sub_bugs = state
+        .sub_bugs
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?;
+    *sub_bugs = serde_json::from_value(sub_bugs_value)
+        .map_err(|e| println!("serde_json err:{}", e))
+        .unwrap_or_default();
 
-    let mut change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?;
-    *change_historys = serde_json::from_value(change_historys_value).map_err(|e|println!("serde_json err:{}",e)).unwrap_or_default();
+    let mut change_historys = state
+        .change_historys
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?;
+    *change_historys = serde_json::from_value(change_historys_value)
+        .map_err(|e| println!("serde_json err:{}", e))
+        .unwrap_or_default();
 
     info!("init_global_state success!");
     Ok(())
 }
 
-fn sync_init_project_catgory(app: AppHandle) -> Result<(),String> {
+fn sync_init_project_catgory(app: AppHandle) -> Result<(), String> {
     // 开启线程同步执行异步函数
     block_on(init_project_catgory(app))
 }
 
 // 初始化分组和项目
-async fn init_project_catgory(app: AppHandle) -> Result<(),String> {
+async fn init_project_catgory(app: AppHandle) -> Result<(), String> {
     let state = app.state::<MyState>().clone();
-    
-    let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+
+    let user = state
+        .user
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
 
     let mut projects = vec![];
     let mut category = vec![];
@@ -524,83 +728,140 @@ async fn init_project_catgory(app: AppHandle) -> Result<(),String> {
     if user.logined {
         // 查询项目列表
         {
-            let jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-            let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-            let body = my_view_page(jar_, &host).await.map_err(|e|format!("my_view_page err:{}",e))?;
+            let jar_ = state
+                .jar
+                .lock()
+                .map_err(|e| format!("lock err:{}", e))?
+                .clone();
+            let host = state
+                .host
+                .lock()
+                .map_err(|e| format!("lock err:{}", e))?
+                .clone();
+            let body = my_view_page(jar_, &host)
+                .await
+                .map_err(|e| format!("my_view_page err:{}", e))?;
             projects = project_data(&Html::parse_document(body.as_str()))?;
-            let mut project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+            let mut project_kv = state
+                .project_kv
+                .lock()
+                .map_err(|e| format!("lock err:{}", e))?;
             *project_kv = projects.clone();
         }
 
         // 查询分组列表
         {
-            let jar_ = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-            let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-            let project_id = projects.last().ok_or("projects error".to_owned())?.key.clone();
-            let body = bug_report_page(jar_, &host, &project_id).await.map_err(|e|format!("filters_params err:{}",e))?;
+            let jar_ = state
+                .jar
+                .lock()
+                .map_err(|e| format!("lock err:{}", e))?
+                .clone();
+            let host = state
+                .host
+                .lock()
+                .map_err(|e| format!("lock err:{}", e))?
+                .clone();
+            let project_id = projects
+                .last()
+                .ok_or("projects error".to_owned())?
+                .key
+                .clone();
+            let body = bug_report_page(jar_, &host, &project_id)
+                .await
+                .map_err(|e| format!("filters_params err:{}", e))?;
             let dc = Html::parse_document(body.as_str());
             category = category_data(&dc)?;
-            let mut catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+            let mut catgory_kv = state
+                .catgory_kv
+                .lock()
+                .map_err(|e| format!("lock err:{}", e))?;
             *catgory_kv = category.clone();
 
             // 查询用户列表
             users = users_data(&dc)?;
-            let mut users_kv = state.users_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+            let mut users_kv = state
+                .users_kv
+                .lock()
+                .map_err(|e| format!("lock err:{}", e))?;
             *users_kv = users.clone();
-
         }
-        if category.len() == 0|| projects.len() == 0 || users.len() == 0 {
+        if category.len() == 0 || projects.len() == 0 || users.len() == 0 {
             return Err("".to_string());
         }
     } else {
-        let mut project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+        let mut project_kv = state
+            .project_kv
+            .lock()
+            .map_err(|e| format!("lock err:{}", e))?;
         *project_kv = projects;
-        let mut catgory_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+        let mut catgory_kv = state
+            .catgory_kv
+            .lock()
+            .map_err(|e| format!("lock err:{}", e))?;
         *catgory_kv = category;
-        let mut users_kv = state.users_kv.lock().map_err(|e|format!("lock err:{}",e))?;
+        let mut users_kv = state
+            .users_kv
+            .lock()
+            .map_err(|e| format!("lock err:{}", e))?;
         *users_kv = users;
     };
     Ok(())
 }
 
 //保存全局状态
-fn save_global_state(app: AppHandle) -> Result<(),String> {
+fn save_global_state(app: AppHandle) -> Result<(), String> {
     let state = app.state::<MyState>().clone();
-    let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
+    let store = app.store("settings.json").map_err(|e| format!("{}", e))?;
 
-    let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?;
-    let json_value = serde_json::to_value(user.clone()).map_err(|e|format!("serde err:{}",e))?;
+    let user = state.user.lock().map_err(|e| format!("lock err:{}", e))?;
+    let json_value = serde_json::to_value(user.clone()).map_err(|e| format!("serde err:{}", e))?;
     store.set("user", json_value);
-    
-    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?;
+
+    let host = state.host.lock().map_err(|e| format!("lock err:{}", e))?;
     store.set("host", Value::from(host.clone()));
 
-    let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
-    let url = format!("http://{}",host.clone()).parse::<Url>().map_err(|e|format!("parse err:{}",e))?;
-    let cookies = jar.cookies(&url).map(|h| h.to_str().unwrap_or("").to_string()).unwrap_or_default();
+    let jar = state.jar.lock().map_err(|e| format!("lock err:{}", e))?;
+    let url = format!("http://{}", host.clone())
+        .parse::<Url>()
+        .map_err(|e| format!("parse err:{}", e))?;
+    let cookies = jar
+        .cookies(&url)
+        .map(|h| h.to_str().unwrap_or("").to_string())
+        .unwrap_or_default();
     store.set("cookies", Value::from(cookies));
 
-    let sub_params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?;
+    let sub_params = state
+        .sub_params
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?;
     store.set("sub_param", sub_params.clone());
 
-    let sub_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
-    let json_value = serde_json::to_value(&sub_bugs.clone()).map_err(|e|format!("to json err:{}",e))?;
+    let sub_bugs = state
+        .sub_bugs
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?;
+    let json_value =
+        serde_json::to_value(&sub_bugs.clone()).map_err(|e| format!("to json err:{}", e))?;
     store.set("sub_bugs", json_value);
 
-    let change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?;
-    let json_value = serde_json::to_value(&change_historys.clone()).map_err(|e|format!("to json err:{}",e))?;
+    let change_historys = state
+        .change_historys
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?;
+    let json_value =
+        serde_json::to_value(&change_historys.clone()).map_err(|e| format!("to json err:{}", e))?;
     store.set("change_historys", json_value);
 
-    store.save().map_err(|e|format!("save err:{}",e))?;
+    store.save().map_err(|e| format!("save err:{}", e))?;
     Ok(())
 }
 
 // 清空所有状态
-fn clear_global_state(app: AppHandle) -> Result<(),String> {
+fn clear_global_state(app: AppHandle) -> Result<(), String> {
     let state = app.state::<MyState>().clone();
-    let store = app.store("settings.json").map_err(|e|format!("{}",e))?;
+    let store = app.store("settings.json").map_err(|e| format!("{}", e))?;
 
-    let mut user = state.user.lock().map_err(|e|format!("lock err:{}",e))?;
+    let mut user = state.user.lock().map_err(|e| format!("lock err:{}", e))?;
     *user = LoginInfo::default();
     store.delete("user");
 
@@ -608,23 +869,32 @@ fn clear_global_state(app: AppHandle) -> Result<(),String> {
     // *host = "".to_string();
     // store.delete("host");
 
-    let mut jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?;
+    let mut jar = state.jar.lock().map_err(|e| format!("lock err:{}", e))?;
     *jar = Arc::new(Jar::default());
     store.delete("cookies");
 
-    let mut sub_params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?;
+    let mut sub_params = state
+        .sub_params
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?;
     *sub_params = vec![];
     store.delete("sub_param");
 
-    let mut sub_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
+    let mut sub_bugs = state
+        .sub_bugs
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?;
     *sub_bugs = Vec::default();
     store.delete("sub_bugs");
 
-    let mut change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?;
+    let mut change_historys = state
+        .change_historys
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?;
     *change_historys = Vec::default();
     store.delete("change_historys");
 
-    store.save().map_err(|e|format!("store save err:{}",e))
+    store.save().map_err(|e| format!("store save err:{}", e))
 }
 
 // 定时查询订阅数据
@@ -636,7 +906,7 @@ fn find_sub_data(app: AppHandle) {
             ticker.tick().await;
             let result = update_sub_data(app.clone()).await;
             if let Err(e) = result {
-                info!("error:{}",e);
+                info!("error:{}", e);
             }
         }
     });
@@ -646,28 +916,59 @@ fn find_sub_data(app: AppHandle) {
 async fn update_sub_data(app: AppHandle) -> Result<(), String> {
     let state = app.state::<MyState>().clone();
     // 判断是否登录，如果未登录，则跳过
-    let user = state.user.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let user = state
+        .user
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
     if !user.logined {
         info!("未登录，跳过定时任务");
         return Ok(());
     };
 
-    let jar = state.jar.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let host = state.host.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let project_kv = state.project_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let category_kv = state.catgory_kv.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let jar = state
+        .jar
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let host = state
+        .host
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let project_kv = state
+        .project_kv
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let category_kv = state
+        .catgory_kv
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
 
     // 循环查询所有订阅的数据并且去重
     let mut bugs = Vec::new();
-    let params = state.sub_params.lock().map_err(|e|format!("lock err:{}",e))?.clone();
+    let params = state
+        .sub_params
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
     for sub_param in params {
         let sub_param = sub_param.clone();
         // 查询列表
         let param = serde_html_form::from_str::<FindBugListParams>(&sub_param)
             .map_err(|e| format!("serde_html_form err:{}", e))?;
-        let body = view_all_set(jar.clone(), param, "0", 1, &host).await.map_err(|e|format!("view_all_set err:{}",e))?;
+        let body = view_all_set(jar.clone(), param, "0", 1, &host)
+            .await
+            .map_err(|e| format!("view_all_set err:{}", e))?;
         // 解析数据
-        let mut data = view_all_set_data(&Html::parse_document(body.as_str()),&category_kv,&project_kv).map_err(|e|format!("view_all_set_data err:{}",e))?;
+        let mut data = view_all_set_data(
+            &Html::parse_document(body.as_str()),
+            &category_kv,
+            &project_kv,
+        )
+        .map_err(|e| format!("view_all_set_data err:{}", e))?;
         bugs.append(&mut data.bugs);
     }
     let mut seen = HashSet::new();
@@ -675,69 +976,95 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
     // info!("find bugs: {:?}", bugs);
 
     // 只查询大于缓存时间的数据的详情，获取新增的日志信息
-    let change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?.clone();
-    let last_history_time = change_historys.last().map_or(0,|c|c.updated_at);
-    let last_history_begin = Utc.timestamp_opt(last_history_time, 0).single().map(|t|{
-        t.with_timezone(&Shanghai).with_time(NaiveTime::MIN).unwrap().timestamp()
-    }).unwrap_or_default();
+    let change_historys = state
+        .change_historys
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let last_history_time = change_historys.last().map_or(0, |c| c.updated_at);
+    let last_history_begin = Utc
+        .timestamp_opt(last_history_time, 0)
+        .single()
+        .map(|t| {
+            t.with_timezone(&Shanghai)
+                .with_time(NaiveTime::MIN)
+                .unwrap()
+                .timestamp()
+        })
+        .unwrap_or_default();
     let mut add_historys = Vec::new();
     for b in bugs.iter() {
         if b.last_updated >= last_history_begin {
-            let text = my_view_detail(jar.clone(), b.bug_id, &host).await.map_err(|e|format!("my_view_detail err:{}",e))?;
+            let text = my_view_detail(jar.clone(), b.bug_id, &host)
+                .await
+                .map_err(|e| format!("my_view_detail err:{}", e))?;
             let document = Html::parse_document(text.as_str());
             let bug_info = my_view_detail_data(&document, &host, &category_kv, &project_kv)?;
             for ch in bug_info.change_history {
                 if ch.updated_at >= last_history_time {
-                    if change_historys.iter().any(|c| get_hash(&c) == get_hash(&ch)) {
+                    if change_historys
+                        .iter()
+                        .any(|c| get_hash(&c) == get_hash(&ch))
+                    {
                         continue;
-                    }else {
+                    } else {
                         add_historys.push(ch);
                     }
                 }
             }
         }
-    };
-    add_historys.sort_by_key(|c|(c.updated_at, c.bug_id, c.handler_id));
+    }
+    add_historys.sort_by_key(|c| (c.updated_at, c.bug_id, c.handler_id));
 
     // bugs有变更则推送
-    let mut old_bugs = state.sub_bugs.lock().map_err(|e|format!("lock err:{}",e))?;
+    let mut old_bugs = state
+        .sub_bugs
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?;
     if get_hash(&*old_bugs) != get_hash(&bugs) {
         let _ = app.emit("sub_bugs", &bugs);
         *old_bugs = bugs;
     }
 
     // change_historys有数据则推送增量
-    let mut change_historys = state.change_historys.lock().map_err(|e|format!("lock err:{}",e))?;
-    if add_historys.len() > 0 { 
+    let mut change_historys = state
+        .change_historys
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?;
+    if add_historys.len() > 0 {
         let _ = app.emit("sub_msgs", &add_historys);
         let mut notify: HashMap<String, (i64, String, String)> = HashMap::new();
         for c in add_historys.iter_mut() {
             change_historys.push(c.clone());
 
-            let new_key = format!("{}-{}-{}",c.updated_at,c.bug_id,c.handler_id).to_string();
+            let new_key = format!("{}-{}-{}", c.updated_at, c.bug_id, c.handler_id).to_string();
             if let Some((_handler_id, _title, content)) = notify.get_mut(&new_key) {
                 let note = format!("\n- {} {}", c.field, c.change.replace("&gt;", ">"));
                 content.push_str(&note);
-            }else{
-                let bug = old_bugs.iter().find(|b|b.bug_id == c.bug_id).ok_or(String::from("not found bug"))?;
-                let t = Utc.timestamp_opt(c.updated_at, 0).single().unwrap_or_default().with_timezone(&Shanghai).format("%Y-%m-%d %H:%M");
+            } else {
+                let bug = old_bugs
+                    .iter()
+                    .find(|b| b.bug_id == c.bug_id)
+                    .ok_or(String::from("not found bug"))?;
+                let t = Utc
+                    .timestamp_opt(c.updated_at, 0)
+                    .single()
+                    .unwrap_or_default()
+                    .with_timezone(&Shanghai)
+                    .format("%Y-%m-%d %H:%M");
                 let note = format!("\n- {} {}", c.field, c.change.replace("&gt;", ">"));
-                let title = format!("{} #{} （{}）",c.handler, c.bug_id, t);
+                let title = format!("{} #{} （{}）", c.handler, c.bug_id, t);
                 let content = format!("{} {}", bug.summary, note);
-                notify.insert(new_key, (c.handler_id,title,content));
+                notify.insert(new_key, (c.handler_id, title, content));
             }
-        };
-        
+        }
+
         // 通知
-        notify.iter().for_each(|(_title,t)|{
+        notify.iter().for_each(|(_title, t)| {
             // 如果是自己操作的记录，则不通知
             if t.0 != user.user_id {
                 // 发送通知
-                let _ = send_notify(
-                    app.clone(),
-                    t.1.as_str(),
-                    t.2.as_str(),
-                );
+                let _ = send_notify(app.clone(), t.1.as_str(), t.2.as_str());
             }
         });
     }
@@ -745,7 +1072,7 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
     // 如何数据量过大，则只保留最近200条
     if change_historys.len() > 200 {
         let len = change_historys.len();
-        change_historys.drain(0..(len-200));
+        change_historys.drain(0..(len - 200));
     }
     Ok(())
 }
@@ -775,12 +1102,15 @@ async fn check_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<Opt
             current_version: update.current_version.clone(),
             version: update.version.clone(),
             target: update.target.clone(),
-            update_time: update.date.map_or(0,|t| t.unix_timestamp())
+            update_time: update.date.map_or(0, |t| t.unix_timestamp()),
         };
 
         // 保存到全局状态
         let state = app.state::<MyState>().clone();
-        let mut last_version = state.last_version.lock().map_err(|_|tauri_plugin_updater::Error::ReleaseNotFound)?;
+        let mut last_version = state
+            .last_version
+            .lock()
+            .map_err(|_| tauri_plugin_updater::Error::ReleaseNotFound)?;
         *last_version = Some(update);
 
         // 通知前端
@@ -801,7 +1131,10 @@ async fn download_and_install(app: tauri::AppHandle) -> tauri_plugin_updater::Re
     let up: Option<Update>;
     {
         let state = app.state::<MyState>().clone();
-        let last_version = state.last_version.lock().map_err(|_|tauri_plugin_updater::Error::ReleaseNotFound)?;
+        let last_version = state
+            .last_version
+            .lock()
+            .map_err(|_| tauri_plugin_updater::Error::ReleaseNotFound)?;
         up = last_version.clone();
     }
     if let Some(update) = up {
@@ -865,11 +1198,10 @@ fn close_app_callback(app: AppHandle) {
         let r = save_global_state(app.clone());
         match r {
             Ok(_) => println!("handle exec ok"),
-            Err(msg) => println!("handle exec err: {}",msg)
+            Err(msg) => println!("handle exec err: {}", msg),
         }
         app.exit(0);
     });
-    
 }
 
 #[cfg(test)]
@@ -880,13 +1212,19 @@ mod tests {
     #[tokio::test]
     async fn test_login() {
         let host = "bug.test.com";
-        let result = login(Arc::new(Jar::default()), "dengxiangcheng", "dxc3434DXC", host).await;
+        let result = login(
+            Arc::new(Jar::default()),
+            "dengxiangcheng",
+            "dxc3434DXC",
+            host,
+        )
+        .await;
         assert!(result.is_ok());
         if let Ok(text) = result {
             info!("text: {}", text);
         }
     }
-    
+
     #[tokio::test]
     async fn test_serde_html_form() {
         let sub_param = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=12&search=&filter_submit=应用过滤器";

@@ -82,8 +82,8 @@ const activeSettingMenu = ref('account');
 const settingsMenu = ref([
   { id: 'account', title: '账号设置', icon: markRaw(UserFilled) },
   { id: 'general', title: '通用设置', icon: markRaw(Tools) },
-  { id: 'files', title: '文件管理', icon: markRaw(FolderOpened) },
-  { id: 'shortcuts', title: '快捷键', icon: markRaw(School) },
+  // { id: 'files', title: '文件管理', icon: markRaw(FolderOpened) },
+  // { id: 'shortcuts', title: '快捷键', icon: markRaw(School) },
   { id: 'about', title: '关于我们', icon: markRaw(InfoFilled) }
 ]);
 

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct Bug {
     pub bug_id: i64,
     pub issue_notes_count: i64, //问题说明数量
-    pub project_id: String,        //项目id
+    pub project_id: String,     //项目id
     pub project: String,        //项目
     pub category_id: i64,       //类别ID
     pub handler_id: i64,        //处理人
@@ -56,29 +56,29 @@ pub struct BugList {
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct BugInfo {
     pub bug_id: i64,
-    pub project_id: String,                //项目id
-    pub project: String,                //项目
-    pub category_id: i64,               //类别ID
-    pub view_state: i64,                //查看权限
-    pub date_submitted: i64,            //报告日期
-    pub last_updated: i64,              //最后更新时间
-    pub last_updated_sec: i64,          //最后更新时间(用于更新的)
-    pub reporter_id: i64,               //报告员id
-    pub reporter: String,               //报告员
-    pub handler_id: i64,                //处理人
-    pub handler: String,                //处理人名称
-    pub priority: i64,                  //优先级
-    pub severity: i64,                  //严重性
-    pub reproducibility: i64,           //出现频率
-    pub status: i64,                    //状态
-    pub resolution: i64,                //处理状况
-    pub summary: String,                //摘要
-    pub description: String,            //描述
-    pub additional_information: String, //附注
-    pub steps_to_reproduce: String,     //问题重现步骤
-    pub tags: String,                   //标签
-    pub bugnote_notes: Vec<BugNote>,    //注释列表
-    pub attachments: Vec<FileInfo>,     //附件
+    pub project_id: String,                 //项目id
+    pub project: String,                    //项目
+    pub category_id: i64,                   //类别ID
+    pub view_state: i64,                    //查看权限
+    pub date_submitted: i64,                //报告日期
+    pub last_updated: i64,                  //最后更新时间
+    pub last_updated_sec: i64,              //最后更新时间(用于更新的)
+    pub reporter_id: i64,                   //报告员id
+    pub reporter: String,                   //报告员
+    pub handler_id: i64,                    //处理人
+    pub handler: String,                    //处理人名称
+    pub priority: i64,                      //优先级
+    pub severity: i64,                      //严重性
+    pub reproducibility: i64,               //出现频率
+    pub status: i64,                        //状态
+    pub resolution: i64,                    //处理状况
+    pub summary: String,                    //摘要
+    pub description: String,                //描述
+    pub additional_information: String,     //附注
+    pub steps_to_reproduce: String,         //问题重现步骤
+    pub tags: String,                       //标签
+    pub bugnote_notes: Vec<BugNote>,        //注释列表
+    pub attachments: Vec<FileInfo>,         //附件
     pub change_history: Vec<ChangeHistory>, //变更历史
 }
 
@@ -94,19 +94,19 @@ pub struct BugNote {
     pub note_id: i64,
     pub time: i64,
     pub text: String,
-    pub handler_id: i64,    //处理人
-    pub handler: String,    //处理人名称
+    pub handler_id: i64, //处理人
+    pub handler: String, //处理人名称
     pub attachments: Vec<FileInfo>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Hash)]
 pub struct ChangeHistory {
-    pub bug_id: i64,        //bug_id
-    pub updated_at: i64,    //变更时间
-    pub handler_id: i64,    //处理人
-    pub handler: String,    //处理人名称
-    pub field: String,  //字段
-    pub change: String, //变更内容
+    pub bug_id: i64,     //bug_id
+    pub updated_at: i64, //变更时间
+    pub handler_id: i64, //处理人
+    pub handler: String, //处理人名称
+    pub field: String,   //字段
+    pub change: String,  //变更内容
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -170,7 +170,7 @@ pub struct VersionInfo {
 pub struct FiltersParams {
     pub view_type: String,
     pub filter_target: String,
-    pub data_filter_id: String
+    pub data_filter_id: String,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
