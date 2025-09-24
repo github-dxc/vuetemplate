@@ -1,10 +1,6 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { LogicalSize } from '@tauri-apps/api/window';
-import { 
-    isPermissionGranted, 
-    requestPermission, 
-    sendNotification 
-} from '@tauri-apps/plugin-notification';
+import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart';
 
 
 // 创建新窗口
@@ -63,3 +59,19 @@ export const changeSize = async function({label,width,hight,center = false,onTop
         console.error(`窗口 ${label} 不存在`);
     }
 }
+
+
+export const autoStart = async (autoStart=false) => {
+  const enabled = await isEnabled();
+  if (autoStart) {
+    if (!enabled) {
+      enable();
+      console.log('Auto start enabled');
+    }
+  } else {
+    if (enabled) {
+      disable();
+      console.log('Auto start disabled');
+    };
+  }
+};

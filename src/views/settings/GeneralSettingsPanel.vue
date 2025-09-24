@@ -36,7 +36,7 @@
 <script setup vapor>
 import { ref } from 'vue';
 import { useUserStore } from '../../store';
-import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart';
+import { autoStart } from '../../windows';
 
 const userStore = useUserStore()
 
@@ -54,18 +54,7 @@ const changeUpdateSetting = () => {
 
 const changeStartSetting = async () => {
   userStore.updateSetting({ start: startSettings.value })
-  const enabled = await isEnabled();
-  if (startSettings.value.autoStart) {
-    if (!enabled) {
-      enable();
-      console.log('Auto start enabled');
-    }
-  } else {
-    if (enabled) {
-      disable();
-      console.log('Auto start disabled');
-    };
-  }
+  autoStart(startSettings.value.autoStart);
 };
 
 </script>
