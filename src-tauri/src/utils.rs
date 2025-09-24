@@ -1391,7 +1391,7 @@ pub fn get_hash<T: Hash>(t: &T) -> u64 {
 }
 
 pub fn set_project_cookie(jar: Arc<Jar>, project_id: &str, host: &str) -> Result<(), String> {
-    let cookie = format!("MANTIS_PROJECT_COOKIE={}", project_id);
+    let cookie = format!("MANTIS_PROJECT_COOKIE={}", project_id).replace(";", "%3B");
     let origin = format!("http://{}", host);
     let url = &Url::parse(&origin).unwrap();
     jar.add_cookie_str(&cookie, url);

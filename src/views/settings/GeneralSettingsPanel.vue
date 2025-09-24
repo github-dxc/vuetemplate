@@ -45,7 +45,7 @@ const updateSettings = ref({
 });
 
 const startSettings = ref({
-  autoStart: userStore.settingInfo.update.autoStart || false,
+  autoStart: userStore.settingInfo.start.autoStart || false,
 });
 
 const changeUpdateSetting = () => {
@@ -58,10 +58,12 @@ const changeStartSetting = async () => {
   if (startSettings.value.autoStart) {
     if (!enabled) {
       enable();
+      console.log('Auto start enabled');
     }
   } else {
     if (enabled) {
       disable();
+      console.log('Auto start disabled');
     };
   }
 };

@@ -111,6 +111,8 @@ pub struct ChangeHistory {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct FindBugListParams {
+    #[serde(skip)]
+    pub project_id: String,
     #[serde(default, rename = "type")]
     pub r#type: i64,
     pub view_type: String,

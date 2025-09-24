@@ -344,7 +344,7 @@ async fn api_bug_list(
         return Err("未登录".to_string());
     }
 
-    let param_str = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器";
+    let param_str = r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=0&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=50&sort[]=date_submitted&dir[]=DESC&sort[]=status&dir[]=ASC&sort[]=last_updated&dir[]=DESC&match_type=0&highlight_changed=6&search=&filter_submit=应用过滤器";
     let mut param = serde_html_form::from_str::<FindBugListParams>(param_str)
         .map_err(|e| format!("serde_html_form err:{}", e))?;
     param.per_page = limit;
@@ -356,18 +356,28 @@ async fn api_bug_list(
     param.reporter_id = reporter_id;
     param.handler_id = handler_id;
     param.category_id = category_id;
+    param.project_id = project_id.to_string();
 
     // 查询列表
     let body = view_all_set(jar, param, project_id, page, &host)
         .await
         .map_err(|e| format!("view_all_set err:{}", e))?;
     // 解析数据
-    let data = view_all_set_data(
+    let mut data = view_all_set_data(
         &Html::parse_document(body.as_str()),
         &catgory_kv,
-        &project_kv,
+        &project_kv
     )
     .map_err(|e| format!("view_all_set_data err:{}", e))?;
+
+    // 设置当前项目
+    if !(project_id == "0" || project_id == "") {
+        if let Some(project) = project_kv.find_by_key(project_id) {
+            data.bugs.iter_mut().for_each(|b| {
+                b.project = project.value.clone();
+            });
+        };
+    }
 
     Ok(data)
 }
@@ -959,7 +969,7 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
         // 查询列表
         let param = serde_html_form::from_str::<FindBugListParams>(&sub_param)
             .map_err(|e| format!("serde_html_form err:{}", e))?;
-        let body = view_all_set(jar.clone(), param, "0", 1, &host)
+        let body = view_all_set(jar.clone(), param.clone(), "0", 1, &host)
             .await
             .map_err(|e| format!("view_all_set err:{}", e))?;
         // 解析数据
@@ -969,6 +979,17 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
             &project_kv,
         )
         .map_err(|e| format!("view_all_set_data err:{}", e))?;
+    
+        // 设置当前项目
+        let project_id = param.project_id.as_str();
+        if !(project_id == "0" || project_id == "") {
+            if let Some(project) = project_kv.find_by_key(project_id) {
+                data.bugs.iter_mut().for_each(|b| {
+                    b.project = project.value.clone();
+                });
+            };
+        }
+
         bugs.append(&mut data.bugs);
     }
     let mut seen = HashSet::new();

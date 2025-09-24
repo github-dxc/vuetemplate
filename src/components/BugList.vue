@@ -15,7 +15,7 @@
                     </template>
                 </el-table-column>
 
-                <el-table-column prop="project" label="项目名称" width="120" header-align="center">
+                <el-table-column prop="project" label="项目" width="120" header-align="center">
                     <template #default="scope">
                         <div class="project-name">
                             {{ scope.row.project }}

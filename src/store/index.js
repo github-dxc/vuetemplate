@@ -7,6 +7,7 @@ pinia.use(piniaPluginPersistedstate)//持久化
 export default pinia
 
 export const useUserStore = defineStore('user', {
+  persist: true,
   state: () => ({
     // 用户信息
     user: {

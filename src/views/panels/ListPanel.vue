@@ -56,7 +56,7 @@ const params = reactive({
   severity: [],
   status: [],
   resolution: [],
-  project_id: '',
+  project_id: '0',
   reporter_id: [],
   handler_id: [],
   category_id: []
@@ -206,7 +206,8 @@ const handleSubmenuClick = (data) => {
       params[data.parent.id] = '';
     }
   }
-
+  params.page = 1;
+  bugPage.value = 1;
   fetchBugList();
 }
 
