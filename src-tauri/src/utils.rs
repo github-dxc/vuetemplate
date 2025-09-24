@@ -19,6 +19,13 @@ use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 use std::time::Duration;
 use url::Url;
+use lazy_static::lazy_static;
+use tokio::sync::Mutex;
+
+// 定义一个全局锁
+lazy_static! {
+    static ref GLOBAL_LOCK: Arc<Mutex<i32>> = Arc::new(Mutex::new(0));
+}
 
 // login 页面
 pub async fn login(
@@ -128,6 +135,9 @@ pub async fn view_all_set(
     page: i64,
     host: &str,
 ) -> Result<String, Box<dyn std::error::Error>> {
+    // 保证每次查询是串行的
+    let l = GLOBAL_LOCK.clone();
+    let _lock = l.lock().await;
     // 地址
     let origin = format!("http://{}",host);
     let mut url = origin.to_string()+"/view_all_set.php";

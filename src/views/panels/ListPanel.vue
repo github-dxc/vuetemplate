@@ -131,7 +131,7 @@ const verticalMenu = reactive([
     label: '分类',
     icon: markRaw(Notebook),
     children: props.enums.Category.map(ver => ({
-      id: ver.key,
+      id: ver.value,
       label: ver.value,
       checked: false
     }))
@@ -158,6 +158,7 @@ const verticalMenu = reactive([
 
 const fetchBugList = async () => {
   try {
+    console.log("查询参数:",params);
     const res = await bugList(params);
     bugs.value = res.bugs;
     bugTotal.value = res.total;
@@ -184,16 +185,26 @@ const handleSubmenuClick = (data) => {
 
   // 判断是否为数组属性
   if (Array.isArray(params[data.parent.id])) {
-    // 是数组，则添加/移除元素
-    const index = params[data.parent.id].indexOf(data.child.id);
-    if (index > -1) {
-      params[data.parent.id].splice(index, 1);
-    } else {
-      params[data.parent.id].push(data.child.id);
+    // 只保存一个选项
+    if (data.child.checked) {
+      params[data.parent.id] = [data.child.id];
+    }else {
+      params[data.parent.id] = [];
+    }
+  } else if (Number.isInteger(params[data.parent.id])) {
+    // 不是数组，直接赋值
+    if (data.child.checked) {
+      params[data.parent.id] = data.child.id;
+    }else {
+      params[data.parent.id] = 0;
     }
   } else {
-    // 不是数组，直接赋值
-    params[data.parent.id] = data.child.id;
+    // 其他类型，直接赋值
+    if (data.child.checked) {
+      params[data.parent.id] = data.child.id;
+    }else {
+      params[data.parent.id] = '';
+    }
   }
 
   fetchBugList();
