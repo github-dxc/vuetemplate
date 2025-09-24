@@ -7,7 +7,7 @@ use log::info;
 use reqwest::cookie::{CookieStore, Jar};
 use reqwest::header::{
     HeaderMap, HeaderValue, ACCEPT, ACCEPT_LANGUAGE, CACHE_CONTROL, CONNECTION, CONTENT_LENGTH,
-    CONTENT_TYPE, HOST, ORIGIN, REFERER, UPGRADE_INSECURE_REQUESTS, USER_AGENT,
+    CONTENT_TYPE, HOST, ORIGIN, REFERER, UPGRADE_INSECURE_REQUESTS, USER_AGENT, PRAGMA
 };
 use reqwest::redirect::Policy;
 use reqwest::Client;
@@ -143,9 +143,10 @@ pub async fn view_all_set(
     headers.insert(ACCEPT,HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
     headers.insert(ACCEPT_LANGUAGE,HeaderValue::from_static("zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"));
     headers.insert(CACHE_CONTROL, HeaderValue::from_static("max-age=0"));
-    // headers.insert(CONTENT_TYPE,HeaderValue::from_static("application/x-www-form-urlencoded"));
+    headers.insert(CONTENT_TYPE,HeaderValue::from_static("application/x-www-form-urlencoded"));
     headers.insert(CONTENT_LENGTH,HeaderValue::from_str(&body.len().to_string())?);
     headers.insert(ORIGIN, HeaderValue::from_str(&origin)?);
+    headers.insert(PRAGMA, HeaderValue::from_str("no-cache")?);
     headers.insert(REFERER,HeaderValue::from_str(&(origin.to_string()+"/view_all_bug_page.php"))?);
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
     headers.insert(USER_AGENT,HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"));
@@ -157,39 +158,53 @@ pub async fn view_all_set(
         .timeout(Duration::from_secs(2))
         .cookie_provider(jar.clone())
         .danger_accept_invalid_certs(true) // --insecure
-        .default_headers(headers)
+        .default_headers(headers.clone())
         .redirect(Policy::custom(|attempt| {
             // 自定义重定向策略
-            attempt.follow()
+            attempt.stop()
         }))
         .build()
         .map_err(|e| e.to_string())?;
+    
+    // 发送 POST 请求
+    let resp = client
+        .post(url)
+        .body(body)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
 
-    // 如果page大于1， 则单独查询
-    let resp;
-    if page > 1 {
-        //发起get请求
-        url = format!("{}/view_all_bug_page.php?page_number={}", origin, page);
-        println!("url:{}",url);
-        resp = client.get(url).send().await.map_err(|e| e.to_string())?;
-    }else{
-        // 发送 POST 请求
-        resp = client
-            .post(url)
-            .body(body)
-            .send()
-            .await
-            .map_err(|e| e.to_string())?;
-
+    if resp.status() != 302 {
+        return Err(format!("请求失败，状态码: {}", resp.status()).into());
     }
+
+    // 获取数据
+    url = format!("{}/view_all_bug_page.php", origin);
+    if page > 1 {
+        url = format!("{}?page_number={}", url, page);
+    }
+
+    // 创建 reqwest 客户端
+    headers.remove(CONTENT_TYPE);
+    headers.remove(CONTENT_LENGTH);
+    headers.remove(REFERER);
+    let client = Client::builder()
+        .timeout(Duration::from_secs(2))
+        .cookie_provider(jar.clone())
+        .danger_accept_invalid_certs(true) // --insecure
+        .default_headers(headers)
+        .redirect(Policy::custom(|attempt| {
+            // 自定义重定向策略
+            attempt.stop()
+        }))
+        .build()
+        .map_err(|e| e.to_string())?;
+    let resp = client.get(url).send().await.map_err(|e| e.to_string())?;
 
     // 清空项目id cookie
     let _ = set_project_cookie(jar.clone(), "0", host);
 
     let text = resp.text().await.unwrap();
-    if page>1 {
-        println!("resp:{}",text);
-    }
     Ok(text)
 }
 
