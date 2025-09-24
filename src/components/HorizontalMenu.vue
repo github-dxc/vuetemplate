@@ -5,11 +5,11 @@
         <!-- 一级菜单项 -->
         <div
           class="menu-item"
-          :class="{ active: activeMenu === item.id, [`${mode}-menu-item`]: true }"
+          :class="{ active: activeMenu === item.id, 'has-selected': !(activeMenu === item.id)&&hasSelectedChild(item), [`${mode}-menu-item`]: true }"
           @click="handleMenuClick(item)"
         >
           <el-button
-            :type="activeMenu === item.id ? 'primary' : 'default'"
+            :type="activeMenu === item.id || hasSelectedChild(item) ? 'primary' : 'default'"
             class="menu-button"
             :class="`${mode}-menu-button`"
           >
@@ -85,11 +85,16 @@ const props = defineProps({
   }
 })
 
+// 事件定义
+const emit = defineEmits(['menu-click', 'submenu-click'])
+
 // 响应式数据
 const activeMenu = ref(null)
 
-// 事件定义
-const emit = defineEmits(['menu-click', 'submenu-click'])
+// 计算属性
+const hasSelectedChild = (item) => {
+  return item.children?.some(child => child.checked);
+};
 
 // 事件处理函数
 const handleMenuClick = (item) => {
@@ -254,6 +259,19 @@ const handleWheelScroll = (event) => {
 }
 
 .menu-item.active .menu-button {
+  background: linear-gradient(135deg, #409eff, #5a9cf8);
+  color: white;
+  border-color: #409eff;
+}
+
+/* 添加有选中子菜单的菜单项样式 */
+.menu-item.has-selected .menu-button {
+  background-color: #ecf5ff;
+  color: #409eff;
+}
+
+/* 当有选中子菜单时，hover 效果保持一致 */
+.menu-item.has-selected:hover .menu-button {
   background: linear-gradient(135deg, #409eff, #5a9cf8);
   color: white;
   border-color: #409eff;
