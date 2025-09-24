@@ -2,18 +2,18 @@
   <div class="user-profile">
     <el-avatar :size="80" :src="userAvatar" />
     <div class="profile-info">
-      <h2>等风来</h2>
-      <p class="wechat-id">帐号：dxc3434</p>
+      <h2>{{ username }}</h2>
+      <p class="wechat-id">帐号：{{ username }}</p>
     </div>
   </div>
-  <div class="login-options">
+  <!-- <div class="login-options">
     <el-button type="primary" size="large">自动登录</el-button>
     <el-button size="large">已开启</el-button>
     <el-button size="large">关闭</el-button>
   </div>
   <div class="login-tip">
     <p>开启后，自动登录之前的用户</p>
-  </div>
+  </div> -->
   <div class="logout-section">
     <el-button text type="primary" @click="logout">退出登录</el-button>
   </div>
@@ -29,7 +29,9 @@ const router = useRouter()
 
 const userStore = useUserStore()
 
-const userAvatar = ref('https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png');
+const userAvatar = userStore.userInfo.avatar;
+
+const username = userStore.userInfo.username;
 
 async function logout() {
   ElMessageBox.alert('确认退出登录吗？', '退出登录', {

@@ -191,7 +191,7 @@ const onLeave = (el) => {
       el.style.height = '0px'
       el.style.transform = 'scaleY(0)'
     }
-  }, buttons.length * 80 + 100)
+  }, buttons.length * 80)
 }
 
 const handleWheelScroll = (event) => {
@@ -330,7 +330,7 @@ const handleWheelScroll = (event) => {
 
 /* 子菜单容器样式 */
 .submenu {
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: all 0.3s cubic-bezier(0.12, 0.92, 0.25, 1.00);
   overflow: hidden;
 }
 
@@ -342,7 +342,6 @@ const handleWheelScroll = (event) => {
   background: linear-gradient(90deg, #f0f9ff, #e0f2fe);
   border-right: 3px solid #409eff;
   height: 60px;
-  transform-origin: left center;
   max-width: 400px;    /* 限制最大宽度 */
   overflow-x: auto;    /* 水平方向溢出时显示滚动条 */
 }
@@ -354,7 +353,6 @@ const handleWheelScroll = (event) => {
   padding: 16px;
   background: linear-gradient(180deg, #f0f9ff, #e0f2fe);
   border-left: 3px solid #409eff;
-  transform-origin: top center;
   max-height: 420px;   /* 限制最大高度 */
   overflow-y: auto;    /* 垂直方向溢出时显示滚动条 */
 }
@@ -504,7 +502,7 @@ const handleWheelScroll = (event) => {
 
 /* 离场状态的按钮样式 */
 .submenu-leaving .submenu-button {
-  transition: all 0.3s cubic-bezier(0.55, 0.085, 0.68, 0.53);
+  transition: all 0.1s cubic-bezier(0.12, 0.92, 0.25, 1.00);
 }
 
 /* 横向模式的分隔线 */

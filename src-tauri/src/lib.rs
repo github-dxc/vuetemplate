@@ -467,8 +467,8 @@ fn init_global_state(app: AppHandle) -> Result<(),String> {
     println!("user:{};cookie:{};host:{}",user_value,cookie_value,host_value);
 
     let sub_params_value = store.get("sub_param").unwrap_or(Value::from(vec![
-        r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=last_updated&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=0&search=&filter_submit=应用过滤器",
         r"type=1&view_type=simple&reporter_id[]=-1&handler_id[]=0&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=last_updated&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=0&search=&filter_submit=应用过滤器",
+        r"type=1&view_type=simple&reporter_id[]=0&handler_id[]=-1&monitor_user_id[]=0&note_user_id[]=0&priority[]=0&severity[]=0&view_state=0&sticky=1&category_id[]=0&hide_status[]=90&status[]=0&resolution[]=0&profile_id[]=0&platform[]=0&os[]=0&os_build[]=0&relationship_type=-1&relationship_bug=0&tag_string=&per_page=999&sort[]=last_updated&dir[]=DESC&sort[]=last_updated&dir[]=DESC&sort[]=status&dir[]=ASC&match_type=0&highlight_changed=0&search=&filter_submit=应用过滤器",
     ]));
     let sub_bugs_value = store.get("sub_bugs").unwrap_or_default();
     let change_historys_value = store.get("change_historys").unwrap_or_default();
