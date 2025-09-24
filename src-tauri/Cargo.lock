@@ -5365,7 +5365,6 @@ dependencies = [
  "lazy_static",
  "log",
  "mime_guess",
- "parking_lot",
  "reqwest 0.11.27",
  "scraper",
  "serde",
