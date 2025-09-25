@@ -1,7 +1,10 @@
 mod enums;
 mod model;
 mod utils;
+mod badge;
 
+use badge::linux_badge;
+use badge::windows_badge;
 use chrono::{NaiveTime, TimeZone, Utc};
 use chrono_tz::Asia::Shanghai;
 use enums::*;
@@ -666,6 +669,15 @@ async fn api_check_update(
 #[tauri::command(rename_all = "snake_case")]
 async fn api_download_and_install(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
     download_and_install(app.clone()).await
+}
+
+#[tauri::command(rename_all = "snake_case")]
+async fn set_window_badge(window: tauri::Window, icon_path: Option<String>) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    windows_badge::set_badge(&window, Some("path/to/icon.ico"))?;
+    #[cfg(target_os = "linux")]
+    linux_badge::set_badge(&window, icon_path.as_deref())?;
+    Ok(())
 }
 
 //初始化全局状态
