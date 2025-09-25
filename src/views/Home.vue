@@ -50,9 +50,9 @@ const userStore = useUserStore();
 // 变量
 const userAvatar = computed(() => userStore.userInfo.avatar);
 const activeMenu = ref('subscribe');
-const menuList = ref([  
-  { id: 'subscribe', title: '订阅', icon: markRaw(Bell), component: markRaw(SubscribePanel) },
-  { id: 'chat', title: '聊天', icon: markRaw(ChatDotRound), badge: 0, component: markRaw(ChatPanel) },
+const menuList = ref([
+  { id: 'subscribe', title: '订阅', icon: markRaw(ChatDotRound), component: markRaw(SubscribePanel) },
+  { id: 'chat', title: '聊天', icon: markRaw(Bell), badge: 0, component: markRaw(ChatPanel) },
   { id: 'files', title: '文件传输', icon: markRaw(Document), component: markRaw(ListPanel) },
   { id: 'contacts', title: '通讯录', icon: markRaw(User) },
   { id: 'favorites', title: '收藏', icon: markRaw(Star) }

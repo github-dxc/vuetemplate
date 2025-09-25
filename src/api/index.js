@@ -32,6 +32,10 @@ export const changeHost = async (host) => {
   return await invoke("api_change_host",{host});
 };
 
+export const changeSubParams = async (params=[]) => {
+  return await invoke("api_change_sub_params",{params});
+};
+
 export const readMsg = async (read_msg) => {
   return await invoke("api_read_msg",{read_msg});
 };
@@ -46,6 +50,10 @@ export const downloadAndInstall = async () => {
 
 export const apiBugInfo = async (bug_id) => {
   return await invoke("api_bug_info",{bug_id});
+};
+
+export const subParamsInfo = async () => {
+  return await invoke("api_sub_params_info");
 };
 
 export const updateBug = async ({ bug_id, severity=0, status=0, resolution=0, category_id=0, handler_id=0, summary="", description="", steps_to_reproduce="" }) => {

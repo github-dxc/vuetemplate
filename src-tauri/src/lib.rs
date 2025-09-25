@@ -47,6 +47,8 @@ pub fn run() {
             api_init_data,
             api_init_bugs,
             api_init_msgs,
+            api_sub_params_info,
+            api_change_sub_params,
             api_change_host,
             api_read_msg,
             api_login_info,
@@ -216,6 +218,24 @@ async fn api_read_msg(app: AppHandle, read_msg: &str) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command(rename_all = "snake_case")]
+async fn api_change_sub_params(app: tauri::AppHandle, params: Vec<String>) -> Result<(), String> {
+    if params.len() == 0 {
+        return Err("params is empty".to_string());
+    }
+    for sub_param in params.iter() {
+        let _ = serde_html_form::from_str::<FindBugListParams>(sub_param)
+            .map_err(|e| format!("serde_sub_params err:{}", e))?;
+    }
+    let state = app.state::<MyState>().clone();
+    let mut sub_params = state
+        .sub_params
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?;
+    *sub_params = params;
+    Ok(())
+}
+
 // 初始化bugs数据
 #[tauri::command(rename_all = "snake_case")]
 async fn api_init_bugs(app: AppHandle) -> Result<Vec<Bug>, String> {
@@ -255,6 +275,19 @@ async fn api_login_info(app: AppHandle) -> Result<LoginInfo, String> {
         .map_err(|e| format!("lock err:{}", e))?
         .clone();
     Ok(user)
+}
+
+// 获取订阅信息
+#[tauri::command(rename_all = "snake_case")]
+async fn api_sub_params_info(app: AppHandle) -> Result<Vec<String>, String> {
+    let state = app.state::<MyState>().clone();
+
+    let params = state
+        .sub_params
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    Ok(params)
 }
 
 // 登录
@@ -366,7 +399,7 @@ async fn api_bug_list(
     let mut data = view_all_set_data(
         &Html::parse_document(body.as_str()),
         &catgory_kv,
-        &project_kv
+        &project_kv,
     )
     .map_err(|e| format!("view_all_set_data err:{}", e))?;
 
@@ -979,7 +1012,7 @@ async fn update_sub_data(app: AppHandle) -> Result<(), String> {
             &project_kv,
         )
         .map_err(|e| format!("view_all_set_data err:{}", e))?;
-    
+
         // 设置当前项目
         let project_id = param.project_id.as_str();
         if !(project_id == "0" || project_id == "") {

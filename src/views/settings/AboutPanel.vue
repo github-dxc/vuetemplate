@@ -10,7 +10,7 @@
       </div>
       <p v-if="!newVersion">版本：{{ version.currentVersion }}</p>
       <p>更新时间：{{ formatDate(version.updateTime) }}</p>
-      <p>© 2024 DengXiangCheng. All rights reserved.</p>
+      <p>© 2025 DengXiangCheng. All rights reserved.</p>
     </div>
     <div class="about-actions">
       <!-- 更新组件 - 全局使用 -->
