@@ -54,11 +54,49 @@ async function logout() {
 
 <style scoped>
 /* Account settings styles from original file */
-.user-profile { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #f0f0f0; }
-.profile-info h2 { margin: 0 0 8px 0; font-size: 24px; color: #333; }
-.wechat-id { margin: 0; color: #666; font-size: 14px; }
-.login-options { display: flex; gap: 12px; margin-bottom: 20px; }
-.login-tip { color: #666; font-size: 14px; line-height: 1.5; margin-bottom: 40px; }
-.login-tip p { margin: 4px 0; }
-.logout-section { margin-top: auto; }
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.profile-info h2 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  color: #333;
+}
+
+.wechat-id {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.login-options {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.login-tip {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 40px;
+}
+
+.login-tip p {
+  margin: 4px 0;
+}
+
+.logout-section {
+  margin-top: auto;
+}
+
+:deep(.el-avatar) {
+  background-color: #ffffff;
+}
 </style>

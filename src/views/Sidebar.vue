@@ -2,7 +2,6 @@
   <div class="sidebar">
     <div class="avatar-section">
       <el-avatar shape="square" :size="50" :src="userAvatar" />
-      <!-- <el-avatar shape="square" :size="50" src="/src/assets/avatar.png" /> -->
     </div>
 
     <div class="menu-section">
@@ -110,5 +109,9 @@ defineEmits(['switch-menu', 'open-settings']);
 
 .bottom-section {
   margin-top: auto;
+}
+
+:deep(.el-avatar) {
+  background-color: #ffffff;
 }
 </style>
