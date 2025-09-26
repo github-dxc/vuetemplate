@@ -40,6 +40,10 @@ export const readMsg = async (read_msg) => {
   return await invoke("api_read_msg",{read_msg});
 };
 
+export const setWindowMessageNotify = async (status) => {
+  return await invoke("api_set_message_notify",{status});
+};
+
 export const checkUpdate = async () => {
   return await invoke("api_check_update");
 };

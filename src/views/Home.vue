@@ -41,7 +41,7 @@ import ListPanel from './panels/ListPanel.vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from "../store";
 import { listen, emit } from '@tauri-apps/api/event';
-import { initBugs, initData, initMsgs } from '../api';
+import { initBugs, initData, initMsgs, setWindowMessageNotify } from '../api';
 import { formatDate } from '../util';
 
 const router = useRouter()
@@ -99,10 +99,11 @@ const groupMsgs = computed(() => {
       msgs.push(msg);
     }
   }
-  // console.log("asdasdasd:",msgs);
-  // console.log("asdasdasd2:",readMsg.value);
-  // console.log("asdasdasd3:",unreadCount);
   menuList.value[1].badge = unreadCount;
+  if (!unreadCount) {
+    // 清除消息通知
+    NewMessageNotify(false);
+  }
   return msgs;
 });
 
@@ -155,6 +156,13 @@ const api_init_data = async () => {
   }
 }
 
+const NewMessageNotify = async (status) => {
+  try {
+    await setWindowMessageNotify(status);
+  } catch (error) {
+    console.error("setWindowNessageNotify error:", error);
+  }
+};
 
 // ------------------监听数据------------------
 
@@ -174,6 +182,8 @@ listen('sub_bugs', (event) => {
 });
 listen('sub_msgs', (event) => {
   console.log('sub_msgs:', event.payload)
+  // 新消息通知
+  NewMessageNotify(true);
   try {
     const obj = event.payload;
     if (obj) {

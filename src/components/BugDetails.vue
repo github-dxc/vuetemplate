@@ -1128,4 +1128,8 @@ onMounted(() => {
   line-height: 1;
 }
 
+:deep(.el-drawer__header) {
+  margin-bottom: 0px;
+}
+
 </style>

@@ -419,6 +419,10 @@ onActivated(() => {
   background-color: #909399;
 }
 
+:deep(.el-drawer__header) {
+  margin-bottom: 0px;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .message-list {

@@ -54,6 +54,7 @@ pub fn run() {
             api_change_sub_params,
             api_change_host,
             api_read_msg,
+            api_set_message_notify,
             api_login_info,
             api_login,
             api_logout,
@@ -672,11 +673,19 @@ async fn api_download_and_install(app: tauri::AppHandle) -> tauri_plugin_updater
 }
 
 #[tauri::command(rename_all = "snake_case")]
-async fn set_window_badge(window: tauri::Window, icon_path: Option<String>) -> Result<(), String> {
+async fn api_set_message_notify(window: tauri::Window, status: bool) -> Result<(), String> {
     #[cfg(target_os = "windows")]
-    windows_badge::set_badge(&window, Some("path/to/icon.ico"))?;
-    #[cfg(target_os = "linux")]
-    linux_badge::set_badge(&window, icon_path.as_deref())?;
+    {
+        if status {
+            windows_badge::flash_taskbar_icon(&window)?;
+            windows_badge::show_message_notification(&window)?;
+        }else{
+            windows_badge::clear_taskbar_status(&window)?;
+        }
+    }
+
+    // #[cfg(target_os = "linux")]
+    // linux_badge::set_badge(&window, icon_path.as_deref())?;
     Ok(())
 }
 
