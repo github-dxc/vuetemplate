@@ -64,6 +64,7 @@ pub fn run() {
             api_bug_list,
             api_image_bytes,
             api_update_bug,
+            api_bug_report,
             api_bug_note_add,
             api_check_update,
             api_download_and_install
@@ -629,6 +630,83 @@ async fn api_bug_note_add(
             max_file_size: 2097152, // 默认值
             file_path,
             binary_file,
+        },
+        &host,
+    )
+    .await?;
+
+    if let Some(s) = get_error_info(&Html::parse_document(resp.as_str())) {
+        println_cookies(&jar, &host);
+        return Err(s);
+    };
+
+    Ok(())
+}
+
+// 保存note
+#[tauri::command(rename_all = "snake_case")]
+async fn api_bug_report(
+    app: AppHandle,
+    project_id: String,
+    category_id: i64,
+    reproducibility: i64,
+    severity: i64,
+    priority: i64,
+    handler_id: i64,
+    summary: String,
+    description: String,
+    steps_to_reproduce: String,
+    file_path: Vec<String>,
+    binary_file: Vec<(String, Vec<u8>)>,
+) -> Result<(), String> {
+    let state = app.state::<MyState>().clone();
+    let user = state
+        .user
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let jar = state
+        .jar
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    let host = state
+        .host
+        .lock()
+        .map_err(|e| format!("lock err:{}", e))?
+        .clone();
+    if !user.logined {
+        return Err("未登录".to_string());
+    }
+
+    // 查询bug详情
+    let bug_report_token;
+    {
+        let body = bug_report_page(jar.clone(), &host, project_id.as_str()).await?;
+        let document = Html::parse_document(body.as_str());
+        bug_report_token = get_page_token(&document, "bug_report_token")?;
+    }
+    
+    let pid = project_id.split(',').last().unwrap_or("0").parse::<i64>().unwrap_or(0);
+    // 保存note
+    let resp = bug_report(
+        jar.clone(),
+        ReportBug {
+            bug_report_token,
+            project_id: pid,
+            category_id,
+            reproducibility,
+            severity,
+            priority,
+            handler_id,
+            summary,
+            description,
+            steps_to_reproduce,
+            view_state: 10, // 默认值
+            max_file_size: 2097152, // 默认值
+            file_path,
+            binary_file,
+            ..ReportBug::default()
         },
         &host,
     )

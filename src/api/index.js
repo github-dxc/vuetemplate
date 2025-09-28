@@ -64,6 +64,12 @@ export const updateBug = async ({ bug_id, severity=0, status=0, resolution=0, ca
   return await invoke("api_update_bug",{bug_id,severity,status,resolution,category_id,handler_id,summary,description,steps_to_reproduce});
 };
 
+export const bugReport = async ({project_id='0',category_id=1,reproducibility=30,severity=50,priority=30,handler_id=0,
+  summary='',description='',steps_to_reproduce='',file_path=[],binary_file=[]}) => {
+  return await invoke("api_bug_report",{project_id,category_id,reproducibility,severity,priority,handler_id,
+  summary,description,steps_to_reproduce,file_path,binary_file});
+}
+
 export const bugNoteAdd = async ({bug_id,bugnote_text,file_path=[],binary_file=[]}) => {
   return await invoke("api_bug_note_add",{bug_id,bugnote_text,file_path,binary_file});
 }

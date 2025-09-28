@@ -201,3 +201,30 @@ pub struct OperateLogs {
     pub content: String,
     pub last_updated: i64,
 }
+
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+pub struct ReportBug {
+    pub bug_report_token: String,//【必填】
+    pub m_id: i64,// 0
+    pub project_id: i64,//【必填】项目id
+    pub category_id: i64, //【必填】分类id
+    pub summary: String,//【必填】摘要
+    pub description: String,//【必填】描述
+    pub reproducibility: i64, //出现频率
+    pub severity: i64, //严重性
+    pub priority: i64, //优先级
+    pub handler_id: i64, //处理人
+    pub platform: String, //平台
+    pub os: String, //操作系统
+    pub os_build: String, //操作系统版本
+    pub steps_to_reproduce: String, //重现步骤
+    pub additional_info: String, //附加信息
+    pub tag_string: String, //标签字符串（逗号分隔）
+    pub tag_select: String, //选择已存在标签
+    pub view_state: i64, //查看权限 10=公开 50=私有
+    pub report_stay: i64, //报告后停留在当前页面 1=是 0=否
+
+    pub max_file_size: i64,
+    pub file_path: Vec<String>,
+    pub binary_file: Vec<(String, Vec<u8>)>, // (filename, filecontent)
+}
