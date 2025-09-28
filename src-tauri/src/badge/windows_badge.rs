@@ -68,7 +68,7 @@ pub fn flash_taskbar_icon(window: &Window) -> Result<(), String> {
                 hwnd,
                 dwFlags: FLASHW_ALL | FLASHW_TIMERNOFG, // 闪烁标题栏和任务栏
                 uCount: 3,                              // 0 表示持续闪烁直到窗口变为前台
-                dwTimeout: 500,                         // 闪烁间隔，单位为毫秒
+                dwTimeout: 200,                         // 闪烁间隔，单位为毫秒
             };
 
             let result = FlashWindowEx(&mut flash_info);

@@ -29,6 +29,8 @@ use tokio::time::{interval, Duration};
 use url::Url;
 use utils::*;
 
+use crate::badge::set_message_notify;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // 初始化日志实现库
@@ -673,20 +675,8 @@ async fn api_download_and_install(app: tauri::AppHandle) -> tauri_plugin_updater
 }
 
 #[tauri::command(rename_all = "snake_case")]
-async fn api_set_message_notify(window: tauri::Window, status: bool) -> Result<(), String> {
-    #[cfg(target_os = "windows")]
-    {
-        if status {
-            windows_badge::flash_taskbar_icon(&window)?;
-            windows_badge::show_message_notification(&window)?;
-        }else{
-            windows_badge::clear_taskbar_status(&window)?;
-        }
-    }
-
-    // #[cfg(target_os = "linux")]
-    // linux_badge::set_badge(&window, icon_path.as_deref())?;
-    Ok(())
+async fn api_set_message_notify(window: tauri::Window, count: i64) -> Result<(), String> {
+    set_message_notify(window, count).await
 }
 
 //初始化全局状态
