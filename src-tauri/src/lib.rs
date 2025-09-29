@@ -686,8 +686,8 @@ async fn api_bug_report(
         let document = Html::parse_document(body.as_str());
         bug_report_token = get_page_token(&document, "bug_report_token")?;
     }
-    
-    let pid = project_id.split(',').last().unwrap_or("0").parse::<i64>().unwrap_or(0);
+
+    let pid = project_id.split(';').last().unwrap_or("0").parse::<i64>().unwrap_or(0);
     // 保存note
     let resp = bug_report(
         jar.clone(),

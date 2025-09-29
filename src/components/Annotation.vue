@@ -178,6 +178,7 @@ const handleFileChange = (file, newFileList) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']
   if (!allowedTypes.includes(file.raw.type)) {
     ElMessage.error('只支持 jpg/png/gif 格式的图片')
+    newFileList.splice(newFileList.indexOf(file), 1)
     return false
   }
   

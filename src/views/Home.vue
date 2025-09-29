@@ -29,7 +29,7 @@
 <script setup vapor>
 import { ref, computed, markRaw, onMounted } from 'vue';
 import { 
-  ChatDotRound, User, Document, Star, Bell
+  ChatDotRound, CirclePlus, Document, Star, Bell
 } from '@element-plus/icons-vue';
 import Sidebar from './Sidebar.vue';
 import ContentArea from './ContentArea.vue';
@@ -38,6 +38,7 @@ import SubscribePanel from './panels/SubscribePanel.vue';
 import ChatPanel from './panels/ChatPanel.vue';
 import Update from '../components/Update.vue';
 import ListPanel from './panels/ListPanel.vue';
+import AddBug from './panels/AddBug.vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from "../store";
 import { listen, emit } from '@tauri-apps/api/event';
@@ -52,9 +53,9 @@ const userAvatar = computed(() => userStore.userInfo.avatar);
 const activeMenu = ref('subscribe');
 const menuList = ref([
   { id: 'subscribe', title: '订阅', icon: markRaw(ChatDotRound), component: markRaw(SubscribePanel) },
-  { id: 'chat', title: '聊天', icon: markRaw(Bell), badge: 0, component: markRaw(ChatPanel) },
-  { id: 'files', title: '文件传输', icon: markRaw(Document), component: markRaw(ListPanel) },
-  { id: 'contacts', title: '通讯录', icon: markRaw(User) },
+  { id: 'chat', title: '消息', icon: markRaw(Bell), badge: 0, component: markRaw(ChatPanel) },
+  { id: 'files', title: '列表', icon: markRaw(Document), component: markRaw(ListPanel) },
+  { id: 'contacts', title: '新增', icon: markRaw(CirclePlus), component: markRaw(AddBug) },
   { id: 'favorites', title: '收藏', icon: markRaw(Star) }
 ]);
 const settingsVisible = ref(false);
@@ -102,7 +103,7 @@ const groupMsgs = computed(() => {
   menuList.value[1].badge = unreadCount;
   if (!unreadCount) {
     // 清除消息通知
-    NewMessageNotify(false);
+    NewMessageNotify(0);
   }
   return msgs;
 });
@@ -156,9 +157,9 @@ const api_init_data = async () => {
   }
 }
 
-const NewMessageNotify = async (status) => {
+const NewMessageNotify = async (count) => {
   try {
-    await setWindowMessageNotify(status);
+    await setWindowMessageNotify(count);
   } catch (error) {
     console.error("setWindowNessageNotify error:", error);
   }
@@ -183,7 +184,7 @@ listen('sub_bugs', (event) => {
 listen('sub_msgs', (event) => {
   console.log('sub_msgs:', event.payload)
   // 新消息通知
-  NewMessageNotify(true);
+  NewMessageNotify(event.payload.length);
   try {
     const obj = event.payload;
     if (obj) {

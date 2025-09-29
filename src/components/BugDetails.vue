@@ -200,7 +200,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { QuillEditor,Quill } from '@vueup/vue-quill';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import { formatDate, getFirstChar, getColorByUnicPalette, byteArrayToBase64Image } from '../util';
-import { apiBugInfo, browserOpen, bugNoteAdd, imageBase64, updateBug } from '../api';
+import { apiBugInfo, browserOpen, imageBase64, updateBug } from '../api';
 import { ElMessage } from "element-plus";
 import { createNewWindow } from '../windows';
 import { emit } from '@tauri-apps/api/event';
@@ -707,6 +707,10 @@ onMounted(() => {
   height: 32px;
   margin-top: 20px;
   margin-left: 25px;
+}
+
+.option_tags>button {
+  font-weight: bold;
 }
 
 .option_check_tag {
