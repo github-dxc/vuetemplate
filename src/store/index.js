@@ -1,6 +1,7 @@
 import { createPinia, defineStore } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import { login, logout, loginInfo, changeHost, readMsg } from '../api/index'
+import avatar from '../assets/avatar.png';
 
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)//持久化
@@ -15,7 +16,7 @@ export const useUserStore = defineStore('user', {
       logined: false,
       username: '',
       read_msg: '',
-      avatar: '/src/assets/avatar.png',
+      avatar: avatar,
       role: '',
       createdAt: null
     },
@@ -153,6 +154,7 @@ export const useUserStore = defineStore('user', {
         const user = await loginInfo()
         const userInfo = {
           ...user,
+          avatar: avatar,
           createdAt: new Date().toISOString()
         }
         this.setUser(userInfo)
