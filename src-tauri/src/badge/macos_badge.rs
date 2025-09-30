@@ -1,52 +1,56 @@
-use tauri::Window;
 use std::path::Path;
+use tauri::Window;
 
-#[cfg(target_os = "macos")]
-use objc::{msg_send, sel, sel_impl, runtime::{Class, Object, BOOL, YES, NO}};
 #[cfg(target_os = "macos")]
 use cocoa::{
     appkit::{NSApp, NSApplication, NSImage, NSRequestUserAttentionType},
     base::{id, nil},
-    foundation::{NSString, NSAutoreleasePool},
+    foundation::{NSAutoreleasePool, NSString},
 };
 #[cfg(target_os = "macos")]
 use core_foundation::string::CFString;
+#[cfg(target_os = "macos")]
+use objc::{
+    msg_send,
+    runtime::{Class, Object, BOOL, NO, YES},
+    sel, sel_impl,
+};
 
 /// 设置 Dock 图标
 #[cfg(target_os = "macos")]
 pub fn set_taskbar_icon<P: AsRef<Path>>(window: &Window, icon_path: P) -> Result<(), String> {
     let icon_path = icon_path.as_ref();
-    
+
     if !icon_path.exists() {
         return Err(format!("图标文件不存在: {:?}", icon_path));
     }
-    
+
     let path_str = icon_path.to_str().ok_or("无效的文件路径")?;
-    
+
     unsafe {
         let _pool = NSAutoreleasePool::new(nil);
-        
+
         // 获取 NSApplication 实例
         let app = NSApp();
-        
+
         // 创建 NSString 路径
         let ns_path = NSString::alloc(nil).init_str(path_str);
-        
+
         // 创建 NSImage
         let image = NSImage::alloc(nil).initWithContentsOfFile_(ns_path);
-        
+
         if image == nil {
             return Err("无法加载图标文件".to_string());
         }
-        
+
         // 设置应用图标
         app.setApplicationIconImage_(image);
-        
+
         // 释放资源
         let _: () = msg_send![image, release];
         let _: () = msg_send![ns_path, release];
     }
-    
+
     Ok(())
 }
 
@@ -56,11 +60,11 @@ pub fn reset_taskbar_icon(window: &Window) -> Result<(), String> {
     unsafe {
         let _pool = NSAutoreleasePool::new(nil);
         let app = NSApp();
-        
+
         // 设置为 nil 会恢复默认图标
         app.setApplicationIconImage_(nil);
     }
-    
+
     Ok(())
 }
 
@@ -85,20 +89,20 @@ pub fn flash_taskbar_icon_with_type(window: &Window, flash_type: FlashType) -> R
     unsafe {
         let _pool = NSAutoreleasePool::new(nil);
         let app = NSApp();
-        
+
         let request_type = match flash_type {
             FlashType::Informational => NSRequestUserAttentionType::NSInformationalRequest,
             FlashType::Critical => NSRequestUserAttentionType::NSCriticalRequest,
         };
-        
+
         // 请求用户注意
         let request_id: i32 = app.requestUserAttention_(request_type);
-        
+
         if request_id == 0 {
             return Err("无法请求用户注意".to_string());
         }
     }
-    
+
     Ok(())
 }
 
@@ -108,11 +112,11 @@ pub fn stop_flash_taskbar_icon(window: &Window) -> Result<(), String> {
     unsafe {
         let _pool = NSAutoreleasePool::new(nil);
         let app = NSApp();
-        
+
         // 取消所有用户注意请求
         app.cancelUserAttentionRequest_(0);
     }
-    
+
     Ok(())
 }
 
@@ -133,7 +137,7 @@ pub fn show_message_notification(
             sound: true,
             flash_dock: true,
             user_info: None,
-        }
+        },
     )
 }
 
@@ -156,48 +160,49 @@ pub fn show_notification_with_options(
 ) -> Result<(), String> {
     unsafe {
         let _pool = NSAutoreleasePool::new(nil);
-        
+
         // 获取用户通知中心
-        let notification_center_class = Class::get("NSUserNotificationCenter")
-            .ok_or("无法获取 NSUserNotificationCenter 类")?;
-        let default_center: id = msg_send![notification_center_class, defaultUserNotificationCenter];
-        
+        let notification_center_class =
+            Class::get("NSUserNotificationCenter").ok_or("无法获取 NSUserNotificationCenter 类")?;
+        let default_center: id =
+            msg_send![notification_center_class, defaultUserNotificationCenter];
+
         // 创建用户通知
-        let notification_class = Class::get("NSUserNotification")
-            .ok_or("无法获取 NSUserNotification 类")?;
+        let notification_class =
+            Class::get("NSUserNotification").ok_or("无法获取 NSUserNotification 类")?;
         let notification: id = msg_send![notification_class, alloc];
         let notification: id = msg_send![notification, init];
-        
+
         // 设置标题
         let title_ns = NSString::alloc(nil).init_str(&options.title);
         let _: () = msg_send![notification, setTitle: title_ns];
-        
+
         // 设置消息内容
         let message_ns = NSString::alloc(nil).init_str(&options.message);
         let _: () = msg_send![notification, setInformativeText: message_ns];
-        
+
         // 设置副标题（如果提供）
         if let Some(subtitle) = &options.subtitle {
             let subtitle_ns = NSString::alloc(nil).init_str(subtitle);
             let _: () = msg_send![notification, setSubtitle: subtitle_ns];
             let _: () = msg_send![subtitle_ns, release];
         }
-        
+
         // 设置声音
         if options.sound {
-            let sound_class = Class::get("NSUserNotificationDefaultSoundName")
-                .ok_or("无法获取默认声音")?;
+            let sound_class =
+                Class::get("NSUserNotificationDefaultSoundName").ok_or("无法获取默认声音")?;
             let default_sound: id = msg_send![sound_class, defaultUserNotificationSound];
             let _: () = msg_send![notification, setSoundName: default_sound];
         }
-        
+
         // 设置用户信息（如果提供）
         if let Some(user_info) = &options.user_info {
-            let dict_class = Class::get("NSMutableDictionary")
-                .ok_or("无法获取 NSMutableDictionary 类")?;
+            let dict_class =
+                Class::get("NSMutableDictionary").ok_or("无法获取 NSMutableDictionary 类")?;
             let dict: id = msg_send![dict_class, alloc];
             let dict: id = msg_send![dict, init];
-            
+
             for (key, value) in user_info {
                 let key_ns = NSString::alloc(nil).init_str(key);
                 let value_ns = NSString::alloc(nil).init_str(value);
@@ -205,25 +210,25 @@ pub fn show_notification_with_options(
                 let _: () = msg_send![key_ns, release];
                 let _: () = msg_send![value_ns, release];
             }
-            
+
             let _: () = msg_send![notification, setUserInfo: dict];
             let _: () = msg_send![dict, release];
         }
-        
+
         // 发送通知
         let _: () = msg_send![default_center, deliverNotification: notification];
-        
+
         // 如果需要闪烁 Dock 图标
         if options.flash_dock {
             flash_taskbar_icon(window)?;
         }
-        
+
         // 释放资源
         let _: () = msg_send![notification, release];
         let _: () = msg_send![title_ns, release];
         let _: () = msg_send![message_ns, release];
     }
-    
+
     Ok(())
 }
 
@@ -233,7 +238,7 @@ pub fn set_dock_badge(badge_text: Option<&str>) -> Result<(), String> {
     unsafe {
         let _pool = NSAutoreleasePool::new(nil);
         let app = NSApp();
-        
+
         match badge_text {
             Some(text) => {
                 let badge_ns = NSString::alloc(nil).init_str(text);
@@ -248,7 +253,7 @@ pub fn set_dock_badge(badge_text: Option<&str>) -> Result<(), String> {
             }
         }
     }
-    
+
     Ok(())
 }
 
@@ -260,7 +265,7 @@ pub fn set_message_count_badge(count: u32) -> Result<(), String> {
     } else {
         None
     };
-    
+
     set_dock_badge(badge_text.as_deref())
 }
 
@@ -269,16 +274,17 @@ pub fn set_message_count_badge(count: u32) -> Result<(), String> {
 pub fn check_notification_permission() -> Result<bool, String> {
     unsafe {
         let _pool = NSAutoreleasePool::new(nil);
-        
-        let notification_center_class = Class::get("NSUserNotificationCenter")
-            .ok_or("无法获取 NSUserNotificationCenter 类")?;
-        let default_center: id = msg_send![notification_center_class, defaultUserNotificationCenter];
-        
+
+        let notification_center_class =
+            Class::get("NSUserNotificationCenter").ok_or("无法获取 NSUserNotificationCenter 类")?;
+        let default_center: id =
+            msg_send![notification_center_class, defaultUserNotificationCenter];
+
         // 检查通知中心是否可用
         if default_center == nil {
             return Ok(false);
         }
-        
+
         // 在 macOS 10.14+ 中，需要检查通知权限
         // 这里简化处理，假设有权限（实际应用中可能需要更复杂的权限检查）
         Ok(true)
@@ -306,24 +312,29 @@ pub fn show_rich_notification(
     if let Some(count) = count {
         set_message_count_badge(count)?;
     }
-    
+
     // 显示通知
     let mut user_info = std::collections::HashMap::new();
-    user_info.insert("timestamp".to_string(), 
-                    std::time::SystemTime::now()
-                        .duration_since(std::time::UNIX_EPOCH)
-                        .unwrap_or_default()
-                        .as_secs()
-                        .to_string());
-    
-    show_notification_with_options(window, NotificationOptions {
-        title: title.to_string(),
-        message: message.to_string(),
-        subtitle: count.map(|c| format!("总计 {} 条消息", c)),
-        sound: true,
-        flash_dock: true,
-        user_info: Some(user_info),
-    })?;
-    
+    user_info.insert(
+        "timestamp".to_string(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs()
+            .to_string(),
+    );
+
+    show_notification_with_options(
+        window,
+        NotificationOptions {
+            title: title.to_string(),
+            message: message.to_string(),
+            subtitle: count.map(|c| format!("总计 {} 条消息", c)),
+            sound: true,
+            flash_dock: true,
+            user_info: Some(user_info),
+        },
+    )?;
+
     Ok(())
 }

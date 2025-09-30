@@ -143,7 +143,7 @@ pub fn clear_taskbar_status(window: &Window) -> Result<(), String> {
         taskbar_list
             .SetProgressState(hwnd, TBPF_NOPROGRESS)
             .map_err(|e| format!("Failed to clear progress state: {:?}", e))?;
-        
+
         // 停止闪烁
         let mut flash_info = FLASHWINFO {
             cbSize: std::mem::size_of::<FLASHWINFO>() as u32,

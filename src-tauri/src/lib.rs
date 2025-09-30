@@ -1,10 +1,8 @@
+mod badge;
 mod enums;
 mod model;
 mod utils;
-mod badge;
 
-use badge::linux_badge;
-use badge::windows_badge;
 use chrono::{NaiveTime, TimeZone, Utc};
 use chrono_tz::Asia::Shanghai;
 use enums::*;
@@ -38,6 +36,8 @@ pub fn run() {
         .filter_level(log::LevelFilter::Info) // 设置日志级别为 Debug
         .init();
     tauri::Builder::default()
+        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
             Some(vec!["--flag1", "--flag2"]),
@@ -687,7 +687,12 @@ async fn api_bug_report(
         bug_report_token = get_page_token(&document, "bug_report_token")?;
     }
 
-    let pid = project_id.split(';').last().unwrap_or("0").parse::<i64>().unwrap_or(0);
+    let pid = project_id
+        .split(';')
+        .last()
+        .unwrap_or("0")
+        .parse::<i64>()
+        .unwrap_or(0);
     // 保存note
     let resp = bug_report(
         jar.clone(),
@@ -702,7 +707,7 @@ async fn api_bug_report(
             summary,
             description,
             steps_to_reproduce,
-            view_state: 10, // 默认值
+            view_state: 10,         // 默认值
             max_file_size: 2097152, // 默认值
             file_path,
             binary_file,

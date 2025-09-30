@@ -1,13 +1,15 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { LogicalSize } from '@tauri-apps/api/window';
 import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart';
+import { register, unregister } from '@tauri-apps/plugin-global-shortcut';
+import { writeText, readText } from '@tauri-apps/plugin-clipboard-manager';
 
 
 // 创建新窗口
-export const createNewWindow = async function(label, option, DOMContentLoadedCallback, successCallback, errorCallback) {
+export const createNewWindow = async (label, option, DOMContentLoadedCallback, successCallback, errorCallback) => {
     // 首先检查窗口是否已经存在
     const existingWindow = await WebviewWindow.getByLabel(label);
-    
+
     if (existingWindow) {
         console.log(existingWindow);
 
@@ -46,7 +48,7 @@ export const createNewWindow = async function(label, option, DOMContentLoadedCal
 }
 
 // 修改窗口大小
-export const changeSize = async function({label,width,hight,center = false,onTop = false}) {
+export const changeSize = async ({ label, width, hight, center = false, onTop = false }) => {
     const webview = await WebviewWindow.getByLabel(label);
     if (webview) {
         //把窗口设置为保持在页面上
@@ -60,18 +62,38 @@ export const changeSize = async function({label,width,hight,center = false,onTop
     }
 }
 
-
-export const autoStart = async (autoStart=false) => {
-  const enabled = await isEnabled();
-  if (autoStart) {
-    if (!enabled) {
-      enable();
-      console.log('Auto start enabled');
+// 自动启动
+export const autoStart = async (autoStart = false) => {
+    const enabled = await isEnabled();
+    if (autoStart) {
+        if (!enabled) {
+            enable();
+            console.log('Auto start enabled');
+        }
+    } else {
+        if (enabled) {
+            disable();
+            console.log('Auto start disabled');
+        };
     }
-  } else {
-    if (enabled) {
-      disable();
-      console.log('Auto start disabled');
-    };
-  }
 };
+
+// 注册快捷键事件
+export const registerShortcut = async (key, hook) => {
+    await register(key, hook);
+}
+
+// 注销快捷键事件
+export const unregisterShortcut = async (key) => {
+    await unregister(key);
+}
+
+// 读取剪切板信息
+export const readClipboard = async () => {
+    return await readText();
+}
+
+// 写入剪切板信息
+export const writeClipboard = async (text='') => {
+    await writeText(text);
+}
