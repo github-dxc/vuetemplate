@@ -13,6 +13,12 @@
       </el-form-item>
     </div>
     <div class="setting-item">
+      <h3>MantisBT设置</h3>
+      <el-form-item label="HOST地址">
+        <el-input v-model="hostSetting" style="width: 240px" placeholder="Please input MantisBT HOST" @change="changeHostSetting" />
+      </el-form-item>
+    </div>
+    <div class="setting-item">
       <h3>订阅设置</h3>
       <el-form-item label="订阅参数">
         <el-input-tag
@@ -32,7 +38,9 @@ import { onMounted, ref } from 'vue';
 import { useUserStore } from '../../store';
 import { autoStart } from '../../windows';
 import { changeSubParams, subParamsInfo } from '../../api';
+import { useRouter } from 'vue-router';
 
+const router = useRouter()
 const userStore = useUserStore()
 
 const updateSettings = ref({
@@ -44,6 +52,8 @@ const startSettings = ref({
 });
 
 const subParamsSetting = ref([]);
+
+const hostSetting = ref(userStore.settingInfo.host || '');
 
 const changeUpdateSetting = () => {
   userStore.updateSetting({ update: updateSettings.value })
@@ -63,6 +73,16 @@ const changeSubParamsSetting = async () => {
     console.error("Failed to change sub params:", error);
   }
   getParamsInfo();
+};
+
+const changeHostSetting = async () => {
+  try {
+    await userStore.changeGetHost(hostSetting.value);
+    userStore.logout();
+    router.push("Login");
+  } catch (error) {
+    console.error("Failed to change host:", error);
+  }
 };
 
 const getParamsInfo = async () => {
