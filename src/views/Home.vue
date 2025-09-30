@@ -27,7 +27,7 @@
 </template>
 
 <script setup vapor>
-import { ref, computed, markRaw, onMounted } from 'vue';
+import { ref, computed, markRaw, onMounted, watch } from 'vue';
 import { 
   ChatDotRound, CirclePlus, Document, Star, Bell
 } from '@element-plus/icons-vue';
@@ -45,11 +45,12 @@ import { useUserStore } from "../store";
 import { listen, emit } from '@tauri-apps/api/event';
 import { initBugs, initData, initMsgs, setWindowMessageNotify } from '../api';
 import { formatDate } from '../util';
+import { readClipboard, registerShortcut, unregisterShortcut } from '../windows';
 
 const router = useRouter()
 const userStore = useUserStore();
 
-// 变量
+// ------------------变量------------------
 const userAvatar = computed(() => userStore.userInfo.avatar);
 const activeMenu = ref('subscribe');
 const menuList = ref([
@@ -65,7 +66,9 @@ const bugMsgs = ref([]);
 const bugTotal = ref(0);
 const enums = ref({});
 
-// 计算属性
+// ------------------计算属性------------------
+const shortcut_timestamp = computed(() => userStore.settingInfo.shortcut.timestamp);
+
 const currentMenu = computed(() => {
   return menuList.value.find(menu => menu.id === activeMenu.value);
 });
@@ -109,7 +112,7 @@ const groupMsgs = computed(() => {
   return msgs;
 });
 
-// 方法
+// ------------------方法------------------
 const handleSwitchMenu = (menu) => {
   activeMenu.value = menu.id;
 };
@@ -166,7 +169,21 @@ const NewMessageNotify = async (count) => {
   }
 };
 
-// ------------------监听数据------------------
+const registerShortcutTimestamp = async () => {
+  if (shortcut_timestamp.value) {
+    // 注册快捷键
+    // TODO 重新使用rust的rdev库实现
+    await registerShortcut('CommandOrControl+C', async () => {
+      const text = await readClipboard();
+      console.log("Clipboard text:", text);
+    });
+  } else {
+    // 注销快捷键
+    await unregisterShortcut('CommandOrControl+C');
+  }
+};
+
+// ------------------订阅数据------------------
 
 // 监听rust发送的消息
 listen('sub_bugs', (event) => {
@@ -197,6 +214,12 @@ listen('sub_msgs', (event) => {
   }
 });
 
+// ------------------监听数据------------------
+// 监听快捷键配置变化
+watch(shortcut_timestamp, (newVal) => {
+  console.log("shortcut_timestamp changed:", newVal);
+  registerShortcutTimestamp();
+});
 
 // ------------------初始化------------------
 
@@ -211,6 +234,8 @@ onMounted(async () => {
   await api_bug_list();
   // 初始化消息数据
   await api_msg_list();
+  // 注册快捷键
+  registerShortcutTimestamp();
 });
 </script>
 

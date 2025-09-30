@@ -59,6 +59,9 @@ export const useUserStore = defineStore('user', {
       },
       start: {
         autoStart: false,
+      },
+      shortcut: {
+        timestamp: false,
       }
     }
   }),

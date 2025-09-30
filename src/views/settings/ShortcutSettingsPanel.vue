@@ -1,27 +1,36 @@
 <template>
   <div class="setting-group">
     <h3>全局快捷键</h3>
-    <div class="shortcut-item" v-for="shortcut in shortcuts" :key="shortcut.id">
-      <span class="shortcut-label">{{ shortcut.label }}</span>
+    <div class="shortcut-item" v-for="sc in shortcuts" :key="sc.id">
+      <span class="shortcut-label">{{ sc.label }}</span>
       <el-input 
-        v-model="shortcut.key" 
+        v-model="sc.key" 
         readonly 
         class="shortcut-input"
         @click=""
       />
+      <el-switch v-model="shortcut.timestamp" @change="changeShortcutSetting" />
     </div>
   </div>
 </template>
 
 <script setup vapor>
 import { ref } from 'vue';
+import { useUserStore } from '../../store';
+
+const userStore = useUserStore()
+
+const shortcut = ref({
+  timestamp: userStore.settingInfo.shortcut.timestamp || false,
+});
 
 const shortcuts = ref([
-  { id: 1, label: '截取屏幕', key: 'Alt + A' },
-  { id: 2, label: '搜索', key: 'Ctrl + F' },
-  { id: 3, label: '切换会话', key: 'Ctrl + Tab' },
-  { id: 4, label: '快速回复', key: 'Ctrl + Enter' }
+  { id: 1, label: '查看时间', key: 'Ctrl + C' },
 ]);
+
+const changeShortcutSetting = () => {
+  userStore.updateSetting({ shortcut: shortcut.value });
+};
 
 </script>
 
