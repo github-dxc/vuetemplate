@@ -208,7 +208,6 @@ const handleWheelScroll = (event) => {
 <style scoped>
 /* 基础容器样式 */
 .menu-container {
-  background: #f5f7fa;
   width: 100%;
   height: 100%;
 }

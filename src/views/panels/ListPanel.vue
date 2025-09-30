@@ -1,5 +1,5 @@
 <template>
-  <div class="demo-container">
+  <div class="content-panel">
     <!-- 使用横向菜单组件 -->
     <el-container>
       <el-aside width="auto">
@@ -221,10 +221,10 @@ onMounted(() => {
   height: 100%;
 }
 
-.demo-container {
+.content-panel {
   width: 100%;
   height: 100%;
-  background: #f5f7fa;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
 .panel-bug-list {

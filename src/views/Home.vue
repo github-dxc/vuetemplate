@@ -39,6 +39,7 @@ import ChatPanel from './panels/ChatPanel.vue';
 import Update from '../components/Update.vue';
 import ListPanel from './panels/ListPanel.vue';
 import AddBug from './panels/AddBug.vue';
+import ToolPanel from './panels/ToolPanel.vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from "../store";
 import { listen, emit } from '@tauri-apps/api/event';
@@ -56,7 +57,7 @@ const menuList = ref([
   { id: 'chat', title: '消息', icon: markRaw(Bell), badge: 0, component: markRaw(ChatPanel) },
   { id: 'files', title: '列表', icon: markRaw(Document), component: markRaw(ListPanel) },
   { id: 'contacts', title: '新增', icon: markRaw(CirclePlus), component: markRaw(AddBug) },
-  { id: 'favorites', title: '收藏', icon: markRaw(Star) }
+  { id: 'favorites', title: '收藏', icon: markRaw(Star), component: markRaw(ToolPanel) }
 ]);
 const settingsVisible = ref(false);
 const bugList = ref([]);
