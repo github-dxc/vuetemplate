@@ -25,6 +25,8 @@ use tauri_plugin_updater::{Update, UpdaterExt};
 use tokio::signal;
 use tokio::time::{interval, Duration};
 use url::Url;
+use rdev::listen;
+use std::thread;
 use utils::*;
 
 use crate::badge::set_message_notify;
@@ -37,7 +39,6 @@ pub fn run() {
         .init();
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
             Some(vec!["--flag1", "--flag2"]),
@@ -84,6 +85,8 @@ pub fn run() {
             find_sub_data(app.handle().clone());
             //注册关闭回调
             close_app_callback(app.handle().clone());
+            //注册快捷键
+            listen_keybord_event(app.handle().clone())?;
             Ok(())
         })
         .on_window_event(move |window, event| {
@@ -1350,6 +1353,33 @@ fn close_app_callback(app: AppHandle) {
         }
         app.exit(0);
     });
+}
+
+// 监听键盘事件
+fn listen_keybord_event(app: AppHandle) -> Result<(), String> {
+    thread::Builder::new()
+        .name("rdev-listener".into())
+        .spawn(move || {
+            // rdev::listen 是阻塞的，放在独立线程
+            if let Err(err) = listen(move |event| {
+                if let Some(name) = event.name {
+                    // 记录日志
+                    info!("Keyboard event: {:?}", name);
+                    match name.as_str() {
+                        "\u{3}" => {
+                            // 向前端广播事件
+                            let _ = app.emit("global-keyboard-event", name);
+                        }
+                        _ => { /* 其他按键事件 */}
+                    }
+                }
+            }) {
+                warn!("Keyboard listener error: {:?}", err);
+            }
+        })
+        .map_err(|e| format!("spawn failed: {}", e))?;
+
+    Ok(())
 }
 
 #[cfg(test)]

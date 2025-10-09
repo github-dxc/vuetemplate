@@ -1,7 +1,6 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { LogicalSize } from '@tauri-apps/api/window';
 import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart';
-import { isRegistered, register, unregister } from '@tauri-apps/plugin-global-shortcut';
 import { writeText, readText } from '@tauri-apps/plugin-clipboard-manager';
 
 
@@ -77,22 +76,6 @@ export const autoStart = async (autoStart = false) => {
         };
     }
 };
-
-// 注册快捷键事件
-export const registerShortcut = async (key, hook) => {
-    const b = await isRegistered(key);
-    if (!b) {
-        await register(key, hook);
-    }
-}
-
-// 注销快捷键事件
-export const unregisterShortcut = async (key) => {
-    const b = await isRegistered(key);
-    if (b) {
-        await unregister(key);
-    }
-}
 
 // 读取剪切板信息
 export const readClipboard = async () => {

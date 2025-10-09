@@ -1,34 +1,19 @@
 <template>
   <div class="app-container">
-    <Sidebar 
-      :menu-list="menuList"
-      :active-menu="activeMenu"
-      :user-avatar="userAvatar"
-      @switch-menu="handleSwitchMenu"
-      @open-settings="openSettings"
-    />
-    
-    <ContentArea 
-      :current-menu="currentMenu"
-      :user-avatar="userAvatar"
-      :bug-list="bugList"
-      :bug-msgs="bugMsgs"
-      :group-msgs="groupMsgs"
-      :bug-total="bugTotal"
-      :enums="enums"
-    />
+    <Sidebar :menu-list="menuList" :active-menu="activeMenu" :user-avatar="userAvatar" @switch-menu="handleSwitchMenu"
+      @open-settings="openSettings" />
 
-    <SettingsDialog
-      v-model:visible="settingsVisible"
-      @close="closeSettings"
-    />
+    <ContentArea :current-menu="currentMenu" :user-avatar="userAvatar" :bug-list="bugList" :bug-msgs="bugMsgs"
+      :group-msgs="groupMsgs" :bug-total="bugTotal" :enums="enums" />
+
+    <SettingsDialog v-model:visible="settingsVisible" @close="closeSettings" />
     <Update />
   </div>
 </template>
 
 <script setup vapor>
-import { ref, computed, markRaw, onMounted, watch } from 'vue';
-import { 
+import { ref, computed, markRaw, onMounted } from 'vue';
+import {
   ChatDotRound, CirclePlus, Document, Star, Bell
 } from '@element-plus/icons-vue';
 import Sidebar from './Sidebar.vue';
@@ -45,7 +30,7 @@ import { useUserStore } from "../store";
 import { listen, emit } from '@tauri-apps/api/event';
 import { initBugs, initData, initMsgs, setWindowMessageNotify } from '../api';
 import { formatDate } from '../util';
-import { readClipboard, registerShortcut, unregisterShortcut } from '../windows';
+import { createNewWindow, readClipboard } from '../windows';
 
 const router = useRouter()
 const userStore = useUserStore();
@@ -67,7 +52,7 @@ const bugTotal = ref(0);
 const enums = ref({});
 
 // ------------------计算属性------------------
-const shortcut_timestamp = computed(() => userStore.settingInfo.shortcut.timestamp);
+const shortcut_ts_conf = computed(() => userStore.settingInfo.shortcut.timestamp);
 
 const currentMenu = computed(() => {
   return menuList.value.find(menu => menu.id === activeMenu.value);
@@ -84,7 +69,7 @@ const groupMsgs = computed(() => {
     let item = msgs.find(h => h.user_id === e.handler_id && h.timestamp === e.updated_at && h.bug_id === e.bug_id)
     if (item) {
       item.operations.push(`${e.field} ${e.change}`);
-    }else {
+    } else {
       let msg = {
         bug_id: e.bug_id,
         user_id: e.handler_id,
@@ -121,7 +106,7 @@ const openSettings = () => {
 };
 const closeSettings = () => {
   settingsVisible.value = false;
-}; 
+};
 const api_bug_list = async () => {
   try {
     // 获取bug列表
@@ -169,20 +154,6 @@ const NewMessageNotify = async (count) => {
   }
 };
 
-const registerShortcutTimestamp = async () => {
-  if (shortcut_timestamp.value) {
-    // 注册快捷键
-    // TODO 重新使用rust的rdev库实现
-    await registerShortcut('CommandOrControl+C', async () => {
-      const text = await readClipboard();
-      console.log("Clipboard text:", text);
-    });
-  } else {
-    // 注销快捷键
-    await unregisterShortcut('CommandOrControl+C');
-  }
-};
-
 // ------------------订阅数据------------------
 
 // 监听rust发送的消息
@@ -213,29 +184,48 @@ listen('sub_msgs', (event) => {
     return;
   }
 });
-
-// ------------------监听数据------------------
-// 监听快捷键配置变化
-watch(shortcut_timestamp, (newVal) => {
-  console.log("shortcut_timestamp changed:", newVal);
-  registerShortcutTimestamp();
+listen('global-keyboard-event', (event) => {
+  console.log('global-keyboard-event:', event.payload)
+  if (!shortcut_ts_conf.value) return;
+  // 读取剪贴板内容
+  readClipboard().then((text) => {
+    console.log("Clipboard text:", text);
+    createNewWindow('time-trans', {
+        url: '/time-trans', // 窗口加载的URL
+        title: 'time-trans',
+        width: 260,
+        height: 120,
+        visible: true,
+        resizable: false,
+        center: true,
+        transparent: false,//背景是否透明
+        decorations: false,//是否有边框
+    }, () => {
+      // 发送剪贴板内容到新窗口
+      console.log("Sending clipboard text to new window:", text);
+    }).then(() => {
+      console.log("Window created successfully");
+    }).catch((err) => {
+      console.error("Failed to create window:", err);
+    });
+  }).catch((err) => {
+    console.error("Failed to read clipboard:", err);
+  });
 });
 
 // ------------------初始化------------------
 
 onMounted(async () => {
   userStore.getUserInfo();
-  console.log("userStore.userInfo:",userStore.userInfo);
+  console.log("userStore.userInfo:", userStore.userInfo);
   userStore.changeGetHost("");
-  console.log("userStore.host:",userStore.serverHost);
+  console.log("userStore.host:", userStore.serverHost);
   // 初始化枚举数据
   await api_init_data();
   // 查询bug列表
   await api_bug_list();
   // 初始化消息数据
   await api_msg_list();
-  // 注册快捷键
-  registerShortcutTimestamp();
 });
 </script>
 

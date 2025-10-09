@@ -10,7 +10,7 @@
             <!-- 当前时间戳 -->
             <div class="current-time-section">
                 <span class="label">当前时间戳：</span>
-                <el-link type="primary" @click="useCurrentTimestamp" :underline="false">
+                <el-link type="primary" @click="useCurrentTimestamp" underline="never">
                     {{ currentTimestamp }}
                 </el-link>
                 <el-link class="summary-icon" @click="copyMessage(currentTimestamp)"
