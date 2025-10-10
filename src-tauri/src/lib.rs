@@ -93,7 +93,8 @@ pub fn run() {
             match event {
                 //关闭事件
                 WindowEvent::CloseRequested { api, .. } => {
-                    if window.title().unwrap().as_str() == "image" {
+                    let label = window.title().unwrap_or_default();
+                    if label == "image" || label == "time-trans" {
                         println!("非main窗口关闭");
                         return;
                     }

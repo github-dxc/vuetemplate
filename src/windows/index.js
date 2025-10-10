@@ -61,6 +61,22 @@ export const changeSize = async ({ label, width, hight, center = false, onTop = 
     }
 }
 
+// 关闭窗口
+export const closeWebWindow = async (label, force = false) => {
+    const webview = await WebviewWindow.getByLabel(label);
+    if (!webview) {
+      console.warn(`窗口 ${label} 不存在`);
+      return false;
+    }
+
+    if (!force) {
+      await webview.hide();
+    } else {
+      await webview.close();
+    }
+
+    return true;
+}
 // 自动启动
 export const autoStart = async (autoStart = false) => {
     const enabled = await isEnabled();

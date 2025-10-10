@@ -59,6 +59,7 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { Clock, CopyDocument, AlarmClock } from '@element-plus/icons-vue'
 import { copyMessage } from '../util'
+import { closeWebWindow } from '../windows'
 
 const inputValue = ref('')
 const timestampUnit = ref('seconds')
@@ -66,13 +67,75 @@ const timezone = ref('Asia/Shanghai')
 const resultValue = ref('')
 const inputRef = ref(null)
 
+
+// 监听输入变化
+watch([inputValue, timestampUnit, timezone], () => {
+    if (!inputValue.value.trim()) {
+        resultValue.value = ''
+        return
+    }
+
+    if (isTimestamp(inputValue.value)) {
+        // 输入是时间戳,转换为时间字符串
+        resultValue.value = timestampToDate(inputValue.value)
+    } else {
+        // 输入是时间字符串,转换为时间戳
+        resultValue.value = dateToTimestamp(inputValue.value)
+    }
+})
+
+
+// 2秒内鼠标没移动到页面上则执行 closeWebWindow，鼠标离开后重新计算2秒时间。
+let closeTimer = null
+const startCloseTimer = () => {
+  clearCloseTimer()
+  // 2 秒后关闭当前窗口（label 固定为 time-trans）
+  closeTimer = window.setTimeout(() => {
+    closeWebWindow('time-trans', true).catch((e) => {
+      console.error('closeWebWindow failed:', e)
+    })
+  }, 1000)
+}
+const clearCloseTimer = () => {
+  if (closeTimer) {
+    clearTimeout(closeTimer)
+    closeTimer = null
+  }
+}
+const onMouseMove = () => {
+  // 鼠标移动到页面则取消计时
+  clearCloseTimer()
+}
+const onMouseLeave = () => {
+  // 鼠标离开页面则重新开始 2 秒计时
+  startCloseTimer()
+}
+
 // 组件挂载时
 onMounted(() => {
     // 输入框自动聚焦
     if (inputRef.value) {
         inputRef.value.focus()
     }
+
+    // 监听鼠标移动与离开
+    window.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseout', onMouseLeave)
+    
+
+    // 初始启动计时：2 秒内没有鼠标移动到此窗口则关闭
+    startCloseTimer()
 })
+
+// 组件卸载时清理
+onUnmounted(() => {
+  clearCloseTimer()
+  window.removeEventListener('mousemove', onMouseMove)
+  document.removeEventListener('mouseout', onMouseLeave)
+  
+})
+
+
 
 // 判断输入是时间戳还是时间字符串
 const isTimestamp = (value) => {
@@ -163,22 +226,6 @@ const dateToTimestamp = (dateString) => {
         return '无效的时间格式'
     }
 }
-
-// 监听输入变化
-watch([inputValue, timestampUnit, timezone], () => {
-    if (!inputValue.value.trim()) {
-        resultValue.value = ''
-        return
-    }
-
-    if (isTimestamp(inputValue.value)) {
-        // 输入是时间戳,转换为时间字符串
-        resultValue.value = timestampToDate(inputValue.value)
-    } else {
-        // 输入是时间字符串,转换为时间戳
-        resultValue.value = dateToTimestamp(inputValue.value)
-    }
-})
 
 </script>
 

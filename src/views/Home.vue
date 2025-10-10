@@ -200,9 +200,10 @@ listen('global-keyboard-event', (event) => {
         center: true,
         transparent: false,//背景是否透明
         decorations: false,//是否有边框
-    }, () => {
-      // 发送剪贴板内容到新窗口
-      console.log("Sending clipboard text to new window:", text);
+        skipTaskbar: true,//跳过任务栏
+        alwaysOnTop: true//保持上层
+    }, () => {}, (window) => {
+      window.setFocus();
     }).then(() => {
       console.log("Window created successfully");
     }).catch((err) => {
