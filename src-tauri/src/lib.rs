@@ -9,6 +9,7 @@ use enums::*;
 use env_logger;
 use log::{debug, info, warn};
 use model::*;
+use rdev::EventType;
 use reqwest::cookie::{CookieStore, Jar};
 use scraper::Html;
 use serde_json::Value;
@@ -1363,16 +1364,19 @@ fn listen_keybord_event(app: AppHandle) -> Result<(), String> {
         .spawn(move || {
             // rdev::listen 是阻塞的，放在独立线程
             if let Err(err) = listen(move |event| {
-                if let Some(name) = event.name {
-                    // 记录日志
-                    info!("Keyboard event: {:?}", name);
-                    match name.as_str() {
-                        "\u{3}" => {
-                            // 向前端广播事件
-                            let _ = app.emit("global-keyboard-event", name);
-                        }
-                        _ => { /* 其他按键事件 */}
+                match event.name {
+                    Some(name) => {
+                        // 向前端广播事件
+                        let _ = app.emit("global-keyboard-event", name);
                     }
+                    None => {
+                        // 获取鼠标位置
+                        if let EventType::MouseMove{x,y} = event.event_type {
+                            // info!("x:{},y:{}", x, y)
+                            let _ = app.emit("mouse-move-event", (x, y));
+                        }
+                    }
+                    _ => { /* 其他按键事件 */}
                 }
             }) {
                 warn!("Keyboard listener error: {:?}", err);

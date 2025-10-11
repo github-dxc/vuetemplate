@@ -60,6 +60,7 @@ import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { Clock, CopyDocument, AlarmClock } from '@element-plus/icons-vue'
 import { copyMessage } from '../util'
 import { closeWebWindow } from '../windows'
+import { listen } from '@tauri-apps/api/event'
 
 const inputValue = ref('')
 const timestampUnit = ref('seconds')
@@ -135,7 +136,10 @@ onUnmounted(() => {
   
 })
 
-
+// 监听传来的值
+listen('trans-time', (event) => {
+    inputValue.value = event.payload;
+})
 
 // 判断输入是时间戳还是时间字符串
 const isTimestamp = (value) => {

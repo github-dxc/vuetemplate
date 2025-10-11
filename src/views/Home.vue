@@ -50,6 +50,8 @@ const bugList = ref([]);
 const bugMsgs = ref([]);
 const bugTotal = ref(0);
 const enums = ref({});
+let mouseX = 0;
+let mouseY = 0;
 
 // ------------------计算属性------------------
 const shortcut_ts_conf = computed(() => userStore.settingInfo.shortcut.timestamp);
@@ -187,32 +189,44 @@ listen('sub_msgs', (event) => {
 listen('global-keyboard-event', (event) => {
   console.log('global-keyboard-event:', event.payload)
   if (!shortcut_ts_conf.value) return;
-  // 读取剪贴板内容
-  readClipboard().then((text) => {
-    console.log("Clipboard text:", text);
-    createNewWindow('time-trans', {
+  // 如果是粘贴事件
+  if (event.payload == "\u{3}") {
+    // 读取剪贴板内容
+    readClipboard().then((text) => {
+      createNewWindow('time-trans', {
         url: '/time-trans', // 窗口加载的URL
         title: 'time-trans',
+        x: mouseX + 10,
+        y: mouseY + 10,
         width: 260,
         height: 120,
         visible: true,
         resizable: false,
-        center: true,
         transparent: false,//背景是否透明
         decorations: false,//是否有边框
         skipTaskbar: true,//跳过任务栏
         alwaysOnTop: true//保持上层
-    }, () => {}, (window) => {
-      window.setFocus();
-    }).then(() => {
-      console.log("Window created successfully");
+      }, () => {
+        // 发送时间给页面
+        console.log("asdasdasdasdaasd");
+        // emit('trans-time', text);
+      }, (window) => {
+        window.setFocus();
+      }).then(() => {
+        console.log("Window created successfully");
+      }).catch((err) => {
+        console.error("Failed to create window:", err);
+      });
     }).catch((err) => {
-      console.error("Failed to create window:", err);
+      console.error("Failed to read clipboard:", err);
     });
-  }).catch((err) => {
-    console.error("Failed to read clipboard:", err);
-  });
+  }
 });
+listen('mouse-move-event', (event) => {
+  mouseX = event.payload[0];
+  mouseY = event.payload[1];
+});
+
 
 // ------------------初始化------------------
 
